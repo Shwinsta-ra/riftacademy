@@ -217,3 +217,4 @@ that card+category. Leave a card+category out entirely to keep using
 auto-generation for it.
 
 Export as CSV, then: `python3 scripts/apply_questions.py path/to/file.csv`
+Verified pipeline: Wed Jul 15 14:58:41 PDT 2026
