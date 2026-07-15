@@ -1,0 +1,23 @@
+name: Enforce branch flow
+
+on:
+  pull_request:
+    branches: [main, staging, beta, integration]
+
+jobs:
+  check-source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify allowed source branch
+        run: |
+          case "${{ github.base_ref }}" in
+            main)        allowed='^(staging|hotfix/.*)$' ;;
+            staging)     allowed='^(beta|hotfix/.*)$' ;;
+            beta)        allowed='^(integration)$' ;;
+            integration) allowed='^(feature/.*|fix/.*|hotfix/.*)$' ;;
+          esac
+          if [[ ! "${{ github.head_ref }}" =~ $allowed ]]; then
+            echo "❌ '${{ github.head_ref }}' is not an approved source branch for merging into '${{ github.base_ref }}'."
+            exit 1
+          fi
+          echo "✅ '${{ github.head_ref }}' is approved to merge into '${{ github.base_ref }}'."
