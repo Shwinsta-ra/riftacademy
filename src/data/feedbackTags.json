@@ -1,0 +1,181 @@
+{
+  "_comment": "Feedback form tags, by screen. Edit the RA_Feedback Tags tab in the Google Sheet, export it as CSV, then run: python3 scripts/apply_feedback_tags.py path/to/export.csv \u2014 same workflow as quizPositions.json / apply_positions.py. Do not hand-edit this file; the next export overwrites it.",
+  "_severities": {
+    "broken": "#CC2929",
+    "data": "#2B73C2",
+    "visual": "#E57921",
+    "slow": "#8629B3",
+    "idea": "#3FA34D",
+    "other": "#EBB113"
+  },
+  "tags": [
+    {
+      "screen": "GLOBAL",
+      "id": "crash",
+      "label": "Crashed or froze",
+      "severity": "broken",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "GLOBAL",
+      "id": "slow",
+      "label": "Too slow",
+      "severity": "slow",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "GLOBAL",
+      "id": "suggestion",
+      "label": "Suggestion",
+      "severity": "idea",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "GLOBAL",
+      "id": "visual",
+      "label": "Visual glitch",
+      "severity": "visual",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "Home",
+      "id": "navigation",
+      "label": "A button doesn't go anywhere",
+      "severity": "broken",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "MatchDetail",
+      "id": "actioncode",
+      "label": "Missing an action code",
+      "severity": "idea",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "MatchDetail",
+      "id": "dataissue",
+      "label": "Issue with match data",
+      "severity": "broken",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "MatchDetail",
+      "id": "cardcount",
+      "label": "Card count is off",
+      "severity": "data",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "MatchDetail",
+      "id": "math",
+      "label": "Rune / point / zone math is wrong",
+      "severity": "data",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "MatchDetail",
+      "id": "turnlog",
+      "label": "Entry won't log",
+      "severity": "broken",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "MatchList",
+      "id": "dataissue",
+      "label": "Issue with match data",
+      "severity": "broken",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "MatchList",
+      "id": "export",
+      "label": "CSV export is wrong",
+      "severity": "data",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "Quiz",
+      "id": "art",
+      "label": "Card art missing or wrong",
+      "severity": "visual",
+      "cardData": true,
+      "active": true
+    },
+    {
+      "screen": "Quiz",
+      "id": "carddata",
+      "label": "Card data is incorrect",
+      "severity": "data",
+      "cardData": true,
+      "active": true
+    },
+    {
+      "screen": "Quiz",
+      "id": "distractors",
+      "label": "Wrong answers too obvious",
+      "severity": "data",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "Quiz",
+      "id": "grading",
+      "label": "Graded my answer wrong",
+      "severity": "broken",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "Quiz",
+      "id": "mask",
+      "label": "Box covers the wrong area",
+      "severity": "visual",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "Quiz",
+      "id": "repeat",
+      "label": "Card repeated too soon",
+      "severity": "data",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "Settings",
+      "id": "filter",
+      "label": "Filter returns the wrong cards",
+      "severity": "data",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "Stats",
+      "id": "statswrong",
+      "label": "Progress numbers look wrong",
+      "severity": "data",
+      "cardData": false,
+      "active": true
+    },
+    {
+      "screen": "GLOBAL",
+      "id": "other",
+      "label": "Other",
+      "severity": "other",
+      "cardData": false,
+      "active": true
+    }
+  ]
+}

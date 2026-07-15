@@ -1,0 +1,1674 @@
+[
+  {
+    "id": "hartford-1st-yi",
+    "name": "Master Yi, Wuju Bladesman — Hartford 1st (Factor)",
+    "legend": "Master Yi, Wuju Bladesman",
+    "runes": {
+      "Calm": 5,
+      "Body": 7
+    },
+    "battlefields": [
+      "Emperor's Dais",
+      "Seat of Power",
+      "The Arena's Greatest"
+    ],
+    "mainDeck": [
+      {
+        "name": "Lonely Poro",
+        "qty": 3
+      },
+      {
+        "name": "Pit Rookie",
+        "qty": 3
+      },
+      {
+        "name": "Scuttle Crab",
+        "qty": 3
+      },
+      {
+        "name": "Fiora, Peerless",
+        "qty": 2
+      },
+      {
+        "name": "First Mate",
+        "qty": 2
+      },
+      {
+        "name": "Rengar, Trophy Hunter",
+        "qty": 3
+      },
+      {
+        "name": "Ruin Runner",
+        "qty": 2
+      },
+      {
+        "name": "Zhonya's Hourglass",
+        "qty": 2
+      },
+      {
+        "name": "Charm",
+        "qty": 3
+      },
+      {
+        "name": "Defy",
+        "qty": 3
+      },
+      {
+        "name": "En Garde",
+        "qty": 2
+      },
+      {
+        "name": "Punch First",
+        "qty": 3
+      },
+      {
+        "name": "Sabotage",
+        "qty": 3
+      },
+      {
+        "name": "Challenge",
+        "qty": 1
+      },
+      {
+        "name": "Discipline",
+        "qty": 3
+      },
+      {
+        "name": "Primal Strength",
+        "qty": 1
+      }
+    ],
+    "championCard": "Master Yi, Tempered"
+  },
+  {
+    "id": "hartford-2nd-diana-bsweitz",
+    "name": "Diana, Scorn of the Moon — Hartford 2nd (bsweitz)",
+    "legend": "Diana, Scorn of the Moon",
+    "runes": {
+      "Mind": 5,
+      "Chaos": 7
+    },
+    "battlefields": [
+      "Abandoned Hall",
+      "Seat of Power",
+      "The Arena's Greatest"
+    ],
+    "mainDeck": [
+      {
+        "name": "Ravenbloom Student",
+        "qty": 3
+      },
+      {
+        "name": "Tideturner",
+        "qty": 3
+      },
+      {
+        "name": "Traveling Merchant",
+        "qty": 3
+      },
+      {
+        "name": "Fizz, Trickster",
+        "qty": 2
+      },
+      {
+        "name": "Khazix, Mutating Horror",
+        "qty": 1
+      },
+      {
+        "name": "Vex, Apathetic",
+        "qty": 3
+      },
+      {
+        "name": "Hwei, Brooding Painter",
+        "qty": 2
+      },
+      {
+        "name": "Sprite Fountain",
+        "qty": 3
+      },
+      {
+        "name": "Acceptable Losses",
+        "qty": 1
+      },
+      {
+        "name": "Gust",
+        "qty": 2
+      },
+      {
+        "name": "Stacked Deck",
+        "qty": 3
+      },
+      {
+        "name": "Stupefy",
+        "qty": 3
+      },
+      {
+        "name": "Hard Bargain",
+        "qty": 2
+      },
+      {
+        "name": "Rebuke",
+        "qty": 1
+      },
+      {
+        "name": "Ride The Wind",
+        "qty": 2
+      },
+      {
+        "name": "Eclipse",
+        "qty": 1
+      },
+      {
+        "name": "Moonfall",
+        "qty": 2
+      },
+      {
+        "name": "Star-Crossed",
+        "qty": 2
+      }
+    ],
+    "championCard": "Diana, Lunari"
+  },
+  {
+    "id": "hartford-top4-ezreal-bradykin",
+    "name": "Ezreal, Prodigal Explorer — Hartford Top 4 (Bradykin)",
+    "legend": "Ezreal, Prodigal Explorer",
+    "runes": {
+      "Mind": 5,
+      "Chaos": 7
+    },
+    "battlefields": [
+      "Aspirant's Climb",
+      "Frozen Fortress",
+      "Sigil of the Storm"
+    ],
+    "mainDeck": [
+      {
+        "name": "Bewitching Spirit",
+        "qty": 3
+      },
+      {
+        "name": "Fizz, Trickster",
+        "qty": 3
+      },
+      {
+        "name": "Vex, Apathetic",
+        "qty": 2
+      },
+      {
+        "name": "Thousand-Tailed Watcher",
+        "qty": 2
+      },
+      {
+        "name": "The List",
+        "qty": 2
+      },
+      {
+        "name": "Pack of Wonders",
+        "qty": 3
+      },
+      {
+        "name": "Sprite Fountain",
+        "qty": 1
+      },
+      {
+        "name": "Treasure Trove",
+        "qty": 2
+      },
+      {
+        "name": "Bellows Breath",
+        "qty": 3
+      },
+      {
+        "name": "Gust",
+        "qty": 2
+      },
+      {
+        "name": "Stacked Deck",
+        "qty": 3
+      },
+      {
+        "name": "Stupefy",
+        "qty": 3
+      },
+      {
+        "name": "Turn to Dust",
+        "qty": 1
+      },
+      {
+        "name": "Eclipse",
+        "qty": 1
+      },
+      {
+        "name": "Star-Crossed",
+        "qty": 3
+      },
+      {
+        "name": "Wages of Pain",
+        "qty": 2
+      },
+      {
+        "name": "Deadly Flourish",
+        "qty": 3
+      }
+    ],
+    "championCard": "Ezreal, Prodigy"
+  },
+  {
+    "id": "hartford-top8-lux-relivia",
+    "name": "Lux, Lady of Luminosity — Hartford Top 8 (CTCG Relivia)",
+    "legend": "Lux, Lady of Luminosity",
+    "runes": {
+      "Mind": 7,
+      "Order": 5
+    },
+    "battlefields": [
+      "Aspirant's Climb",
+      "Forgotten Monument",
+      "The Papertree"
+    ],
+    "mainDeck": [
+      {
+        "name": "Soaring Scout",
+        "qty": 3
+      },
+      {
+        "name": "Ekko, Recurrent",
+        "qty": 3
+      },
+      {
+        "name": "Seal of Insight",
+        "qty": 3
+      },
+      {
+        "name": "Forge of the Future",
+        "qty": 3
+      },
+      {
+        "name": "Sumpworks Map",
+        "qty": 1
+      },
+      {
+        "name": "Retreat",
+        "qty": 3
+      },
+      {
+        "name": "Sacrifice",
+        "qty": 3
+      },
+      {
+        "name": "Stupefy",
+        "qty": 3
+      },
+      {
+        "name": "Downstage Dramatics",
+        "qty": 3
+      },
+      {
+        "name": "Rally the Troops",
+        "qty": 2
+      },
+      {
+        "name": "Shadow's Call",
+        "qty": 3
+      },
+      {
+        "name": "Promising Future",
+        "qty": 1
+      },
+      {
+        "name": "Sprite Burst",
+        "qty": 1
+      },
+      {
+        "name": "Progress Day",
+        "qty": 3
+      },
+      {
+        "name": "The Ruination",
+        "qty": 1
+      },
+      {
+        "name": "Time Warp",
+        "qty": 3
+      }
+    ],
+    "championCard": "Lux, Crownguard"
+  },
+  {
+    "id": "hartford-top8-annie-prismaticism",
+    "name": "Annie, Dark Child — Hartford Top 8 (Prismaticism)",
+    "legend": "Annie, Dark Child",
+    "runes": {
+      "Fury": 7,
+      "Chaos": 5
+    },
+    "battlefields": [
+      "Seat of Power",
+      "The Arena's Greatest",
+      "Zaun Warrens"
+    ],
+    "mainDeck": [
+      {
+        "name": "Inferna",
+        "qty": 3
+      },
+      {
+        "name": "Overzealous Fan",
+        "qty": 2
+      },
+      {
+        "name": "Traveling Merchant",
+        "qty": 3
+      },
+      {
+        "name": "Grim Apothecary",
+        "qty": 2
+      },
+      {
+        "name": "Rengar, Pouncing",
+        "qty": 3
+      },
+      {
+        "name": "Kaisa, Survivor",
+        "qty": 3
+      },
+      {
+        "name": "Noxus Hopeful",
+        "qty": 2
+      },
+      {
+        "name": "Vex, Apathetic",
+        "qty": 3
+      },
+      {
+        "name": "Ferrous Forerunner",
+        "qty": 3
+      },
+      {
+        "name": "Long Sword",
+        "qty": 2
+      },
+      {
+        "name": "Cleave",
+        "qty": 3
+      },
+      {
+        "name": "Stacked Deck",
+        "qty": 1
+      },
+      {
+        "name": "Abandon",
+        "qty": 3
+      },
+      {
+        "name": "Flash",
+        "qty": 1
+      },
+      {
+        "name": "Hard Bargain",
+        "qty": 2
+      },
+      {
+        "name": "Star-Crossed",
+        "qty": 2
+      }
+    ],
+    "championCard": "Annie, Stubborn"
+  },
+  {
+    "id": "hartford-top8-pyke-mirru",
+    "name": "Pyke, Bloodharbor Ripper — Hartford Top 8 (Mirru)",
+    "legend": "Pyke, Bloodharbor Ripper",
+    "runes": {
+      "Fury": 6,
+      "Chaos": 6
+    },
+    "battlefields": [
+      "Aspirant's Climb",
+      "Forbidding Waste",
+      "Ripper's Bay"
+    ],
+    "mainDeck": [
+      {
+        "name": "Tideturner",
+        "qty": 3
+      },
+      {
+        "name": "Traveling Merchant",
+        "qty": 3
+      },
+      {
+        "name": "Treasure Hunter",
+        "qty": 3
+      },
+      {
+        "name": "Bewitching Spirit",
+        "qty": 3
+      },
+      {
+        "name": "Ezreal, Prodigy",
+        "qty": 1
+      },
+      {
+        "name": "Fizz, Trickster",
+        "qty": 2
+      },
+      {
+        "name": "Rengar, Pouncing",
+        "qty": 2
+      },
+      {
+        "name": "Kaisa, Survivor",
+        "qty": 2
+      },
+      {
+        "name": "Ferrous Forerunner",
+        "qty": 2
+      },
+      {
+        "name": "Mindsplitter",
+        "qty": 2
+      },
+      {
+        "name": "Blighted Battleaxe",
+        "qty": 2
+      },
+      {
+        "name": "Cleave",
+        "qty": 2
+      },
+      {
+        "name": "Stacked Deck",
+        "qty": 2
+      },
+      {
+        "name": "Falling Star",
+        "qty": 3
+      },
+      {
+        "name": "Switcheroo",
+        "qty": 2
+      },
+      {
+        "name": "Star-Crossed",
+        "qty": 2
+      },
+      {
+        "name": "Void Seeker",
+        "qty": 3
+      }
+    ],
+    "championCard": "Pyke, Dockside Butcher"
+  },
+  {
+    "id": "hartford-9th-irelia-guubums",
+    "name": "Irelia, Blade Dancer — Hartford 9th (guubums)",
+    "legend": "Irelia, Blade Dancer",
+    "runes": {
+      "Calm": 6,
+      "Chaos": 6
+    },
+    "battlefields": [
+      "Abandoned Hall",
+      "Sunken Temple",
+      "Targon's Peak"
+    ],
+    "championCard": "Irelia, Fervent",
+    "mainDeck": [
+      {
+        "name": "Scuttle Crab",
+        "qty": 3
+      },
+      {
+        "name": "Tideturner",
+        "qty": 3
+      },
+      {
+        "name": "Pyke, Returned",
+        "qty": 2
+      },
+      {
+        "name": "Khazix, Mutating Horror",
+        "qty": 2
+      },
+      {
+        "name": "Stellacorn Herder",
+        "qty": 2
+      },
+      {
+        "name": "Vex, Apathetic",
+        "qty": 2
+      },
+      {
+        "name": "Guardian Angel",
+        "qty": 2
+      },
+      {
+        "name": "Boots of Swiftness",
+        "qty": 3
+      },
+      {
+        "name": "Charm",
+        "qty": 3
+      },
+      {
+        "name": "Defiant Dance",
+        "qty": 3
+      },
+      {
+        "name": "Defy",
+        "qty": 3
+      },
+      {
+        "name": "En Garde",
+        "qty": 2
+      },
+      {
+        "name": "Gust",
+        "qty": 1
+      },
+      {
+        "name": "Abandon",
+        "qty": 1
+      },
+      {
+        "name": "Discipline",
+        "qty": 3
+      },
+      {
+        "name": "Not So Fast",
+        "qty": 1
+      },
+      {
+        "name": "Ride The Wind",
+        "qty": 2
+      },
+      {
+        "name": "Star-Crossed",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "id": "hartford-11th-azir-hxnstrog",
+    "name": "Azir, Emperor of the Sands — Hartford 11th (HXN Strog)",
+    "legend": "Azir, Emperor of the Sands",
+    "runes": {
+      "Calm": 7,
+      "Order": 5
+    },
+    "battlefields": [
+      "Hall of Legends",
+      "Seat of Power",
+      "Trifarian War Camp"
+    ],
+    "championCard": "Azir, Sovereign",
+    "mainDeck": [
+      {
+        "name": "Scuttle Crab",
+        "qty": 1
+      },
+      {
+        "name": "Vi, Peacekeeper",
+        "qty": 1
+      },
+      {
+        "name": "Doran's Shield",
+        "qty": 3
+      },
+      {
+        "name": "Eye of the Herald",
+        "qty": 3
+      },
+      {
+        "name": "Soul Sword",
+        "qty": 3
+      },
+      {
+        "name": "Brutalizer",
+        "qty": 3
+      },
+      {
+        "name": "B.F. Sword",
+        "qty": 3
+      },
+      {
+        "name": "Defy",
+        "qty": 3
+      },
+      {
+        "name": "En Garde",
+        "qty": 3
+      },
+      {
+        "name": "Deathgrip",
+        "qty": 3
+      },
+      {
+        "name": "Discipline",
+        "qty": 3
+      },
+      {
+        "name": "Hidden Blade",
+        "qty": 3
+      },
+      {
+        "name": "Back Off",
+        "qty": 2
+      },
+      {
+        "name": "Guards!",
+        "qty": 2
+      },
+      {
+        "name": "Arise!",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "hartford-12th-reksai-zult",
+    "name": "Rek'Sai, Void Burrower — Hartford 12th (Zult)",
+    "legend": "Reksai, Void Burrower",
+    "runes": {
+      "Fury": 8,
+      "Order": 4
+    },
+    "battlefields": [
+      "Hall of Legends",
+      "The Arena's Greatest",
+      "The Candlelit Sanctum"
+    ],
+    "championCard": "Reksai, Breacher",
+    "mainDeck": [
+      {
+        "name": "Carrion Dredger",
+        "qty": 3
+      },
+      {
+        "name": "Daring Poro",
+        "qty": 3
+      },
+      {
+        "name": "Honest Broker",
+        "qty": 3
+      },
+      {
+        "name": "Inferna",
+        "qty": 3
+      },
+      {
+        "name": "Legion Rearguard",
+        "qty": 3
+      },
+      {
+        "name": "Faithful Manufactor",
+        "qty": 3
+      },
+      {
+        "name": "Noxus Hopeful",
+        "qty": 3
+      },
+      {
+        "name": "Undertitan",
+        "qty": 3
+      },
+      {
+        "name": "Blood Rush",
+        "qty": 3
+      },
+      {
+        "name": "Cleave",
+        "qty": 3
+      },
+      {
+        "name": "Cull the Weak",
+        "qty": 3
+      },
+      {
+        "name": "Falling Star",
+        "qty": 3
+      },
+      {
+        "name": "Void Rush",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "hartford-13th-missfortune-doctorsnuffles",
+    "name": "Miss Fortune, Bounty Hunter — Hartford 13th (Doctor Snuffles)",
+    "legend": "Miss Fortune, Bounty Hunter",
+    "runes": {
+      "Body": 6,
+      "Chaos": 6
+    },
+    "battlefields": [
+      "Aspirant's Climb",
+      "Forgotten Monument",
+      "Vilemaw's Lair"
+    ],
+    "championCard": "Miss Fortune, Captain",
+    "mainDeck": [
+      {
+        "name": "Mindsplitter",
+        "qty": 1
+      },
+      {
+        "name": "Baron Nashor",
+        "qty": 1
+      },
+      {
+        "name": "Elder Dragon",
+        "qty": 3
+      },
+      {
+        "name": "Scryer's Bloom",
+        "qty": 3
+      },
+      {
+        "name": "Pack of Wonders",
+        "qty": 3
+      },
+      {
+        "name": "Treasure Trove",
+        "qty": 3
+      },
+      {
+        "name": "Last Rites",
+        "qty": 2
+      },
+      {
+        "name": "Dazzling Aurora",
+        "qty": 3
+      },
+      {
+        "name": "Bullet Time",
+        "qty": 2
+      },
+      {
+        "name": "Flurry of Blades",
+        "qty": 3
+      },
+      {
+        "name": "Gust",
+        "qty": 3
+      },
+      {
+        "name": "Stacked Deck",
+        "qty": 3
+      },
+      {
+        "name": "Mobilize",
+        "qty": 3
+      },
+      {
+        "name": "Lunar Boon",
+        "qty": 3
+      },
+      {
+        "name": "Catalyst of Aeons",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "hartford-16th-sivir-bloody",
+    "name": "Sivir, Battle Mistress — Hartford 16th (bloody)",
+    "legend": "Sivir, Battle Mistress",
+    "runes": {
+      "Body": 6,
+      "Chaos": 6
+    },
+    "battlefields": [
+      "Aspirant's Climb",
+      "Forgotten Monument",
+      "Sigil of the Storm"
+    ],
+    "championCard": "Sivir, Mercenary",
+    "mainDeck": [
+      {
+        "name": "Baron Nashor",
+        "qty": 3
+      },
+      {
+        "name": "Elder Dragon",
+        "qty": 1
+      },
+      {
+        "name": "Scryer's Bloom",
+        "qty": 3
+      },
+      {
+        "name": "Treasure Trove",
+        "qty": 1
+      },
+      {
+        "name": "Boots of Swiftness",
+        "qty": 1
+      },
+      {
+        "name": "Last Rites",
+        "qty": 2
+      },
+      {
+        "name": "Dazzling Aurora",
+        "qty": 3
+      },
+      {
+        "name": "Existential Dread",
+        "qty": 1
+      },
+      {
+        "name": "Gust",
+        "qty": 2
+      },
+      {
+        "name": "Punch First",
+        "qty": 3
+      },
+      {
+        "name": "Sabotage",
+        "qty": 2
+      },
+      {
+        "name": "Stacked Deck",
+        "qty": 3
+      },
+      {
+        "name": "Challenge",
+        "qty": 3
+      },
+      {
+        "name": "Mobilize",
+        "qty": 3
+      },
+      {
+        "name": "Ride The Wind",
+        "qty": 3
+      },
+      {
+        "name": "Lunar Boon",
+        "qty": 2
+      },
+      {
+        "name": "Catalyst of Aeons",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "hartford-19th-rengar-momsky",
+    "name": "Rengar, Pridestalker — Hartford 19th (mom sky)",
+    "legend": "Rengar, Pridestalker",
+    "runes": {
+      "Fury": 4,
+      "Body": 8
+    },
+    "battlefields": [
+      "Emperor's Dais",
+      "Seat of Power",
+      "The Arena's Greatest"
+    ],
+    "championCard": "Rengar, Trophy Hunter",
+    "mainDeck": [
+      {
+        "name": "Determined Sentry",
+        "qty": 3
+      },
+      {
+        "name": "Inferna",
+        "qty": 3
+      },
+      {
+        "name": "Irresistible Faefolk",
+        "qty": 3
+      },
+      {
+        "name": "Pit Rookie",
+        "qty": 3
+      },
+      {
+        "name": "Grim Apothecary",
+        "qty": 2
+      },
+      {
+        "name": "Kinkou Initiate",
+        "qty": 3
+      },
+      {
+        "name": "Nidalee, Cat Form",
+        "qty": 3
+      },
+      {
+        "name": "Pyke, Dockside Butcher",
+        "qty": 2
+      },
+      {
+        "name": "Kaisa, Survivor",
+        "qty": 3
+      },
+      {
+        "name": "Noxus Hopeful",
+        "qty": 3
+      },
+      {
+        "name": "Darius, Trifarian",
+        "qty": 1
+      },
+      {
+        "name": "Brynhir Thundersong",
+        "qty": 1
+      },
+      {
+        "name": "Ferrous Forerunner",
+        "qty": 1
+      },
+      {
+        "name": "Punch First",
+        "qty": 3
+      },
+      {
+        "name": "Sabotage",
+        "qty": 1
+      },
+      {
+        "name": "Challenge",
+        "qty": 2
+      },
+      {
+        "name": "Thrill of the Hunt",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "hartford-26th-darius-asiptofu",
+    "name": "Darius, Hand of Noxus — Hartford 26th (asiptofu)",
+    "legend": "Darius, Hand of Noxus",
+    "runes": {
+      "Fury": 6,
+      "Order": 6
+    },
+    "battlefields": [
+      "Seat of Power",
+      "The Arena's Greatest",
+      "Trifarian War Camp"
+    ],
+    "championCard": "Darius, Trifarian",
+    "mainDeck": [
+      {
+        "name": "Gem Jammer",
+        "qty": 3
+      },
+      {
+        "name": "Honest Broker",
+        "qty": 2
+      },
+      {
+        "name": "Inferna",
+        "qty": 3
+      },
+      {
+        "name": "Trifarian Gloryseeker",
+        "qty": 3
+      },
+      {
+        "name": "Reksai, Breacher",
+        "qty": 1
+      },
+      {
+        "name": "Vanguard Captain",
+        "qty": 3
+      },
+      {
+        "name": "Kaisa, Survivor",
+        "qty": 3
+      },
+      {
+        "name": "Noxus Hopeful",
+        "qty": 3
+      },
+      {
+        "name": "Vi, Peacekeeper",
+        "qty": 2
+      },
+      {
+        "name": "Ferrous Forerunner",
+        "qty": 1
+      },
+      {
+        "name": "Blighted Battleaxe",
+        "qty": 2
+      },
+      {
+        "name": "Cleave",
+        "qty": 2
+      },
+      {
+        "name": "Falling Star",
+        "qty": 1
+      },
+      {
+        "name": "Hidden Blade",
+        "qty": 3
+      },
+      {
+        "name": "Rally the Troops",
+        "qty": 3
+      },
+      {
+        "name": "Salvage",
+        "qty": 1
+      },
+      {
+        "name": "Call to Glory",
+        "qty": 2
+      },
+      {
+        "name": "Vengeance",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "id": "hartford-29th-jhin-ksdden",
+    "name": "Jhin, Virtuoso — Hartford 29th (Ksdden)",
+    "legend": "Jhin, Virtuoso",
+    "runes": {
+      "Fury": 2,
+      "Mind": 10
+    },
+    "battlefields": [
+      "Aspirant's Climb",
+      "Forgotten Monument",
+      "Sigil of the Storm"
+    ],
+    "championCard": "Jhin, Meticulous Killer",
+    "mainDeck": [
+      {
+        "name": "Keeper of Masks",
+        "qty": 1
+      },
+      {
+        "name": "Ekko, Recurrent",
+        "qty": 3
+      },
+      {
+        "name": "Brynhir Thundersong",
+        "qty": 3
+      },
+      {
+        "name": "Seal of Insight",
+        "qty": 3
+      },
+      {
+        "name": "Energy Conduit",
+        "qty": 2
+      },
+      {
+        "name": "Hextech Anomaly",
+        "qty": 2
+      },
+      {
+        "name": "Gutter Palace",
+        "qty": 2
+      },
+      {
+        "name": "Downstage Dramatics",
+        "qty": 3
+      },
+      {
+        "name": "Consult the Past",
+        "qty": 3
+      },
+      {
+        "name": "Curtain Call",
+        "qty": 3
+      },
+      {
+        "name": "Deadly Flourish",
+        "qty": 3
+      },
+      {
+        "name": "Falling Comet",
+        "qty": 1
+      },
+      {
+        "name": "Promising Future",
+        "qty": 3
+      },
+      {
+        "name": "Sprite Burst",
+        "qty": 1
+      },
+      {
+        "name": "Progress Day",
+        "qty": 3
+      },
+      {
+        "name": "Time Warp",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "hartford-30th-viktor-htojuicy",
+    "name": "Viktor, Herald of the Arcane — Hartford 30th (HTO Juicy)",
+    "legend": "Viktor, Herald of the Arcane",
+    "runes": {
+      "Mind": 6,
+      "Order": 6
+    },
+    "battlefields": [
+      "Forbidding Waste",
+      "Rockfall Path",
+      "The Arena's Greatest"
+    ],
+    "championCard": "Viktor, Leader",
+    "mainDeck": [
+      {
+        "name": "Carrion Dredger",
+        "qty": 3
+      },
+      {
+        "name": "Honest Broker",
+        "qty": 3
+      },
+      {
+        "name": "Chakram Dancer",
+        "qty": 1
+      },
+      {
+        "name": "Xin Zhao, Vigilant",
+        "qty": 3
+      },
+      {
+        "name": "Vi, Peacekeeper",
+        "qty": 3
+      },
+      {
+        "name": "Sprite Fountain",
+        "qty": 3
+      },
+      {
+        "name": "Bellows Breath",
+        "qty": 3
+      },
+      {
+        "name": "Stupefy",
+        "qty": 3
+      },
+      {
+        "name": "Cull the Weak",
+        "qty": 3
+      },
+      {
+        "name": "Hidden Blade",
+        "qty": 3
+      },
+      {
+        "name": "Salvage",
+        "qty": 1
+      },
+      {
+        "name": "Shadow's Call",
+        "qty": 2
+      },
+      {
+        "name": "Eclipse",
+        "qty": 1
+      },
+      {
+        "name": "Wages of Pain",
+        "qty": 3
+      },
+      {
+        "name": "Imperial Decree",
+        "qty": 1
+      },
+      {
+        "name": "Singularity",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "id": "hartford-39th-leblanc-alex",
+    "name": "LeBlanc, Deceiver — Hartford 39th (Alex)",
+    "legend": "Leblanc, Deceiver",
+    "runes": {
+      "Mind": 4,
+      "Order": 8
+    },
+    "battlefields": [
+      "Aspirant's Climb",
+      "Star Spring",
+      "Windswept Hillock"
+    ],
+    "championCard": "Leblanc, Fragmented",
+    "mainDeck": [
+      {
+        "name": "Soaring Scout",
+        "qty": 3
+      },
+      {
+        "name": "Watchful Sentry",
+        "qty": 3
+      },
+      {
+        "name": "Black Rose Dignitary",
+        "qty": 3
+      },
+      {
+        "name": "Karthus, Eternal",
+        "qty": 3
+      },
+      {
+        "name": "Glasc Mixologist",
+        "qty": 3
+      },
+      {
+        "name": "Vi, Peacekeeper",
+        "qty": 3
+      },
+      {
+        "name": "Ruined Rex",
+        "qty": 2
+      },
+      {
+        "name": "Thousand-Tailed Watcher",
+        "qty": 2
+      },
+      {
+        "name": "Harnessed Dragon",
+        "qty": 3
+      },
+      {
+        "name": "Rift Herald",
+        "qty": 2
+      },
+      {
+        "name": "Baited Hook",
+        "qty": 3
+      },
+      {
+        "name": "Sacrifice",
+        "qty": 3
+      },
+      {
+        "name": "Hidden Blade",
+        "qty": 2
+      },
+      {
+        "name": "Mirror Image",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "hartford-60th-khazix-avdantelush",
+    "name": "Kha'Zix, Voidreaver — Hartford 60th (AV Dantelush)",
+    "legend": "Khazix, Voidreaver",
+    "runes": {
+      "Body": 7,
+      "Chaos": 5
+    },
+    "battlefields": [
+      "Forbidding Waste",
+      "Star Spring",
+      "Zaun Warrens"
+    ],
+    "championCard": "Khazix, Mutating Horror",
+    "mainDeck": [
+      {
+        "name": "Evelynn, Entrancing",
+        "qty": 3
+      },
+      {
+        "name": "Irresistible Faefolk",
+        "qty": 3
+      },
+      {
+        "name": "Mister Root",
+        "qty": 2
+      },
+      {
+        "name": "Treasure Hunter",
+        "qty": 1
+      },
+      {
+        "name": "Kinkou Initiate",
+        "qty": 3
+      },
+      {
+        "name": "Nidalee, Cat Form",
+        "qty": 2
+      },
+      {
+        "name": "Pyke, Returned",
+        "qty": 2
+      },
+      {
+        "name": "Akshan, Mischievous",
+        "qty": 1
+      },
+      {
+        "name": "Vex, Apathetic",
+        "qty": 1
+      },
+      {
+        "name": "Yordle Explorer",
+        "qty": 3
+      },
+      {
+        "name": "Rengar, Trophy Hunter",
+        "qty": 3
+      },
+      {
+        "name": "Punch First",
+        "qty": 3
+      },
+      {
+        "name": "Sabotage",
+        "qty": 2
+      },
+      {
+        "name": "Rebuke",
+        "qty": 1
+      },
+      {
+        "name": "Switcheroo",
+        "qty": 3
+      },
+      {
+        "name": "Void Assault",
+        "qty": 3
+      },
+      {
+        "name": "Star-Crossed",
+        "qty": 2
+      }
+    ]
+  },
+  {
+    "id": "hartford-71st-kaisa-flamekilla",
+    "name": "Kai'Sa, Daughter of the Void — Hartford 71st (Flamekilla)",
+    "legend": "Kaisa, Daughter of the Void",
+    "runes": {
+      "Fury": 7,
+      "Mind": 5
+    },
+    "battlefields": [
+      "Rockfall Path",
+      "The Arena's Greatest",
+      "Void Gate"
+    ],
+    "championCard": "Kaisa, Survivor",
+    "mainDeck": [
+      {
+        "name": "Plundering Poro",
+        "qty": 2
+      },
+      {
+        "name": "Ravenbloom Student",
+        "qty": 2
+      },
+      {
+        "name": "Watchful Sentry",
+        "qty": 3
+      },
+      {
+        "name": "Lecturing Yordle",
+        "qty": 3
+      },
+      {
+        "name": "Noxus Hopeful",
+        "qty": 2
+      },
+      {
+        "name": "Ferrous Forerunner",
+        "qty": 3
+      },
+      {
+        "name": "Thousand-Tailed Watcher",
+        "qty": 3
+      },
+      {
+        "name": "Bellows Breath",
+        "qty": 1
+      },
+      {
+        "name": "Hextech Ray",
+        "qty": 3
+      },
+      {
+        "name": "Retreat",
+        "qty": 1
+      },
+      {
+        "name": "Stupefy",
+        "qty": 3
+      },
+      {
+        "name": "Falling Star",
+        "qty": 3
+      },
+      {
+        "name": "Piercing Light",
+        "qty": 1
+      },
+      {
+        "name": "Smite",
+        "qty": 1
+      },
+      {
+        "name": "Smoke Screen",
+        "qty": 1
+      },
+      {
+        "name": "Turn to Dust",
+        "qty": 1
+      },
+      {
+        "name": "Void Seeker",
+        "qty": 1
+      },
+      {
+        "name": "Rocket Barrage",
+        "qty": 1
+      },
+      {
+        "name": "Singularity",
+        "qty": 2
+      },
+      {
+        "name": "Time Warp",
+        "qty": 2
+      }
+    ]
+  },
+  {
+    "id": "hartford-75th-vex-tinyguy",
+    "name": "Vex, Gloomist — Hartford 75th (TinyGuy)",
+    "legend": "Vex, Gloomist",
+    "runes": {
+      "Calm": 6,
+      "Chaos": 6
+    },
+    "battlefields": [
+      "Ravenbloom Conservatory",
+      "Startipped Peak",
+      "The Papertree"
+    ],
+    "championCard": "Vex, Apathetic",
+    "mainDeck": [
+      {
+        "name": "Evelynn, Entrancing",
+        "qty": 3
+      },
+      {
+        "name": "Mutated Mouser",
+        "qty": 3
+      },
+      {
+        "name": "Overzealous Fan",
+        "qty": 3
+      },
+      {
+        "name": "Allay, Eager Admirer",
+        "qty": 1
+      },
+      {
+        "name": "Shadow",
+        "qty": 2
+      },
+      {
+        "name": "Sona, Harmonious",
+        "qty": 3
+      },
+      {
+        "name": "Ahri, Alluring",
+        "qty": 2
+      },
+      {
+        "name": "Vilemaw",
+        "qty": 1
+      },
+      {
+        "name": "Boots of Swiftness",
+        "qty": 2
+      },
+      {
+        "name": "Charm",
+        "qty": 1
+      },
+      {
+        "name": "Defy",
+        "qty": 3
+      },
+      {
+        "name": "Existential Dread",
+        "qty": 2
+      },
+      {
+        "name": "Gust",
+        "qty": 2
+      },
+      {
+        "name": "Discipline",
+        "qty": 3
+      },
+      {
+        "name": "Hard Bargain",
+        "qty": 1
+      },
+      {
+        "name": "Ride The Wind",
+        "qty": 1
+      },
+      {
+        "name": "Switcheroo",
+        "qty": 1
+      },
+      {
+        "name": "Back Off",
+        "qty": 3
+      },
+      {
+        "name": "Star-Crossed",
+        "qty": 2
+      }
+    ]
+  },
+  {
+    "id": "hartford-84th-teemo-batsmak",
+    "name": "Teemo, Swift Scout — Hartford 84th (Batsmak)",
+    "legend": "Teemo, Swift Scout",
+    "runes": {
+      "Mind": 6,
+      "Chaos": 6
+    },
+    "battlefields": [
+      "Grove of the God-Willow",
+      "Startipped Peak",
+      "The Arena's Greatest"
+    ],
+    "championCard": "Teemo, Strategist",
+    "mainDeck": [
+      {
+        "name": "Evelynn, Entrancing",
+        "qty": 1
+      },
+      {
+        "name": "Teemo, Scout",
+        "qty": 2
+      },
+      {
+        "name": "Teemo, Strategist",
+        "qty": 2
+      },
+      {
+        "name": "Tideturner",
+        "qty": 3
+      },
+      {
+        "name": "Windsinger",
+        "qty": 2
+      },
+      {
+        "name": "Sneaky Deckhand",
+        "qty": 3
+      },
+      {
+        "name": "Nocturne, Horrifying",
+        "qty": 3
+      },
+      {
+        "name": "Vex, Apathetic",
+        "qty": 1
+      },
+      {
+        "name": "Sprite Fountain",
+        "qty": 3
+      },
+      {
+        "name": "Existential Dread",
+        "qty": 1
+      },
+      {
+        "name": "Stacked Deck",
+        "qty": 3
+      },
+      {
+        "name": "Abandon",
+        "qty": 1
+      },
+      {
+        "name": "Guerilla Warfare",
+        "qty": 2
+      },
+      {
+        "name": "Switcheroo",
+        "qty": 3
+      },
+      {
+        "name": "Sprite Call",
+        "qty": 3
+      },
+      {
+        "name": "Star-Crossed",
+        "qty": 2
+      },
+      {
+        "name": "Consult the Past",
+        "qty": 3
+      },
+      {
+        "name": "Singularity",
+        "qty": 1
+      }
+    ]
+  }
+]

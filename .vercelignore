@@ -1,0 +1,5 @@
+# Nothing here needs to reach Vercel's build container.
+node_modules
+dist
+.expo
+scripts

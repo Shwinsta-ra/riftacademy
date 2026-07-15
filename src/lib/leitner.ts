@@ -1,0 +1,99 @@
+import { CardProgress } from "./types";
+
+// Leitner box intervals in minutes. Index = box number (1-5).
+// Box 1 = missed, short retry. Higher boxes = longer gaps = better known.
+export const BOX_INTERVALS_MIN: Record<number, number> = {
+  1: 30, // Missed
+  2: 60 * 24, // Common — 1 day
+  3: 60 * 24 * 3, // Rare — 3 days
+  4: 60 * 24 * 7, // Epic — 7 days
+  5: 60 * 24 * 14, // Mastered — 14 days
+};
+
+export const MAX_BOX = 5;
+export const MIN_BOX = 1;
+
+const MINUTE_MS = 60 * 1000;
+
+// Hard floor: a card just shown (right OR wrong) can't be considered "due"
+// again for at least this long, regardless of what box it lands in. This is
+// separate from the Leitner scheduling below — box promotions on a correct
+// answer already push dueAt out much further than this, but this catches
+// the edge case where a new session starts shortly after the last one
+// ended and would otherwise be free to redraw a card seen moments ago.
+export const MIN_COOLDOWN_MIN = 10;
+
+export function newProgress(cardId: string, now: number = Date.now()): CardProgress {
+  return {
+    cardId,
+    box: MIN_BOX,
+    dueAt: now,
+    seenCount: 0,
+    correctCount: 0,
+    lastResult: null,
+    updatedAt: now,
+  };
+}
+
+/**
+ * Apply a quiz result to a card's progress, per Leitner box rules:
+ * - Correct: promote one box (cap at MAX_BOX), schedule next review using
+ *   the new box's interval.
+ * - Incorrect: demote all the way back to box 1, due immediately (next
+ *   session), since a miss means the card needs more repetitions, not a
+ *   slightly-shorter wait.
+ */
+export function applyResult(
+  progress: CardProgress,
+  correct: boolean,
+  now: number = Date.now()
+): CardProgress {
+  const nextBox = correct ? Math.min(MAX_BOX, progress.box + 1) : MIN_BOX;
+  const intervalMin = BOX_INTERVALS_MIN[nextBox];
+  return {
+    ...progress,
+    box: nextBox,
+    dueAt: now + intervalMin * MINUTE_MS,
+    seenCount: progress.seenCount + 1,
+    correctCount: progress.correctCount + (correct ? 1 : 0),
+    lastResult: correct ? "correct" : "incorrect",
+    updatedAt: now,
+  };
+}
+
+export function isDue(progress: CardProgress, now: number = Date.now()): boolean {
+  const sinceLastShown = now - progress.updatedAt;
+  if (sinceLastShown < MIN_COOLDOWN_MIN * MINUTE_MS) return false;
+  return progress.dueAt <= now;
+}
+
+/**
+ * Build a review queue: all due cards, sorted so lower boxes (weaker cards)
+ * surface first, then interleaved lightly by due time. Cards never seen
+ * before (no progress) count as box 1 / immediately due.
+ */
+export function buildQueue(
+  allCardIds: string[],
+  progressByCardId: Record<string, CardProgress>,
+  now: number = Date.now()
+): string[] {
+  // Defensive dedup — guarantees this can never return the same id twice
+  // regardless of what the caller passes in.
+  const uniqueIds = Array.from(new Set(allCardIds));
+
+  const due = uniqueIds.filter((id) => {
+    const p = progressByCardId[id];
+    return !p || isDue(p, now);
+  });
+
+  due.sort((a, b) => {
+    const boxA = progressByCardId[a]?.box ?? MIN_BOX;
+    const boxB = progressByCardId[b]?.box ?? MIN_BOX;
+    if (boxA !== boxB) return boxA - boxB;
+    const dueA = progressByCardId[a]?.dueAt ?? 0;
+    const dueB = progressByCardId[b]?.dueAt ?? 0;
+    return dueA - dueB;
+  });
+
+  return due;
+}

@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "RiftAcademy",
+    "slug": "riftacademy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#14141a"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ashwin.riftacademy"
+    },
+    "android": {
+      "package": "com.ashwin.riftacademy"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": ["expo-sqlite"]
+  }
+}

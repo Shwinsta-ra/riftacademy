@@ -1,0 +1,104 @@
+{
+  "cost": {
+    "default": [
+      {
+        "top": 0.0,
+        "height": 25.0,
+        "left": 0.0,
+        "width": 20.0
+      }
+    ]
+  },
+  "might": {
+    "default": [
+      {
+        "top": 0.0,
+        "height": 20.0,
+        "left": 80.0,
+        "width": 20.0
+      }
+    ],
+    "Gear": [
+      {
+        "top": 80.0,
+        "height": 20.0,
+        "left": 80.0,
+        "width": 20.0
+      }
+    ]
+  },
+  "name": {
+    "default": [
+      {
+        "top": 50.0,
+        "height": 15.0,
+        "left": 2.5,
+        "width": 95.0
+      }
+    ],
+    "Battlefield": [
+      {
+        "top": 54.0,
+        "height": 10.0,
+        "left": 2.5,
+        "width": 95.0
+      }
+    ],
+    "Token": [
+      {
+        "top": 70.0,
+        "height": 10.0,
+        "left": 5.0,
+        "width": 90.0
+      }
+    ],
+    "Legend": [
+      {
+        "top": 62.5,
+        "height": 12.5,
+        "left": 2.5,
+        "width": 95.0
+      }
+    ]
+  },
+  "text": {
+    "default": [
+      {
+        "top": 65.0,
+        "height": 30.0,
+        "left": 2.5,
+        "width": 95.0
+      }
+    ],
+    "Battlefield": [
+      {
+        "top": 30.0,
+        "height": 7.5,
+        "left": 2.5,
+        "width": 95.0
+      },
+      {
+        "top": 64.0,
+        "height": 7.5,
+        "left": 2.5,
+        "width": 95.0
+      }
+    ],
+    "Token": [
+      {
+        "top": 75.0,
+        "height": 25.0,
+        "left": 5.0,
+        "width": 90.0
+      }
+    ],
+    "Legend": [
+      {
+        "top": 75.0,
+        "height": 20.0,
+        "left": 2.5,
+        "width": 95.0
+      }
+    ]
+  }
+}
