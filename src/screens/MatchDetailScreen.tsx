@@ -216,8 +216,7 @@ export default function MatchDetailScreen({ route }: Props) {
         // turn, so they're excluded here even though they're still Spells.
         const isReactiveSpell = card.type === "Spell" && (card.speed === "Action" || card.speed === "Reaction");
         const isAmbushUnit = card.type === "Unit" && card.keywords.includes("Ambush");
-        const isQuickDrawGear =
-          (card.type === "Gear" || card.type === "Equipment") && card.keywords.includes("Quick-Draw");
+        const isQuickDrawGear = card.type === "Gear" && card.keywords.includes("Quick-Draw");
         if (!isReactiveSpell && !isAmbushUnit && !isQuickDrawGear) return null;
 
         const playedCount = entries.filter(
@@ -888,11 +887,20 @@ export default function MatchDetailScreen({ route }: Props) {
         scrollable={false}
       >
         {previewCard && (
-          <Image
-            source={{ uri: cardImageUri(previewCard.imageUrl) }}
-            style={styles.previewImage}
-            resizeMode="contain"
-          />
+          previewCard.imageUrl ? (
+            <Image
+              source={{ uri: cardImageUri(previewCard.imageUrl) }}
+              style={styles.previewImage}
+              resizeMode="contain"
+            />
+          ) : (
+            // Cards merged in ahead of their art (e.g. Vendetta before its
+            // July 31 release) are fully searchable/loggable here — they
+            // just can't show a preview image yet.
+            <View style={[styles.previewImage, styles.previewImagePlaceholder]}>
+              <Text style={styles.previewImagePlaceholderText}>Art not available yet</Text>
+            </View>
+          )
         )}
       </AppModal>
 
@@ -1254,6 +1262,14 @@ const styles = StyleSheet.create({
   exportButtonSecondary: { alignItems: "center", paddingVertical: 8, marginBottom: 20 },
   exportButtonSecondaryText: { color: theme.textDim, fontSize: 12, textDecorationLine: "underline" },
   previewImage: { width: "100%", aspectRatio: 744 / 1039, borderRadius: 10 },
+  previewImagePlaceholder: {
+    backgroundColor: theme.card,
+    borderWidth: 1,
+    borderColor: theme.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  previewImagePlaceholderText: { color: theme.textDim, fontSize: 13, fontStyle: "italic" },
   discardMenuOption: {
     borderWidth: 1,
     borderColor: theme.border,

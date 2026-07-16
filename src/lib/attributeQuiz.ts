@@ -40,20 +40,11 @@ function toMaskRegions(raw: RawRegion[]): MaskRegion[] {
   }));
 }
 
-// Equipment and Champion are now distinct canonical types (for filtering),
-// but they're still physically the exact same card frame/layout as Gear
-// and Unit respectively — so position lookups alias them rather than
-// needing duplicate rows in quizPositions.json for every mode.
-const POSITION_TYPE_ALIAS: Partial<Record<Card["type"], string>> = {
-  Equipment: "Gear",
-  Champion: "Unit",
-};
-
 export function getMaskRegions(mode: AttributeMode, card: Card): MaskRegion[] {
   const modeKey = POSITION_MODE_KEY[mode];
   const modeConfig = (positionsConfig as Record<string, Record<string, RawRegion[]>>)[modeKey];
   if (!modeConfig) return [];
-  const positionType = POSITION_TYPE_ALIAS[card.type] ?? card.type;
+  const positionType = card.type;
   // Tokens (colorless portrait cards) are their own visual layout even
   // though their canonical `type` is Unit or Gear — check for a
   // Token-specific config first, since that's a more specific match than
@@ -483,7 +474,7 @@ function buildNameQuestion(card: Card, pool: Card[]) {
   // (e.g. Kha'Zix - Mutating vs. Kha'Zix - Evolving vs. Kha'Zix -
   // Voidreaver) — any available match is guaranteed to be included, even if
   // there's only 1 or 2 (rather than requiring 3+ before using them at all).
-  if (card.type === "Champion") {
+  if (card.subtype === "Champion") {
     const base = championBaseName(card.name);
     const sameChampion = sameType.filter((c) => championBaseName(c.name) === base);
     for (const c of shuffle(sameChampion)) {

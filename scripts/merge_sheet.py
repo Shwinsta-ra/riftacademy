@@ -4,83 +4,66 @@ Merges Ashwin's curated Master Card Inventory export into src/data/cards.json.
 Usage:
     python3 scripts/merge_sheet.py path/to/exported_sheet.csv
 
-What it does:
+v3 changes (correction pass — type/subtype, blacklist):
+- REVERSED from v2: `type` is now ALWAYS the sheet's literal Type value.
+  Champion and Equipment are never collapsed into their own `type` — a
+  champion stays type "Unit" with subtype "Champion"; equipment stays type
+  "Gear" with subtype "Equipment". This means selecting "Unit" as a filter
+  includes champions, and selecting "Gear" includes equipment, while
+  separate "Champion"/"Equipment" filter options narrow to ONLY that
+  subtype — see TYPE_FILTER_PREDICATES in quiz.ts, which is where that
+  distinction now actually lives (not here).
+- BLACKLIST: card ids in BLACKLISTED_IDS are permanently deleted from
+  cards.json on every run, not just skipped from updates — currently just
+  "unl-238-219" (Baron Nashor (Ultimate)), a non-unique variant Ashwin
+  never wants in the app again. Add future permanent removals here rather
+  than deleting by hand, so a re-run doesn't silently reintroduce them.
+
+v2 changes (Vendetta-prep pass):
+- Type=Token -> type: "Unit", isToken: true.
+  Every Subtype value (Champion, Equipment, Combat Trick, Removal,
+  Counterspell, Utility, or None) is stored as-is in a new `subtype`
+  field, independent of `type`.
+- NEW: rows whose Card Code isn't in cards.json yet are now INSERTED as
+  brand-new cards, not just skipped. This is what actually brings in
+  Vendetta (and the two previously-missing Unleashed tokens, Bird and
+  Reflection — Riftcodex's API never had them; the sheet does). New cards
+  get imageUrl: null and flavour: null, since neither exists in this sheet
+  and Riftcodex has no Vendetta art yet (set isn't out until July 31) —
+  QuizScreen-side filtering excludes anything with imageUrl: null from the
+  quiz pool so these can't surface as broken-image questions before art
+  exists; see getFilteredCards in quiz.ts.
+- Exact duplicate Card Codes in the sheet (same code, two rows) are deduped
+  — first occurrence wins, duplicate is reported and skipped.
+- Collector number for brand-new cards is best-effort parsed from the
+  numeric segment of Card Code; falls back to 0 for non-standard codes
+  (rune/signature codes like VEN-R01, VEN-SP1) since collectorNumber isn't
+  read anywhere in app logic today, purely informational.
+
+Existing v1 behavior preserved:
 - Matches each dataset card to a sheet row by riftbound_id (Card Code,
-  lowercased). Falls back to the alt-art code variant (e.g. ogn-007a-298)
-  when the sheet only has an alt-art printing of that card, since rules
-  text is identical between base and alt-art versions. (Harmless no-op once
-  the sheet only uses base codes.)
-- Overwrites domain, energy, power, might, rarity, and text from the sheet
-  (treated as validated/authoritative per Ashwin's own curation).
+  lowercased). Falls back to the alt-art code variant when the sheet only
+  has an alt-art printing of that card.
+- Overwrites domain, energy, power, might, rarity, and text from the sheet.
 - Adds/overwrites keywords, speed, and tags from the sheet.
-- Remaps the sheet's Type column into canonical `type` directly — Champion
-  and Equipment are now their own clean, mutually exclusive categories
-  (the sheet no longer needs "Gear-Equipment"/"Signature Gear"/"Signature
-  Spell" as separate Type values; a "Signature?" column tracks that
-  orthogonally instead). Captures `isSignature` (Signature? == "Yes") and
-  `isToken` (Type == "Token") as separate flags — `isSignature` isn't wired
-  into any filter yet per Ashwin's request, just tracked for later.
-- Computes `abilityTrigger` (While/When/May/Hold/Turn Start/Turn End/Here)
-  for every card via its own text-based classifier, run against the final
-  merged Card Text — NOT copied from the sheet's own "Ability Triggers"
-  column, since that column is Ashwin's own rough first pass. Prints a diff
-  report of any card where the computed value disagrees with the sheet's,
-  for Ashwin's awareness (computed value always wins).
-- Remaps the sheet's Type column into the app's canonical 6-category
-  taxonomy (Unit/Spell/Gear/Battlefield/Legend/Rune) per Ashwin's mapping:
-    Unit        <- Unit, Champion, Signature Unit, Token
-    Spell       <- Spell, Signature Spell
-    Gear        <- Gear, Gear-Equipment, Signature Gear
-    Battlefield <- Battlefield
-    Legend      <- Legend
-    Rune        <- Rune  (kept in the dataset but excluded from quiz logic
-                           entirely — enforced in attributeQuiz.ts)
-  Falls back to the original Riftcodex `type` when a sheet row's Type value
-  isn't recognized, rather than guessing.
-- Does NOT merge Shorthand (Ashwin's personal note-taking column only).
-- NEVER reads Ability Target / Function / Used In / Notes — explicitly
-  unvalidated per Ashwin, excluded even if present in the export.
-- Cards the sheet doesn't cover at all are left untouched (original
-  Riftcodex-derived data stays).
-- Prints a full report: direct matches, alt-art matches, untouched/missing
-  cards, any name mismatches skipped, and any unrecognized Type values.
+- Computes `abilityTrigger` from final merged Card Text via its own
+  classifier — NOT copied from the sheet's own column.
+- Merges Shorthand (genuinely displayed in the app).
+- NEVER reads Ability Target / Function / Used In / Notes.
 """
 import json, csv, sys, re, difflib
 
 CARDS_PATH = "src/data/cards.json"
 
-TYPE_MAP = {
-    "unit": "Unit",
-    "champion": "Champion",  # now kept distinct — was collapsed into Unit previously
-    "signature unit": "Unit",  # legacy value; sheet now tracks this via the Signature? column instead
-    "token": "Unit",
-    "spell": "Spell",
-    "signature spell": "Spell",  # legacy value; sheet now folds this into plain Spell + Signature? column
-    "gear": "Gear",
-    "equipment": "Equipment",  # sheet's current clean value — its own canonical type now
-    "gear-equipment": "Equipment",  # legacy hyphenated value from older sheet exports
-    "signature gear": "Gear",  # legacy value; sheet now folds this into plain Gear + Signature? column
-    "battlefield": "Battlefield",
-    "legend": "Legend",
-    "rune": "Rune",
+# Cards permanently excluded from the app, regardless of what's in the
+# sheet or the existing dataset — deleted on every run, not just skipped.
+# Add future one-off removals here (with a short reason) rather than
+# deleting by hand, so a later re-run of this script doesn't quietly bring
+# them back.
+BLACKLISTED_IDS = {
+    "unl-238-219",  # "Baron Nashor (Ultimate)" — not a real unique card
 }
 
-# Ability Trigger classifier — derives Ashwin's new "Ability Triggers" column
-# (While/When/May/Hold/Turn Start/Turn End/Here) directly from Card Text via
-# regex + priority order, rather than trusting the sheet's own partial column
-# (which as of v4 only covers When/While/May and is missing Hold/Turn
-# Start/Turn End/Here almost entirely).
-#
-# Priority matters because a single card's text can match several patterns
-# at once — e.g. "When you hold here, ..." contains "When", "hold", AND
-# "here". More specific/mechanical triggers are checked first so the most
-# meaningful label wins:
-#   1. Turn Start / Turn End — explicit turn-timing phrasing
-#   2. Hold — the specific "hold" battlefield-control mechanic
-#   3. Here — a location qualifier with no explicit trigger word
-#   4. May — marks the effect as optional
-#   5. When / While — the generic catch-all triggers
-#   6. None — no matching trigger language at all (passive stat lines, etc.)
 ABILITY_TRIGGER_PATTERNS = [
     ("Turn Start", re.compile(r"start.{0,15}turn|beginning of (your|the) turn", re.I)),
     ("Turn End", re.compile(r"end of (your |the )?turn", re.I)),
@@ -101,23 +84,13 @@ def normalize_name(name):
     n = name.lower().strip()
     n = re.sub(r"\s*\(starter\)\s*$", "", n)
     n = re.sub(r"\s*//\s*buff\s*$", "", n)
-    n = re.sub(r"\s*\([^)]*\)\s*$", "", n)  # trailing parenthetical (token variant codes etc.)
+    n = re.sub(r"\s*\([^)]*\)\s*$", "", n)
     n = n.replace(" - ", ", ")
     n = n.replace("\u2019", "'")
-    n = n.replace("'", "")  # apostrophe-insensitive
+    n = n.replace("'", "")
     n = re.sub(r"\s+", " ", n).strip()
     return n
 
-# Platform-wide naming convention for every Champion/Legend card: "Name,
-# Epithet" — no apostrophes in the base name, sentence case with minor words
-# (of/the/at/etc.) lowercase except as the epithet's first or last word.
-# Riftcodex's raw API data (and Mobalytics decklists) write these as
-# "Name - Epithet", with a few base names stylized with apostrophes/internal
-# capitals (Kai'Sa, Kha'Zix, Rek'Sai, Kog'Maw, LeBlanc) and three legends
-# tagged "(Starter)". Applied to every Champion/Legend card on every run —
-# not just ones present in this CSV — so a fresh Riftcodex pull for a new
-# set (e.g. Vendetta) gets canonicalized the same way without needing a
-# separate one-off fix each time.
 NAME_MINOR_WORDS = {"of", "the", "a", "an", "and", "or", "but", "nor",
                      "in", "on", "at", "to", "for", "from", "with", "as"}
 CHAMPION_BASE_FIX = {
@@ -148,7 +121,7 @@ def canonical_champion_name(name):
     elif ", " in name:
         base, epithet = name.split(", ", 1)
     else:
-        return name  # not "Name/Epithet"-shaped — leave untouched
+        return name
     base = CHAMPION_BASE_FIX.get(base, base)
     epithet = _fix_epithet_case(epithet)
     return f"{base}, {epithet}"
@@ -182,6 +155,89 @@ def parse_num(val):
         except ValueError:
             return None
 
+def parse_collector_number(card_code):
+    parts = card_code.split("-")
+    if len(parts) >= 2:
+        digits = re.sub(r"[^\d]", "", parts[1])
+        if digits:
+            return int(digits)
+    digits = re.sub(r"[^\d]", "", card_code)
+    return int(digits) if digits else 0
+
+def derive_type_and_flags(sheet_type, subtype):
+    """Returns (type, isToken) from the sheet's Type + Subtype columns.
+
+    NOTE (v3): type is now ALWAYS the literal sheet Type value — Champion
+    and Equipment are never collapsed into their own `type` anymore. A
+    champion's type is "Unit" with subtype "Champion"; equipment's type is
+    "Gear" with subtype "Equipment". Filtering that wants "only champions"
+    or "only equipment" as distinct categories does so via `subtype`, in
+    quiz.ts's TYPE_FILTER_PREDICATES — not via `type`. This is a deliberate
+    reversal of the v2 behavior, per Ashwin's explicit correction: he wants
+    Unit-filter to include champions and Gear-filter to include equipment,
+    while Champion/Equipment filters narrow to ONLY that subtype.
+    """
+    t = sheet_type.strip()
+    if t == "Token":
+        return "Unit", True
+    return t, False
+
+def derive_supertype(subtype, is_token, is_signature):
+    if subtype == "Champion":
+        return "Champion"
+    if is_token:
+        return "Token"
+    if is_signature:
+        return "Signature"
+    return "Basic"
+
+def build_new_card(row):
+    card_code = row["Card Code"].strip()
+    resolved_type, is_token = derive_type_and_flags(row["Type"], row["Subtype"])
+    subtype_raw = row["Subtype"].strip()
+    subtype = None if subtype_raw in ("", "-", "None") else subtype_raw
+    is_signature = row.get("Signature", "").strip().upper() == "TRUE"
+    power_raw = row["Power"].strip()
+    recycle_cost = (
+        [d.strip() for d in re.split(r"[,/]", power_raw) if d.strip()]
+        if power_raw and power_raw.lower() != "none"
+        else []
+    )
+    speed_raw = row["Speed"].strip()
+    speed = speed_raw if speed_raw not in ("", "None") else None
+    name = row["Card Name"].strip()
+    if subtype == "Champion" or resolved_type == "Legend":
+        name = canonical_champion_name(name)
+    shorthand = row.get("Shorthand", "").strip()
+    text = row["Card Text"].strip()
+
+    return {
+        "id": card_code.lower(),
+        "name": name,
+        "collectorNumber": parse_collector_number(card_code),
+        "energy": parse_num(row["Energy"]),
+        "might": parse_num(row["Might"]),
+        "power": None,
+        "type": resolved_type,
+        "supertype": derive_supertype(subtype, is_token, is_signature),
+        "rarity": row["Rarity"].strip(),
+        "domain": parse_list(row["Domain(s)"]),
+        "text": text,
+        "flavour": None,
+        "setId": card_code.split("-")[0].strip().upper(),
+        "setLabel": row["Set"].strip(),
+        "imageUrl": None,
+        "tags": parse_list(row["Tags"]),
+        "recycleCost": recycle_cost,
+        "keywords": parse_list(row["Keywords"]),
+        "speed": speed,
+        "shorthand": shorthand if shorthand else None,
+        "isSignature": is_signature,
+        "isToken": is_token,
+        "abilityTrigger": classify_ability_trigger(text),
+        "subtype": subtype,
+    }
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: python3 scripts/merge_sheet.py path/to/sheet.csv")
@@ -194,22 +250,40 @@ def main():
     ids = set(by_id.keys())
 
     with open(csv_path, encoding="utf-8-sig") as f:
-        rows = list(csv.DictReader(f))
-    by_code = {row["Card Code"].strip().lower(): row for row in rows if row.get("Card Code")}
+        raw_rows = list(csv.DictReader(f))
+
+    seen_codes = set()
+    rows = []
+    exact_dupes = []
+    for r in raw_rows:
+        code = r.get("Card Code", "").strip()
+        if not code:
+            continue
+        key = code.lower()
+        if key in seen_codes:
+            exact_dupes.append(code)
+            continue
+        seen_codes.add(key)
+        rows.append(r)
+
+    by_code = {row["Card Code"].strip().lower(): row for row in rows}
 
     direct_matched, alt_matched, truly_missing, name_mismatches = [], [], [], []
-    unrecognized_types = []
-    other_set_rows = [r for r in rows if r["Set"].strip().lower() not in
-                       {"origins", "proving grounds", "spiritforged", "unleashed"} and r.get("Card Code")]
+    matched_codes = set()
 
     for cid in ids:
         row = by_code.get(cid)
         via_alt = False
         if row is None:
             parts = cid.split("-")
-            alt_code = f"{parts[0]}-{parts[1]}a-{parts[2]}"
-            row = by_code.get(alt_code)
-            via_alt = row is not None
+            if len(parts) == 3:
+                alt_code = f"{parts[0]}-{parts[1]}a-{parts[2]}"
+                row = by_code.get(alt_code)
+                via_alt = row is not None
+                if via_alt:
+                    matched_codes.add(alt_code)
+        else:
+            matched_codes.add(cid)
         if row is None:
             truly_missing.append(cid)
             continue
@@ -224,11 +298,6 @@ def main():
         if domain:
             card["domain"] = domain
         card["energy"] = parse_num(row["Energy"])
-        # NOTE: the sheet's "Power" column is NOT a number — it's the
-        # domain(s) of rune that must be recycled to play the card (e.g.
-        # "Calm", or "Body, Body" for two Body runes). The old numeric
-        # `power` field from the original Riftcodex API is a different,
-        # unrelated stat and is left untouched here.
         power_raw = row["Power"].strip()
         if power_raw and power_raw.lower() != "none":
             card["recycleCost"] = [d.strip() for d in re.split(r"[,/]", power_raw) if d.strip()]
@@ -247,14 +316,15 @@ def main():
         shorthand = row.get("Shorthand", "").strip()
         card["shorthand"] = shorthand if shorthand else None
 
-        sheet_type = row["Type"].strip().lower()
-        card["isSignature"] = row.get("Signature?", "").strip().lower() == "yes"
-        card["isToken"] = sheet_type == "token"
-        mapped_type = TYPE_MAP.get(sheet_type)
-        if mapped_type:
-            card["type"] = mapped_type
-        elif sheet_type:
-            unrecognized_types.append((cid, row["Type"].strip()))
+        resolved_type, is_token = derive_type_and_flags(row["Type"], row["Subtype"])
+        card["type"] = resolved_type
+        card["isToken"] = is_token
+        card["isSignature"] = row.get("Signature", "").strip().upper() == "TRUE"
+        subtype_raw = row["Subtype"].strip()
+        card["subtype"] = None if subtype_raw in ("", "-", "None") else subtype_raw
+
+        if csv_name and (card["subtype"] == "Champion" or card["type"] == "Legend"):
+            card["name"] = canonical_champion_name(csv_name)
 
         (alt_matched if via_alt else direct_matched).append(cid)
 
@@ -265,44 +335,59 @@ def main():
         c.setdefault("speed", None)
         c.setdefault("shorthand", None)
         c.setdefault("recycleCost", [])
-        if c["type"] in ("Champion", "Legend"):
-            c["name"] = canonical_champion_name(c["name"])
+        c.setdefault("subtype", None)
 
-    # Ability Trigger is computed from final Card Text (post-merge), for every
-    # card regardless of sheet match status — it's derived, not copied.
-    trigger_diffs = []
+    new_cards = []
+    for row in rows:
+        code = row["Card Code"].strip().lower()
+        if code in matched_codes:
+            continue
+        new_cards.append(build_new_card(row))
+
+    cards.extend(new_cards)
+
     for c in cards:
-        computed = classify_ability_trigger(c["text"])
-        c["abilityTrigger"] = computed
-        row = by_code.get(c["id"])
-        if row and "Ability Triggers" in row:
-            sheet_val = row["Ability Triggers"].strip()
-            sheet_val = None if sheet_val in ("", "-", "None") else sheet_val
-            if sheet_val is not None and sheet_val != computed:
-                trigger_diffs.append((c["id"], c["name"], sheet_val, computed))
+        c["abilityTrigger"] = classify_ability_trigger(c["text"])
+
+    before_blacklist = len(cards)
+    removed = [c for c in cards if c["id"] in BLACKLISTED_IDS]
+    cards = [c for c in cards if c["id"] not in BLACKLISTED_IDS]
 
     with open(CARDS_PATH, "w") as f:
-        json.dump(cards, f)
+        json.dump(cards, f, indent=2)
+        f.write("\n")
 
+    print("=== Existing cards updated ===")
     print("direct matched:", len(direct_matched))
     print("alt-art matched:", len(alt_matched))
     print("untouched (not in sheet):", len(truly_missing))
-    print("name mismatches (skipped):", len(name_mismatches))
+    for t in sorted(truly_missing):
+        print("  UNTOUCHED:", t, by_id[t]["name"], by_id[t]["type"])
+    print("name mismatches (skipped, needs manual review):", len(name_mismatches))
     for m in name_mismatches:
         print("  MISMATCH:", m)
-    print("unrecognized Type values (kept original app type):", len(unrecognized_types))
-    for u in unrecognized_types:
-        print("  ", u)
-    print("rows for sets not yet active in the app (ignored):", len(other_set_rows))
-    for r in other_set_rows:
-        print("  ", r["Set"], r["Card Code"], r["Card Name"])
-    if truly_missing:
-        print("\nuntouched card ids (still using original Riftcodex text):")
-        for t in sorted(truly_missing):
-            print(" ", t, by_id[t]["name"], by_id[t]["type"])
-    print("\nAbility Trigger: computed-vs-sheet disagreements (computed value kept):", len(trigger_diffs))
-    for d in trigger_diffs[:30]:
+    print()
+    print("=== New cards inserted ===")
+    print("count:", len(new_cards))
+    by_set = {}
+    for c in new_cards:
+        by_set[c["setId"]] = by_set.get(c["setId"], 0) + 1
+    print("by set:", by_set)
+    no_image = [c for c in new_cards if c["imageUrl"] is None]
+    print(f"new cards with no art yet (excluded from quiz pool until art exists): {len(no_image)}")
+    print()
+    print("=== Exact duplicate Card Codes in sheet (second+ occurrence dropped) ===")
+    for d in exact_dupes:
         print("  ", d)
+    print()
+    print("=== Totals ===")
+    print("cards.json now has", len(cards), "cards")
+    print()
+    print("=== Blacklisted cards permanently removed ===")
+    for c in removed:
+        print("  ", c["id"], c["name"])
+    if not removed and any(bid not in {c["id"] for c in cards} for bid in BLACKLISTED_IDS):
+        pass  # already gone from a prior run, nothing to report as newly removed
 
 if __name__ == "__main__":
     main()
