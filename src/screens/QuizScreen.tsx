@@ -248,14 +248,13 @@ export default function QuizScreen({ navigation }: Props) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}
       >
-        <Text style={styles.prompt}>{question.prompt}</Text>
-        {question.caption && (
-          <Text style={styles.caption}>{humanizeCardText(question.caption)}</Text>
-        )}
-
         <View style={styles.cardImageWrap}>
           <Image
-            source={{ uri: imageProxyFailed ? card.imageUrl : cardImageUri(card.imageUrl) }}
+            // Non-null assertion is safe here: getFilteredCards() (quiz.ts)
+            // excludes every card with imageUrl === null from the pool this
+            // screen ever receives, specifically so a card can never reach
+            // this render without real art.
+            source={{ uri: imageProxyFailed ? card.imageUrl! : cardImageUri(card.imageUrl!) }}
             style={styles.cardImage}
             resizeMode={card.type === "Battlefield" ? "contain" : "cover"}
             onError={() => setImageProxyFailed(true)}
@@ -278,6 +277,11 @@ export default function QuizScreen({ navigation }: Props) {
               </View>
             ))}
         </View>
+
+        <Text style={styles.prompt}>{question.prompt}</Text>
+        {question.caption && (
+          <Text style={styles.caption}>{humanizeCardText(question.caption)}</Text>
+        )}
 
         <View style={styles.optionsList}>
           {question.options.map((opt, i) => {
@@ -326,14 +330,16 @@ const styles = StyleSheet.create({
   doneButtonText: { color: "#fff", fontWeight: "600" },
   prompt: {
     color: theme.text,
-    fontSize: 16,
+    fontSize: 19,
     fontWeight: "600",
     textAlign: "center",
-    marginBottom: 8,
+    marginTop: 16,
+    marginBottom: 14,
   },
   caption: {
     color: theme.textDim,
     fontSize: 13,
+    fontStyle: "italic",
     lineHeight: 18,
     textAlign: "center",
     marginBottom: 14,
@@ -345,7 +351,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     aspectRatio: CARD_ASPECT_RATIO,
     borderRadius: 16,
-    marginBottom: 16,
     overflow: "visible",
     position: "relative",
   },

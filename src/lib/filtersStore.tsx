@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { QuizFilters } from "./types";
 
-const DEFAULT_FILTERS: QuizFilters = { sets: [], domains: [], types: [], deckId: null };
+const DEFAULT_FILTERS: QuizFilters = { sets: [], domains: [], types: [], speeds: [], deckId: null };
 
 type FiltersContextValue = {
   filters: QuizFilters;
