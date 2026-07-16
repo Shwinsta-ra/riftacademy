@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from "react-nati
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { theme, DOMAIN_COLORS } from "../lib/theme";
-import { getAvailableDomains, getAvailableTypes } from "../lib/quiz";
+import { getAvailableDomains, getAvailableTypes, getAvailableSpeeds } from "../lib/quiz";
 import { getAllDecks, getCardsForDeck } from "../lib/deckPool";
 import { DeckList } from "../lib/types";
 import { resetAllProgress } from "../lib/db";
@@ -12,14 +12,15 @@ import AppModal from "../components/AppModal";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
 
-// Set groupings: individual set selection matters mainly once a new set
-// (currently Unleashed) needs isolated practice. Everything before it is
-// lumped as "Old Sets." Swap OLD_SET_IDS / LATEST_SET_IDS here when Vendetta
-// becomes the new latest set.
-const OLD_SET_IDS = ["OGN", "OGS", "SFD"];
-const LATEST_SET_IDS = ["UNL"];
-const OLD_SETS_LABEL = "Old Sets (Origins, Proving Grounds, Spiritforged)";
-const LATEST_SET_LABEL = "Latest Set (Unleashed)";
+// Four set groups, matching how Ashwin actually wants to practice by set —
+// Origins and Proving Grounds are small/old enough to always study together.
+// Swap this list once a set after Vendetta needs its own group.
+const SET_GROUPS: { label: string; ids: string[] }[] = [
+  { label: "Origins & Proving Grounds", ids: ["OGN", "OGS"] },
+  { label: "Spiritforged", ids: ["SFD"] },
+  { label: "Unleashed", ids: ["UNL"] },
+  { label: "Vendetta", ids: ["VEN"] },
+];
 
 // Deck names are stored as "Legend — placement (pilot)", e.g.
 // "Diana, Scorn of the Moon — Hartford 2nd (bsweitz)". Splitting on the em
@@ -36,6 +37,7 @@ export default function SettingsScreen(_: Props) {
   const { filters, setFilters } = useFilters();
   const domains = getAvailableDomains();
   const types = getAvailableTypes();
+  const speeds = getAvailableSpeeds();
   const [confirming, setConfirming] = useState(false);
   const [deckPickerOpen, setDeckPickerOpen] = useState(false);
   // Staged selection: tapping a row in the picker highlights it but doesn't
@@ -101,16 +103,14 @@ export default function SettingsScreen(_: Props) {
             <Text style={styles.sectionTitle}>Sets</Text>
             <Text style={styles.helper}>None selected = all sets included.</Text>
             <View style={styles.chipRow}>
-              <Chip
-                label={LATEST_SET_LABEL}
-                active={isGroupActive(LATEST_SET_IDS)}
-                onPress={() => toggleSetGroup(LATEST_SET_IDS)}
-              />
-              <Chip
-                label={OLD_SETS_LABEL}
-                active={isGroupActive(OLD_SET_IDS)}
-                onPress={() => toggleSetGroup(OLD_SET_IDS)}
-              />
+              {SET_GROUPS.map((group) => (
+                <Chip
+                  key={group.label}
+                  label={group.label}
+                  active={isGroupActive(group.ids)}
+                  onPress={() => toggleSetGroup(group.ids)}
+                />
+              ))}
             </View>
 
             <Text style={styles.sectionTitle}>Domains</Text>
@@ -148,9 +148,21 @@ export default function SettingsScreen(_: Props) {
           ))}
         </View>
 
+        <Text style={styles.sectionTitle}>Speed</Text>
+        <View style={styles.chipRow}>
+          {speeds.map((s) => (
+            <Chip
+              key={s}
+              label={s}
+              active={filters.speeds.includes(s)}
+              onPress={() => setFilters({ ...filters, speeds: toggle(filters.speeds, s) })}
+            />
+          ))}
+        </View>
+
         <Pressable
           style={styles.clearButton}
-          onPress={() => setFilters({ sets: [], domains: [], types: [], deckId: null })}
+          onPress={() => setFilters({ sets: [], domains: [], types: [], speeds: [], deckId: null })}
         >
           <Text style={styles.clearButtonText}>Clear all filters</Text>
         </Pressable>
