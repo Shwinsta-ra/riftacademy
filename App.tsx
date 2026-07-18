@@ -94,7 +94,11 @@ function AppShell() {
             component={HomeScreen}
             options={{ title: "Home", headerLeft: () => null }}
           />
-          <Stack.Screen name="Quiz" component={QuizScreen} options={{ title: "" }} />
+          <Stack.Screen
+            name="Quiz"
+            component={QuizScreen}
+            options={{ title: "", headerTitleAlign: "center" }}
+          />
           <Stack.Screen
             name="Settings"
             component={SettingsScreen}
