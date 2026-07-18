@@ -144,6 +144,11 @@ export function eligibleModes(card: Card): AttributeMode[] {
   // appear as a quiz question.
   if (card.type === "Rune") return [];
 
+  // Tokens (e.g. OGN's Recruit/Sprite "// Buff" cards, kept in the dataset
+  // so set counts still match the official release) are game pieces, not
+  // cards a player studies — excluded from the quiz the same way runes are.
+  if (card.isToken) return [];
+
   const modes: AttributeMode[] = [];
   if (card.energy !== null || card.power !== null) modes.push("cost");
   if (card.might !== null) modes.push("might");

@@ -62,6 +62,44 @@ CARDS_PATH = "src/data/cards.json"
 # them back.
 BLACKLISTED_IDS = {
     "unl-238-219",  # "Baron Nashor (Ultimate)" — not a real unique card
+    # Vendetta champion reprints: exact "Name, Epithet" duplicates of
+    # champions already in earlier sets, absent from the master inventory,
+    # and carrying degraded data (missing `power`, thinner text) vs the
+    # originals. Removed from RiftRecall so a champion isn't quizzed twice.
+    # SP cards (collector # 1-6):
+    "ven-sp1",      # Kaisa, Survivor      -> ogn-039
+    "ven-sp2",      # Sona, Harmonious     -> ogn-073
+    "ven-sp3",      # Ahri, Inquisitive    -> ogn-119
+    "ven-sp4",      # Sett, Brawler        -> ogn-164
+    "ven-sp5",      # Ezreal, Prodigy      -> sfd-149
+    "ven-sp6",      # Lux, Crownguard      -> ogs-014
+    # Overnumbered cards (# 167-184, above the 166 set total):
+    "ven-167-166",  # Vi, Destructive         -> ogn-036
+    "ven-168-166",  # Jinx, Demolitionist     -> ogn-030
+    "ven-175-166",  # Jayce, Man of Progress  -> sfd-084
+    "ven-176-166",  # Viktor, Innovator       -> ogn-117
+    "ven-179-166",  # Rengar, Trophy Hunter   -> unl-120
+    "ven-180-166",  # Khazix, Evolving Hunter -> unl-119
+    "ven-183-166",  # Diana, No Longer Human  -> unl-149
+    "ven-184-166",  # Leona, Determined       -> ogn-238
+    # VEN domain runes: exact duplicates of the OGN runes (same 6 domain
+    # runes). Excluded from the quiz anyway (type=="Rune"); the OGN runes
+    # remain as the canonical copies for any rune logic. Removed for tidiness.
+    "ven-r01",      # Fury Rune   -> ogn-007
+    "ven-r02",      # Calm Rune   -> ogn-042
+    "ven-r03",      # Mind Rune   -> ogn-089
+    "ven-r04",      # Body Rune   -> ogn-126
+    "ven-r05",      # Chaos Rune  -> ogn-166
+    "ven-r06",      # Order Rune  -> ogn-214
+    # Non-base token cards: not part of any set's base count, not needed for
+    # quiz or notes logic. OGN's Recruit/Sprite tokens (ogn-271..274) are
+    # deliberately NOT here — they're numbered inside OGN's 298 base set, so
+    # they stay in the data (excluded from the quiz via card.isToken instead).
+    "sfd-t03",      # Gold // Buff
+    "unl-t01",      # Baron Pit
+    "unl-t02",      # Bird
+    "unl-t03",      # Brush
+    "unl-t06",      # Reflection
 }
 
 ABILITY_TRIGGER_PATTERNS = [
