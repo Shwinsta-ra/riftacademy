@@ -52,7 +52,9 @@ export function getFilteredCards(filters: QuizFilters): Card[] {
     // been merged in ahead of its art (e.g. Vendetta before release) —
     // excluded the same way as the normal path below, not shown as a
     // question subject until imageUrl exists.
-    const deckCards = (pool ? pool.cards : []).filter((c) => c.imageUrl !== null);
+    const deckCards = (pool ? pool.cards : []).filter(
+      (c) => c.imageUrl !== null && !c.isToken,
+    );
     if (!filters.types.length) return deckCards;
     return deckCards.filter((c) => matchesTypeFilter(c, filters.types));
   }
@@ -64,6 +66,10 @@ export function getFilteredCards(filters: QuizFilters): Card[] {
     // in getAllCards() for distractor generation, match tracking, and
     // stats, just never surface as the actual card being tested.
     if (c.imageUrl === null) return false;
+    // Tokens are kept in the dataset (set-count alignment / match tracking)
+    // but never quizzed — see eligibleModes(); excluded here too so they
+    // don't inflate the pool count shown before a session starts.
+    if (c.isToken) return false;
     if (filters.sets.length && !filters.sets.includes(c.setId)) return false;
     if (!matchesTypeFilter(c, filters.types)) return false;
     if (
