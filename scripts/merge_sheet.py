@@ -179,6 +179,19 @@ def parse_list(val):
         return []
     return [p.strip() for p in v.split(",") if p.strip()]
 
+def parse_ban_modes(val):
+    """Parses the sheet's 'Bans' column into a set of game modes a card is
+    banned in, e.g. '1v1, 2v2' -> {'1v1', '2v2'}, 'N/A, 1v1' -> {'1v1'}.
+    Blank / N/A / '-' -> empty set. Only the recognized mode tokens '1v1'
+    and '2v2' are kept; anything else (stray notes, 'N/A') is ignored."""
+    if val is None:
+        return set()
+    v = val.strip()
+    if v in ("", "-", "None", "N/A"):
+        return set()
+    parts = [p.strip().lower() for p in v.split(",")]
+    return {p for p in parts if p in ("1v1", "2v2")}
+
 def parse_num(val):
     if val is None:
         return None
@@ -391,6 +404,20 @@ def main():
     removed = [c for c in cards if c["id"] in BLACKLISTED_IDS]
     cards = [c for c in cards if c["id"] not in BLACKLISTED_IDS]
 
+    # Competitive bans (dynamic, read from the sheet's own "Bans" column):
+    # remove any card banned in 1v1 (in any combination, e.g. "1v1" or
+    # "1v1, 2v2"). Cards banned ONLY in 2v2 (e.g. Master Yi, Wuju Bladesman)
+    # are KEPT — RiftRecall targets the 1v1 format. Because this reads the
+    # sheet every run, future banlist changes are a sheet edit, not a code
+    # change. A card gone from the banlist naturally reappears next merge.
+    banned_1v1_ids = set()
+    for row in rows:
+        modes = parse_ban_modes(row.get("Bans"))
+        if "1v1" in modes:
+            banned_1v1_ids.add(row["Card Code"].strip().lower())
+    ban_removed = [c for c in cards if c["id"] in banned_1v1_ids]
+    cards = [c for c in cards if c["id"] not in banned_1v1_ids]
+
     with open(CARDS_PATH, "w") as f:
         json.dump(cards, f, indent=2)
         f.write("\n")
@@ -426,6 +453,11 @@ def main():
         print("  ", c["id"], c["name"])
     if not removed and any(bid not in {c["id"] for c in cards} for bid in BLACKLISTED_IDS):
         pass  # already gone from a prior run, nothing to report as newly removed
+    print()
+    print("=== 1v1-banned cards removed (from sheet's Bans column) ===")
+    for c in sorted(ban_removed, key=lambda c: c["id"]):
+        print("  ", c["id"], c["name"])
+    print(f"  ({len(ban_removed)} removed; cards banned only in 2v2 were kept)")
 
 if __name__ == "__main__":
     main()

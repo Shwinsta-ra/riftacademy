@@ -15,6 +15,7 @@ import { getFilteredCards } from "../lib/quiz";
 import { buildAttributeQuestion, AttributeQuestion, getMaskRegions } from "../lib/attributeQuiz";
 import { humanizeCardText } from "../lib/textDisplay";
 import { loadAllProgress, saveProgress } from "../lib/db";
+import { loadSessionSnapshot, saveSessionSnapshot } from "../lib/sessionState";
 import { buildQueue, applyResult, newProgress } from "../lib/leitner";
 import { Card, CardProgress } from "../lib/types";
 import { useFilters } from "../lib/filtersStore";
@@ -55,6 +56,12 @@ export default function QuizScreen({ navigation }: Props) {
   // logic above; it exists specifically so "same card twice in one
   // session" is structurally impossible rather than just unlikely.
   const shownThisSessionRef = useRef<Set<string>>(new Set());
+  // Rolling list of the last several question modes shown (most-recent-last),
+  // fed to buildAttributeQuestion so it can bias toward attributes that
+  // haven't come up lately — this is what stops long streaks of the same
+  // question type (e.g. 8 name questions with no cost/might). Not persisted;
+  // a fresh session starting with an empty history is fine.
+  const recentModesRef = useRef<AttributeQuestion["mode"][]>([]);
 
   useEffect(() => {
     (async () => {
@@ -68,13 +75,48 @@ export default function QuizScreen({ navigation }: Props) {
       // and was the actual cause of cards reappearing back-to-back. If
       // nothing is available, the person sees a clear "come back later"
       // message instead of being served a card they just saw.
-      const dueQueue = buildQueue(ids, progress).slice(0, MAX_SESSION_SIZE);
+      const freshDueQueue = buildQueue(ids, progress).slice(0, MAX_SESSION_SIZE);
+
+      // Resume an in-progress session (refresh/back-nav within the same
+      // tab) only if it was captured under this exact filter set. The fresh
+      // due-queue above is always the source of truth for what's actually
+      // due right now — the snapshot only supplies ORDERING/position within
+      // that, and never hides a card that's become newly due since the
+      // last save (e.g. 10+ minutes passed between saves).
+      const snapshot = loadSessionSnapshot(filters);
+      let finalQueue = freshDueQueue;
+      let restoredShown = new Set<string>();
+      let restoredCorrect = 0;
+      let restoredTotal = 0;
+
+      if (snapshot) {
+        restoredShown = new Set(snapshot.shownThisSession);
+        restoredCorrect = snapshot.sessionCorrect;
+        restoredTotal = snapshot.sessionTotal;
+
+        const freshDueSet = new Set(freshDueQueue);
+        const resumedQueue = snapshot.queue.filter((id) => freshDueSet.has(id));
+        const alreadyIncluded = new Set(resumedQueue);
+        const newlyDue = freshDueQueue.filter(
+          (id) => !alreadyIncluded.has(id) && !restoredShown.has(id)
+        );
+        finalQueue = [...resumedQueue, ...newlyDue].slice(0, MAX_SESSION_SIZE);
+      }
 
       setPool(cards);
       setProgressMap(progress);
-      setQueue(dueQueue);
-      setNothingAvailable(cards.length > 0 && dueQueue.length === 0);
-      shownThisSessionRef.current = new Set();
+      setQueue(finalQueue);
+      setNothingAvailable(cards.length > 0 && finalQueue.length === 0);
+      shownThisSessionRef.current = restoredShown;
+      setSessionCorrect(restoredCorrect);
+      setSessionTotal(restoredTotal);
+      saveSessionSnapshot({
+        filters,
+        queue: finalQueue,
+        shownThisSession: Array.from(restoredShown),
+        sessionCorrect: restoredCorrect,
+        sessionTotal: restoredTotal,
+      });
       setLoading(false);
     })();
   }, [filters]);
@@ -102,17 +144,30 @@ export default function QuizScreen({ navigation }: Props) {
         nextQuestion(queueToUse.slice(1), currentPool);
         return;
       }
-      const q = buildAttributeQuestion(nextCard, currentPool);
+      const q = buildAttributeQuestion(
+        nextCard,
+        currentPool,
+        recentModesRef.current,
+        filters.speeds
+      );
       if (!q) {
         nextQuestion(queueToUse.slice(1), currentPool);
         return;
       }
+      // Record the mode we're about to show so the next pick can steer away
+      // from it. Keep only a short rolling window (the picker only looks at
+      // the last ~7 anyway).
+      recentModesRef.current = [...recentModesRef.current, q.mode].slice(-10);
       shownThisSessionRef.current.add(nextId);
       setCard(nextCard);
       setQuestion(q);
       setSelected(null);
     },
-    []
+    // filters.speeds is read inside (for speed-question suppression); include
+    // it so a filter change can't leave a stale closure here. The mount
+    // effect also rebuilds the pool on any filter change, so in practice this
+    // just keeps the two consistent.
+    [filters.speeds]
   );
 
   useEffect(() => {
@@ -166,14 +221,24 @@ export default function QuizScreen({ navigation }: Props) {
     setSelected(index);
     const correct = index === question.correctIndex;
     trace("answer", `${card.id} ${question.mode} idx=${index} correct=${correct}`);
-    setSessionTotal((t) => t + 1);
-    if (correct) setSessionCorrect((c) => c + 1);
+    const newTotal = sessionTotal + 1;
+    const newCorrect = correct ? sessionCorrect + 1 : sessionCorrect;
+    setSessionTotal(newTotal);
+    setSessionCorrect(newCorrect);
 
     const existing = progressMap[card.id] ?? newProgress(card.id);
     const updated = applyResult(existing, correct);
     const newMap = { ...progressMap, [card.id]: updated };
     setProgressMap(newMap);
     await saveProgress(updated);
+
+    saveSessionSnapshot({
+      filters,
+      queue,
+      shownThisSession: Array.from(shownThisSessionRef.current),
+      sessionCorrect: newCorrect,
+      sessionTotal: newTotal,
+    });
 
     // Auto-scroll so the Next button is immediately visible without the
     // person having to hunt for it after answering.
@@ -186,6 +251,13 @@ export default function QuizScreen({ navigation }: Props) {
     const remaining = queue.slice(1);
     setQueue(remaining);
     nextQuestion(remaining, pool);
+    saveSessionSnapshot({
+      filters,
+      queue: remaining,
+      shownThisSession: Array.from(shownThisSessionRef.current),
+      sessionCorrect,
+      sessionTotal,
+    });
   }
 
   if (loading) {
@@ -283,28 +355,49 @@ export default function QuizScreen({ navigation }: Props) {
           <Text style={styles.caption}>{humanizeCardText(question.caption)}</Text>
         )}
 
-        <View style={styles.optionsList}>
-          {question.options.map((opt, i) => {
-            const isCorrect = i === question.correctIndex;
-            const isSelected = i === selected;
-            return (
-              <Pressable
-                key={`${opt}-${i}`}
-                disabled={revealed}
-                onPress={() => handleAnswer(i)}
-                style={[
-                  styles.option,
-                  revealed && isCorrect && { backgroundColor: theme.correct },
-                  revealed && isSelected && !isCorrect && { backgroundColor: theme.incorrect },
-                ]}
-              >
-                <Text style={styles.optionText} numberOfLines={3}>
-                  {humanizeCardText(opt)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        {(() => {
+          // Layout rule (answer-count based, applies to ALL question types):
+          //   3 options -> 1x3 horizontal row
+          //   4 options -> 2x2 grid
+          // This is deliberately keyed off option COUNT, not question mode:
+          // speed questions happen to be the common 3-option case today, but
+          // custom fill-in-the-blank or text questions can also have exactly
+          // 3 answers (e.g. a card with only two sensible distractors), and
+          // they should compact to 1x3 the same way.
+          const optionCount = question.options.length;
+          const isRow3 = optionCount === 3;
+          const containerStyle = isRow3 ? styles.optionsRow3 : styles.optionsGrid;
+          const itemStyle = isRow3 ? styles.optionThird : styles.optionHalf;
+          // Long-answer text mode still needs more lines per cell until
+          // Group B shortens the answers; others stay tight.
+          const maxLines = question.mode === "text" ? 6 : 3;
+
+          return (
+            <View style={containerStyle}>
+              {question.options.map((opt, i) => {
+                const isCorrect = i === question.correctIndex;
+                const isSelected = i === selected;
+                return (
+                  <Pressable
+                    key={`${opt}-${i}`}
+                    disabled={revealed}
+                    onPress={() => handleAnswer(i)}
+                    style={[
+                      styles.option,
+                      itemStyle,
+                      revealed && isCorrect && { backgroundColor: theme.correct },
+                      revealed && isSelected && !isCorrect && { backgroundColor: theme.incorrect },
+                    ]}
+                  >
+                    <Text style={styles.optionText} numberOfLines={maxLines}>
+                      {humanizeCardText(opt)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          );
+        })()}
 
         {revealed && (
           <Pressable style={styles.nextButton} onPress={handleNext}>
@@ -345,9 +438,10 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   cardImageWrap: {
-    // 10% smaller across all dimensions than the previous full-bleed
-    // width, centered.
-    width: "90%",
+    // Shrunk from 90% to 62% width so the card, prompt, and a 2x2 answer
+    // grid all fit within a typical phone viewport without scrolling. The
+    // aspect ratio is preserved, so this scales height down proportionally.
+    width: "62%",
     alignSelf: "center",
     aspectRatio: CARD_ASPECT_RATIO,
     borderRadius: 16,
@@ -365,17 +459,35 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   maskText: { color: theme.accent, fontSize: 22, fontWeight: "800" },
-  optionsList: { gap: 8, alignItems: "stretch" },
+  // Full-width single column — used only for long-answer text-mode questions.
+  optionsColumn: { gap: 8, alignItems: "stretch" },
+  // 2x2 grid — 4 short options (cost/might/name/keyword).
+  optionsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 8,
+  },
+  // 1x3 horizontal row — 3 options (speed questions).
+  optionsRow3: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    columnGap: 8,
+  },
   option: {
-    width: "100%",
-    alignSelf: "stretch",
     backgroundColor: theme.card,
     borderWidth: 1,
     borderColor: theme.border,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
+    justifyContent: "center",
   },
+  optionFull: { width: "100%", alignSelf: "stretch" },
+  // 48% (not 50%) leaves room for the space-between gutter between columns.
+  optionHalf: { width: "48%", minHeight: 52 },
+  // ~31.5% x3 + two gutters ≈ full width.
+  optionThird: { flex: 1, minHeight: 52 },
   optionText: { color: theme.text, fontSize: 13, lineHeight: 17, textAlign: "center" },
   nextButton: {
     backgroundColor: theme.accent,
