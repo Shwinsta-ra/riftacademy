@@ -5,18 +5,29 @@ Usage:
     python3 scripts/apply_overrides.py path/to/overrides.csv
 
 Expected columns (see README for the proposed sheet format):
-    Card Code, Cost, Might, Name, Text, Keyword, Speed, Trigger
+    Card Code, Name, Energy Cost, Power Cost, Might, Speed, Keyword, Text
+
+An optional "Card Name (reference only)" column may also be present for
+human readability -- it's ignored by this script, not written to the JSON.
 
 Card Code is the riftbound_id (e.g. ogn-297-298). Every other column should
 be TRUE, FALSE, or left blank:
 - Blank = auto (the app's normal eligibility logic decides, no override)
 - FALSE = force this mode OFF for this card even if it would otherwise
-  qualify (e.g. Windswept Hillock's Trigger)
+  qualify
 - TRUE = force this mode ON for this card -- but this only works if the
   underlying data actually supports building that question (e.g. forcing
-  Cost on a card with no Energy/Power set won't do anything; this isn't a
+  Energy Cost on a card with no Energy set won't do anything; this isn't a
   way to fabricate missing data, just to widen an otherwise-too-strict
   auto-eligibility check)
+
+Note: Energy Cost and Power Cost are independent toggles -- a card with both
+stats populated (there are 320 of these) can have one enabled and the other
+disabled, since they're now separately-quizzable modes, not one combined
+"Cost" question that always defaulted to Energy.
+
+Trigger mode is currently paused app-wide (see attributeQuiz.ts) -- a
+Trigger column here is accepted but has no effect until that pause lifts.
 
 Only rows for cards that need an actual exception belong in this sheet --
 leave most cards out entirely rather than filling in a blank row for each.
@@ -29,7 +40,8 @@ import json, csv, sys
 OVERRIDES_PATH = "src/data/quizOverrides.json"
 
 COLUMN_TO_MODE = {
-    "Cost": "cost",
+    "Energy Cost": "energyCost",
+    "Power Cost": "powerCost",
     "Might": "might",
     "Name": "name",
     "Text": "text",

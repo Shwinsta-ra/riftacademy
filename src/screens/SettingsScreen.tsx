@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from "react-native";
+import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { theme, DOMAIN_COLORS } from "../lib/theme";
 import { getAvailableDomains, getAvailableTypes, getAvailableSpeeds } from "../lib/quiz";
 import { getAllDecks, getCardsForDeck } from "../lib/deckPool";
-import { DeckList } from "../lib/types";
-import { resetAllProgress } from "../lib/db";
+import { DeckList, QuizFilters } from "../lib/types";
 import { useFilters } from "../lib/filtersStore";
 import AppModal from "../components/AppModal";
 
@@ -33,19 +32,26 @@ function splitDeckName(deck: DeckList): { title: string; subtitle: string } {
   return { title: deck.legend, subtitle: deck.name.slice(idx + 3) };
 }
 
-export default function SettingsScreen(_: Props) {
+export default function SettingsScreen({ navigation }: Props) {
   const { filters, setFilters } = useFilters();
   const domains = getAvailableDomains();
   const types = getAvailableTypes();
   const speeds = getAvailableSpeeds();
-  const [confirming, setConfirming] = useState(false);
   const [deckPickerOpen, setDeckPickerOpen] = useState(false);
-  // Staged selection: tapping a row in the picker highlights it but doesn't
-  // apply or close anything — only the CTA button commits it to `filters`.
+  // Staged selection: tapping a row in the deck picker highlights it but
+  // doesn't apply or close anything — only the picker's CTA commits it.
   const [stagedDeckId, setStagedDeckId] = useState<string | null>(null);
 
+  // All filter edits are STAGED locally and only committed to the shared
+  // store when the user taps "Set filters" at the bottom — a deliberate
+  // accept step, rather than the old behavior where every chip tap applied
+  // live and "Back" was the only (implicit) way to accept. `staged` seeds
+  // from the current live filters each time the screen mounts.
+  const [staged, setStaged] = useState<QuizFilters>(filters);
+  const dirty = JSON.stringify(staged) !== JSON.stringify(filters);
+
   const decks = getAllDecks();
-  const selectedDeck = filters.deckId ? decks.find((d) => d.id === filters.deckId) ?? null : null;
+  const selectedDeck = staged.deckId ? decks.find((d) => d.id === staged.deckId) ?? null : null;
   const selectedDeckCardCount = selectedDeck
     ? getCardsForDeck(selectedDeck.id)?.cards.length ?? 0
     : 0;
@@ -55,16 +61,21 @@ export default function SettingsScreen(_: Props) {
   }
 
   function toggleSetGroup(groupIds: string[]) {
-    const allPresent = groupIds.every((id) => filters.sets.includes(id));
-    const withoutGroup = filters.sets.filter((id) => !groupIds.includes(id));
-    setFilters({
-      ...filters,
+    const allPresent = groupIds.every((id) => staged.sets.includes(id));
+    const withoutGroup = staged.sets.filter((id) => !groupIds.includes(id));
+    setStaged({
+      ...staged,
       sets: allPresent ? withoutGroup : [...withoutGroup, ...groupIds],
     });
   }
 
   function isGroupActive(groupIds: string[]): boolean {
-    return groupIds.every((id) => filters.sets.includes(id));
+    return groupIds.every((id) => staged.sets.includes(id));
+  }
+
+  function commitFilters() {
+    setFilters(staged);
+    navigation.goBack();
   }
 
   return (
@@ -77,7 +88,7 @@ export default function SettingsScreen(_: Props) {
         <Pressable
           style={[styles.selectorButton, !selectedDeck && styles.selectorButtonEmpty]}
           onPress={() => {
-            setStagedDeckId(filters.deckId);
+            setStagedDeckId(staged.deckId);
             setDeckPickerOpen(true);
           }}
         >
@@ -92,13 +103,13 @@ export default function SettingsScreen(_: Props) {
         {selectedDeck && (
           <Pressable
             style={styles.clearDeckLink}
-            onPress={() => setFilters({ ...filters, deckId: null })}
+            onPress={() => setStaged({ ...staged, deckId: null })}
           >
             <Text style={styles.clearDeckLinkText}>Clear deck filter</Text>
           </Pressable>
         )}
 
-        {!filters.deckId && (
+        {!staged.deckId && (
           <>
             <Text style={styles.sectionTitle}>Sets</Text>
             <Text style={styles.helper}>None selected = all sets included.</Text>
@@ -119,17 +130,17 @@ export default function SettingsScreen(_: Props) {
                 <Chip
                   key={d}
                   label={d}
-                  active={filters.domains.includes(d)}
+                  active={staged.domains.includes(d)}
                   color={DOMAIN_COLORS[d]}
                   onPress={() =>
-                    setFilters({ ...filters, domains: toggle(filters.domains, d) })
+                    setStaged({ ...staged, domains: toggle(staged.domains, d) })
                   }
                 />
               ))}
             </View>
           </>
         )}
-        {filters.deckId && (
+        {staged.deckId && (
           <Text style={[styles.helper, { marginTop: 20 }]}>
             Sets and domains are hidden while testing against a deck — clear the deck filter
             above to use them again.
@@ -142,8 +153,8 @@ export default function SettingsScreen(_: Props) {
             <Chip
               key={t}
               label={t}
-              active={filters.types.includes(t)}
-              onPress={() => setFilters({ ...filters, types: toggle(filters.types, t) })}
+              active={staged.types.includes(t)}
+              onPress={() => setStaged({ ...staged, types: toggle(staged.types, t) })}
             />
           ))}
         </View>
@@ -154,45 +165,25 @@ export default function SettingsScreen(_: Props) {
             <Chip
               key={s}
               label={s}
-              active={filters.speeds.includes(s)}
-              onPress={() => setFilters({ ...filters, speeds: toggle(filters.speeds, s) })}
+              active={staged.speeds.includes(s)}
+              onPress={() => setStaged({ ...staged, speeds: toggle(staged.speeds, s) })}
             />
           ))}
         </View>
 
         <Pressable
           style={styles.clearButton}
-          onPress={() => setFilters({ sets: [], domains: [], types: [], speeds: [], deckId: null })}
+          onPress={() => setStaged({ sets: [], domains: [], types: [], speeds: [], deckId: null })}
         >
           <Text style={styles.clearButtonText}>Clear all filters</Text>
         </Pressable>
 
         <Pressable
-          style={[styles.clearButton, { borderColor: theme.incorrect, marginTop: 32 }]}
-          onPress={() => {
-            if (!confirming) {
-              setConfirming(true);
-              Alert.alert(
-                "Reset all progress?",
-                "This clears every card's Leitner box back to new. This can't be undone.",
-                [
-                  { text: "Cancel", style: "cancel", onPress: () => setConfirming(false) },
-                  {
-                    text: "Reset",
-                    style: "destructive",
-                    onPress: async () => {
-                      await resetAllProgress();
-                      setConfirming(false);
-                      Alert.alert("Done", "Progress reset.");
-                    },
-                  },
-                ]
-              );
-            }
-          }}
+          style={[styles.setFiltersButton, !dirty && styles.setFiltersButtonInactive]}
+          onPress={commitFilters}
         >
-          <Text style={[styles.clearButtonText, { color: theme.incorrect }]}>
-            Reset progress
+          <Text style={styles.setFiltersButtonText}>
+            {dirty ? "Set filters" : "Filters set"}
           </Text>
         </Pressable>
       </ScrollView>
@@ -204,7 +195,7 @@ export default function SettingsScreen(_: Props) {
         ctaLabel="Choose"
         ctaDisabled={!stagedDeckId}
         onCta={() => {
-          setFilters({ ...filters, deckId: stagedDeckId });
+          setStaged({ ...staged, deckId: stagedDeckId });
           setDeckPickerOpen(false);
         }}
       >
@@ -285,6 +276,19 @@ const styles = StyleSheet.create({
     borderColor: theme.border,
   },
   clearButtonText: { color: theme.text, fontWeight: "600" },
+  // Primary accept CTA. Filled accent when there are unsaved changes; a
+  // muted "already set" state when staged == committed so the button still
+  // works (re-commit + go back) but signals nothing is pending. Not the
+  // reserved REQUIRED magenta — that stays for required-field indication.
+  setFiltersButton: {
+    marginTop: 28,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: theme.accent,
+  },
+  setFiltersButtonInactive: { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border },
+  setFiltersButtonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   selectorButton: {
     backgroundColor: theme.card,
     borderWidth: 1,

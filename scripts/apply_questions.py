@@ -11,8 +11,16 @@ they'll be randomly cycled between). Expected columns:
     Distractor 1, Distractor 2, Distractor 3, Distractor 4, Distractor 5, Distractor 6,
     Caption
 
+Extra authoring/triage columns (Referenced Card, Referenced Card Text, Needs
+Fixing, Notes / Context, or similar) may also be present in the sheet -- this
+script ignores any column it doesn't recognize, so they're safe to keep for
+your own reference without polluting the JSON.
+
 - Card Code: the riftbound_id (e.g. unl-113-219).
-- Category: one of Cost, Might, Name, Text, Keyword, Speed, Trigger.
+- Category: one of Energy Cost, Power Cost, Might, Name, Text, Keyword,
+  Speed, Trigger. Energy Cost and Power Cost are separate categories now --
+  a card with both stats (320 of them) needs its own row per stat if you
+  want to hand-author both; don't use a bare "Cost" category anymore.
 - Prompt: the question text shown above/below the card.
 - Correct Answer: always included as one of the options.
 - Distractor 1-6: wrong-answer pool for this variant. You don't need all 6 --
@@ -39,7 +47,8 @@ import json, csv, sys
 QUESTIONS_PATH = "src/data/quizQuestions.json"
 
 CATEGORY_MAP = {
-    "cost": "cost",
+    "energy cost": "energyCost",
+    "power cost": "powerCost",
     "might": "might",
     "name": "name",
     "text": "text",
