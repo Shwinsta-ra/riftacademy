@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
@@ -50,6 +50,20 @@ export default function SettingsScreen({ navigation }: Props) {
   const [staged, setStaged] = useState<QuizFilters>(filters);
   const dirty = JSON.stringify(staged) !== JSON.stringify(filters);
 
+  // Auto-scroll the page to the bottom the first time the user makes a
+  // selection, so the "Set filters" / "Clear all filters" buttons come into
+  // view without the user having to hunt for them. Fires only on the
+  // false -> true transition of `dirty` (the first change), not on every
+  // subsequent tap.
+  const scrollRef = useRef<ScrollView>(null);
+  const wasDirty = useRef(false);
+  useEffect(() => {
+    if (dirty && !wasDirty.current) {
+      requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+    }
+    wasDirty.current = dirty;
+  }, [dirty]);
+
   const decks = getAllDecks();
   const selectedDeck = staged.deckId ? decks.find((d) => d.id === staged.deckId) ?? null : null;
   const selectedDeckCardCount = selectedDeck
@@ -80,7 +94,11 @@ export default function SettingsScreen({ navigation }: Props) {
 
   return (
     <>
-      <ScrollView style={styles.container} contentContainerStyle={{ padding: 20 }}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.container}
+        contentContainerStyle={{ padding: 20 }}
+      >
         <Text style={styles.sectionTitle}>Deck matchup</Text>
         <Text style={styles.helper}>
           Choose a specific "Best of Hartford RQ" deck instead of the full card pool.
@@ -172,19 +190,22 @@ export default function SettingsScreen({ navigation }: Props) {
         </View>
 
         <Pressable
+          style={[styles.setFiltersButton, !dirty && styles.setFiltersButtonInactive]}
+          onPress={commitFilters}
+          disabled={!dirty}
+        >
+          <Text
+            style={[styles.setFiltersButtonText, !dirty && styles.setFiltersButtonTextInactive]}
+          >
+            Set filters
+          </Text>
+        </Pressable>
+
+        <Pressable
           style={styles.clearButton}
           onPress={() => setStaged({ sets: [], domains: [], types: [], speeds: [], deckId: null })}
         >
           <Text style={styles.clearButtonText}>Clear all filters</Text>
-        </Pressable>
-
-        <Pressable
-          style={[styles.setFiltersButton, !dirty && styles.setFiltersButtonInactive]}
-          onPress={commitFilters}
-        >
-          <Text style={styles.setFiltersButtonText}>
-            {dirty ? "Set filters" : "Filters set"}
-          </Text>
         </Pressable>
       </ScrollView>
 
@@ -268,7 +289,7 @@ const styles = StyleSheet.create({
   },
   chipText: { color: theme.text, fontSize: 13 },
   clearButton: {
-    marginTop: 24,
+    marginTop: 12,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
@@ -276,10 +297,10 @@ const styles = StyleSheet.create({
     borderColor: theme.border,
   },
   clearButtonText: { color: theme.text, fontWeight: "600" },
-  // Primary accept CTA. Filled accent when there are unsaved changes; a
-  // muted "already set" state when staged == committed so the button still
-  // works (re-commit + go back) but signals nothing is pending. Not the
-  // reserved REQUIRED magenta — that stays for required-field indication.
+  // Primary accept CTA, now placed ABOVE "Clear all filters". Always reads
+  // "Set filters"; it's the filled accent when there are pending changes and
+  // a muted/greyed disabled state before the user has changed anything.
+  // Not the reserved REQUIRED magenta — that stays for required-field use.
   setFiltersButton: {
     marginTop: 28,
     paddingVertical: 16,
@@ -287,8 +308,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: theme.accent,
   },
-  setFiltersButtonInactive: { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border },
+  setFiltersButtonInactive: {
+    backgroundColor: theme.card,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
   setFiltersButtonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  setFiltersButtonTextInactive: { color: theme.textDim },
   selectorButton: {
     backgroundColor: theme.card,
     borderWidth: 1,

@@ -350,6 +350,7 @@ export default function QuizScreen({ navigation }: Props) {
             ))}
         </View>
 
+        <View style={styles.controlsGroup}>
         <Text style={styles.prompt}>{question.prompt}</Text>
         {question.caption && (
           <Text style={styles.caption}>{humanizeCardText(question.caption)}</Text>
@@ -404,6 +405,7 @@ export default function QuizScreen({ navigation }: Props) {
             <Text style={styles.nextButtonText}>Next card</Text>
           </Pressable>
         )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -411,7 +413,17 @@ export default function QuizScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.bg },
-  scrollContent: { padding: 16, paddingBottom: 48 },
+  // flexGrow lets the content fill the viewport so space-between can push the
+  // card to the top and the controls group to the bottom. It still scrolls as
+  // a fallback if a particular card's content is taller than the screen.
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 20,
+    justifyContent: "space-between",
+  },
+  controlsGroup: { width: "100%" },
   centered: { alignItems: "center", justifyContent: "center", flex: 1 },
   emptyText: { color: theme.text, fontSize: 16, textAlign: "center", marginBottom: 16 },
   doneButton: {
@@ -438,10 +450,11 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   cardImageWrap: {
-    // Shrunk from 90% to 62% width so the card, prompt, and a 2x2 answer
-    // grid all fit within a typical phone viewport without scrolling. The
-    // aspect ratio is preserved, so this scales height down proportionally.
-    width: "62%",
+    // Enlarged to 78% per device testing. The controls group is
+    // bottom-anchored (scrollContent uses space-between), leaving room for a
+    // bigger card up top without forcing a scroll on a normal phone. Tune
+    // this single value if it's too big/small on a given device.
+    width: "78%",
     alignSelf: "center",
     aspectRatio: CARD_ASPECT_RATIO,
     borderRadius: 16,
