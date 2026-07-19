@@ -35,6 +35,11 @@ function getDb(): Promise<SQLite.SQLiteDatabase> {
 // leitner.ts. Independent of resetAllProgress on purpose: resetting Leitner
 // progress (forgetting what you know) shouldn't also reset the pacing gate.
 const BATCH_GATE_KEY = "lastBatchCompletedAt";
+// Whether the person has completed (or explicitly skipped) the first-launch
+// onboarding tutorial. Same settings table as the batch gate, deliberately
+// a separate key from both progress and the batch gate — none of these
+// three should reset each other as a side effect.
+const TUTORIAL_SEEN_KEY = "hasSeenTutorial";
 
 export async function getLastBatchCompletedAt(): Promise<number | null> {
   const db = await getDb();
@@ -51,6 +56,24 @@ export async function setLastBatchCompletedAt(timestamp: number): Promise<void> 
     `INSERT INTO settings (key, value) VALUES (?, ?)
      ON CONFLICT(key) DO UPDATE SET value = excluded.value;`,
     [BATCH_GATE_KEY, String(timestamp)]
+  );
+}
+
+export async function getHasSeenTutorial(): Promise<boolean> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>(
+    "SELECT value FROM settings WHERE key = ?",
+    [TUTORIAL_SEEN_KEY]
+  );
+  return row?.value === "true";
+}
+
+export async function setHasSeenTutorial(seen: boolean): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value;`,
+    [TUTORIAL_SEEN_KEY, seen ? "true" : "false"]
   );
 }
 

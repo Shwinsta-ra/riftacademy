@@ -9,10 +9,11 @@ import { loadAllProgress, resetAllProgress } from "../lib/db";
 import { clearSessionSnapshot } from "../lib/sessionState";
 import { MAX_BOX } from "../lib/leitner";
 import { BOX_LABELS, BOX_INTERVAL_LABELS, BOX_COLORS, NEW_LABEL, NEW_COLOR } from "../lib/boxMeta";
+import { useTutorial } from "../lib/tutorialContext";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Stats">;
 
-export default function StatsScreen(_: Props) {
+export default function StatsScreen({ navigation }: Props) {
   const [counts, setCounts] = useState<Record<number, number>>({});
   const [unseen, setUnseen] = useState(0);
   const [total, setTotal] = useState(0);
@@ -20,6 +21,7 @@ export default function StatsScreen(_: Props) {
   // Bumped after a reset to force the focus effect's loader to re-run so the
   // bars visibly drop to zero without needing to leave and return.
   const [refreshTick, setRefreshTick] = useState(0);
+  const { restart } = useTutorial();
 
   useFocusEffect(
     useCallback(() => {
@@ -101,6 +103,16 @@ export default function StatsScreen(_: Props) {
       >
         <Text style={styles.resetButtonText}>Reset progress</Text>
       </Pressable>
+
+      <Pressable
+        style={styles.replayTutorialButton}
+        onPress={() => {
+          restart();
+          navigation.navigate("Home");
+        }}
+      >
+        <Text style={styles.replayTutorialButtonText}>Replay tutorial</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -159,4 +171,13 @@ const styles = StyleSheet.create({
     borderColor: theme.incorrect,
   },
   resetButtonText: { color: theme.incorrect, fontWeight: "600" },
+  replayTutorialButton: {
+    marginTop: 12,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  replayTutorialButtonText: { color: theme.text, fontWeight: "600" },
 });

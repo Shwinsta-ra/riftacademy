@@ -22,6 +22,12 @@ const STORAGE_KEY = "riftboundTrainerProgress";
 // progress (forgetting what you know) doesn't also reset the pacing gate;
 // they're independent concerns.
 const BATCH_GATE_KEY = "riftboundTrainerLastBatchCompletedAt";
+// Whether the person has completed (or explicitly skipped) the first-launch
+// onboarding tutorial. Same durability reasoning as BATCH_GATE_KEY — needs
+// to survive a full app close, not just a tab refresh. Separate key from
+// both progress and the batch gate: none of these three should reset each
+// other as a side effect.
+const TUTORIAL_SEEN_KEY = "riftboundTrainerHasSeenTutorial";
 
 function readAll(): Record<string, CardProgress> {
   try {
@@ -71,6 +77,22 @@ export async function getLastBatchCompletedAt(): Promise<number | null> {
 export async function setLastBatchCompletedAt(timestamp: number): Promise<void> {
   try {
     localStorage.setItem(BATCH_GATE_KEY, String(timestamp));
+  } catch {
+    // no-op
+  }
+}
+
+export async function getHasSeenTutorial(): Promise<boolean> {
+  try {
+    return localStorage.getItem(TUTORIAL_SEEN_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export async function setHasSeenTutorial(seen: boolean): Promise<void> {
+  try {
+    localStorage.setItem(TUTORIAL_SEEN_KEY, seen ? "true" : "false");
   } catch {
     // no-op
   }
