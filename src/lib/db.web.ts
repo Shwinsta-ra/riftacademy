@@ -13,6 +13,15 @@ import { CardProgress } from "./types";
 // never gets bundled here, so the wasm dependency chain is avoided
 // entirely rather than just unused at runtime.
 const STORAGE_KEY = "riftboundTrainerProgress";
+// Separate from CardProgress: this is the "when did the last study batch
+// finish" pacing gate (see BATCH_COOLDOWN_MIN in leitner.ts). It needs to
+// survive the app/tab being fully closed and reopened — unlike the
+// in-session resume state in sessionState.ts, which is allowed to clear —
+// because the pacing limit is wall-clock based, not tied to any one
+// browser session. Deliberately a separate key from progress so resetting
+// progress (forgetting what you know) doesn't also reset the pacing gate;
+// they're independent concerns.
+const BATCH_GATE_KEY = "riftboundTrainerLastBatchCompletedAt";
 
 function readAll(): Record<string, CardProgress> {
   try {
@@ -47,5 +56,22 @@ export async function resetAllProgress(): Promise<void> {
     localStorage.removeItem(STORAGE_KEY);
   } catch {
     // no-op, same reasoning as above
+  }
+}
+
+export async function getLastBatchCompletedAt(): Promise<number | null> {
+  try {
+    const raw = localStorage.getItem(BATCH_GATE_KEY);
+    return raw ? parseInt(raw, 10) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setLastBatchCompletedAt(timestamp: number): Promise<void> {
+  try {
+    localStorage.setItem(BATCH_GATE_KEY, String(timestamp));
+  } catch {
+    // no-op
   }
 }
