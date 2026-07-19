@@ -47,9 +47,9 @@
 
 ### Card database
 - Master Card Inventory: 929+ cards across OGN, OGS, SFD, UNL, VEN.
-- Vendetta ingestion complete: 327 raw rows → 161 unique base cards (196 unique `riftbound_id`s counting variants).
+- Vendetta ingestion in progress: **141 of 166** base cards currently in `cards.json` (all numbered within 1–166, no duplicates, no over-total codes). The remaining **25 collector numbers are unreleased/not-yet-on-Riftcodex slots** ahead of the July 31 launch — genuine gaps, not ingestion errors; they fill in as cards reveal. (Earlier "327 raw rows → 161 base / 196 variants" figure was the pre-cleanup count.)
 - **Verified July 19:** all Vendetta cards in the current Riftcodex export have valid `image_url` values (checked directly against raw source — zero null/empty). The earlier "art-less new VEN cards excluded from quiz pool" note describes a now-stale pre-backfill state; if the live app still shows gaps, it's a merge-step or `new`-flag issue, not missing source art.
-- 8 VEN champions (Vi, Jinx, Jayce, Viktor, Rengar, Khazix, Diana, Leona) kept with provisional overnumbered codes until Riftcodex ingests real slots.
+- The 8 provisional overnumbered VEN champion codes (Vi, Jinx, Jayce, Viktor, Rengar, Khazix, Diana, Leona; `ven-167..184-166`) have been **removed** by `cleanup_ven_reprints.py`, along with 6 signature "SP" champion reprints (`ven-sp1..sp6`) and 6 VEN domain runes (`ven-r01..r06`) — 20 cards total. Each was an exact `Name, Epithet` duplicate of a card already in an earlier set, carrying degraded data; none referenced by any deck/override/question. This is what took the VEN count from 161 → 141.
 - Baron Nashor (Ultimate) permanently blacklisted (`BLACKLISTED_IDS`) — `merge_sheet.py` won't let it silently return on re-run.
 - Champion/Equipment stored as `Unit`/`Gear` + `subtype`; `Champion`/`Equipment` no longer valid `type` values.
 - Set filters grouped: Origins & Proving Grounds / Spiritforged / Unleashed / Vendetta. Speed filter (Action/Reaction) added.
@@ -243,6 +243,7 @@ git archive --format=zip -o ~/Downloads/riftacademy-upload.zip HEAD
 **July 19**
 - Customer-facing: —
 - Team-facing: Feature formerly "Card Recall"/"Memory Game" is now named **RiftRecall**. Merged the two project-management docs (this file + the prior `.docx`) into one canonical doc — the `.docx` should be removed from Project Knowledge. TickTick `RiftAcademy` list tagged for type/state/area (columns unchanged). Verified all Vendetta cards have valid art directly against raw Riftcodex source files (zero null `image_url`) — any remaining app-side gap is a merge-step or `new`-flag issue, not missing source data.
+- Team-facing (VEN count reconcile): `cleanup_ven_reprints.py` removed 20 VEN cards — 8 overnumbered champion reprints (`ven-167..184-166`), 6 signature "SP" champion reprints (`ven-sp1..sp6`), 6 domain runes (`ven-r01..r06`) — all exact duplicates of earlier-set cards with degraded data. VEN went **161 → 141**. Set total is **166**; the 25 absent collector numbers are unreleased/not-yet-on-Riftcodex slots ahead of the July 31 launch, not ingestion errors. Confirmed all 141 present VEN cards (and all 893 cards overall) have non-null `imageUrl`, and RiftRecall's art-exclusion in `src/lib/quiz.ts` keys strictly off `imageUrl === null` — there is no `new` flag in `cards.json`, so no stale-flag path can bench a card that has art.
 
 **July 17**
 - Customer-facing: All Vendetta cards now show their real card art in Card Recall — no longer placeholder-only.
