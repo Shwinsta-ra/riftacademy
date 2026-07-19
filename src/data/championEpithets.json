@@ -1,0 +1,566 @@
+{
+  "Ahri": [
+    "Alluring",
+    "Inquisitive",
+    "Enchanting",
+    "Soul-Hungry"
+  ],
+  "Akali": [
+    "Deadly Weapon",
+    "Silent",
+    "Rogue Assassin",
+    "Fireborn"
+  ],
+  "Akshan": [
+    "Mischievous",
+    "Rogue Sentinel",
+    "Vengeful",
+    "Roguish"
+  ],
+  "Ambessa": [
+    "The Wolf",
+    "Respected and Feared",
+    "Iron Matriarch",
+    "Noxian General"
+  ],
+  "Anivia": [
+    "Primal",
+    "Cryophoenix",
+    "Everfrost",
+    "Reborn in Ice"
+  ],
+  "Annie": [
+    "Fiery",
+    "Stubborn",
+    "Dark Child",
+    "Tibbers' Friend"
+  ],
+  "Aphelios": [
+    "Exalted",
+    "Moonlit Marksman",
+    "Silent Blade",
+    "Weapon of the Moon"
+  ],
+  "Ashe": [
+    "Focused",
+    "Frost Archer",
+    "Ice Queen",
+    "Avarosan"
+  ],
+  "Azir": [
+    "Ascendant",
+    "Sovereign",
+    "Emperor of the Sands",
+    "Reborn Pharaoh"
+  ],
+  "Bard": [
+    "Mercurial",
+    "Wandering Caretaker",
+    "Keeper of Chimes",
+    "Cosmic Vagabond"
+  ],
+  "Blitzcrank": [
+    "Impassive",
+    "Iron Giant",
+    "Zaun's Machine",
+    "Great Steam Golem"
+  ],
+  "Caitlyn": [
+    "Patrolling",
+    "Piltover Sheriff",
+    "Sharpshooter",
+    "Law of the City"
+  ],
+  "Darius": [
+    "Trifarian",
+    "Executioner",
+    "Hand of Noxus",
+    "Conqueror"
+  ],
+  "Diana": [
+    "Lunari",
+    "No Longer Human",
+    "Scorn of the Moon",
+    "Radiant"
+  ],
+  "Dr. Mundo": [
+    "Expert",
+    "Mad Chemist",
+    "Unkillable",
+    "Zaun's Nightmare"
+  ],
+  "Draven": [
+    "Showboat",
+    "Audacious",
+    "Glorious Executioner",
+    "Crowd's Favorite"
+  ],
+  "Ekko": [
+    "Recurrent",
+    "Boy Who Shattered Time",
+    "Timeloop Trickster",
+    "Firelight's Champion"
+  ],
+  "Evelynn": [
+    "Entrancing",
+    "Widow of the Shadows",
+    "Hidden Predator",
+    "Agony's Embrace"
+  ],
+  "Ezreal": [
+    "Dashing",
+    "Prodigy",
+    "Explorer",
+    "Relic Hunter"
+  ],
+  "Fiora": [
+    "Victorious",
+    "Peerless",
+    "Worthy",
+    "Grand Duelist"
+  ],
+  "Fizz": [
+    "Trickster",
+    "Tidal Trickster",
+    "Reef Prankster",
+    "Playful Menace"
+  ],
+  "Galio": [
+    "Indefatigable",
+    "Stone Sentinel",
+    "Colossus of Demacia",
+    "Living Statue"
+  ],
+  "Gangplank": [
+    "Naval",
+    "Saltwater Scourge",
+    "Bilgewater's Terror",
+    "Reaper of the Seas"
+  ],
+  "Garen": [
+    "Rugged",
+    "Commander",
+    "Might of Demacia",
+    "Dauntless Vanguard"
+  ],
+  "Heimerdinger": [
+    "Inventor",
+    "Tinkerer",
+    "Master of Machines",
+    "Revered Inventor"
+  ],
+  "Hwei": [
+    "Brooding Painter",
+    "Ionian Artist",
+    "Visionary",
+    "Painter of Nightmares"
+  ],
+  "Illaoi": [
+    "Prophet of the Great Kraken",
+    "Truth-Bearer",
+    "Idol-Bearer",
+    "Kraken's Priestess"
+  ],
+  "Irelia": [
+    "Fervent",
+    "Graceful",
+    "Blade Dancer",
+    "Dancing Steel"
+  ],
+  "Ivern": [
+    "Nurturer",
+    "Friend to All",
+    "Green Father",
+    "Bramble Wanderer"
+  ],
+  "Janna": [
+    "Savior",
+    "Storm's Fury",
+    "Zephyr",
+    "Guardian Wind"
+  ],
+  "Jax": [
+    "Unmatched",
+    "Unrelenting",
+    "Grandmaster at Arms",
+    "Weapons Master"
+  ],
+  "Jayce": [
+    "Man of Progress",
+    "Brilliant Inventor",
+    "Hammer in Hand",
+    "Defender of Piltover"
+  ],
+  "Jhin": [
+    "Murderous Artist",
+    "Meticulous Killer",
+    "Virtuoso",
+    "Master of Ceremony"
+  ],
+  "Jinx": [
+    "Demolitionist",
+    "Rebel",
+    "Loose Cannon",
+    "Chaos Incarnate"
+  ],
+  "Kaisa": [
+    "Survivor",
+    "Evolutionary",
+    "Daughter of the Void",
+    "Void's Chosen"
+  ],
+  "Karma": [
+    "Channeler",
+    "Enlightened One",
+    "Ionia's Wisdom",
+    "Spirit's Vessel"
+  ],
+  "Karthus": [
+    "Eternal",
+    "Deathsinger",
+    "Voice of the Grave",
+    "Lich of the Shadow Isles"
+  ],
+  "Katarina": [
+    "Reckless",
+    "Sinister Blade",
+    "Daughter of Noxus",
+    "Death's Dance"
+  ],
+  "Kayle": [
+    "Justified",
+    "Judgment's Wing",
+    "Aspect of Justice",
+    "Righteous Blade"
+  ],
+  "Kayn": [
+    "Unleashed",
+    "Shadow Reaper",
+    "Rhaast's Host",
+    "Darkin's Vessel"
+  ],
+  "Kennen": [
+    "Storm of Shuriken",
+    "Keeper of Balance",
+    "Bandle City's Guardian",
+    "Lightning Ninja"
+  ],
+  "Khazix": [
+    "Evolving Hunter",
+    "Mutating Horror",
+    "Apex Predator",
+    "Void Stalker"
+  ],
+  "Kogmaw": [
+    "Caustic",
+    "Mouth of the Void",
+    "Void's Appetite",
+    "Insatiable"
+  ],
+  "Leblanc": [
+    "Everywhere at Once",
+    "Fragmented",
+    "Deceiver",
+    "Mirror of Deceit"
+  ],
+  "Lee Sin": [
+    "Ascetic",
+    "Centered",
+    "Blind Monk",
+    "Fist of Shadow"
+  ],
+  "Leona": [
+    "Zealot",
+    "Determined",
+    "Radiant Dawn",
+    "Solari Vanguard"
+  ],
+  "Lillia": [
+    "Protector of Dreams",
+    "Fae Fawn",
+    "Timid Dreamer",
+    "Wandering Sapling"
+  ],
+  "Lucian": [
+    "Gunslinger",
+    "Merciless",
+    "Sentinel of Light",
+    "Purifier"
+  ],
+  "Lux": [
+    "Illuminated",
+    "Crownguard",
+    "Lady of Luminosity",
+    "Light's Blessing"
+  ],
+  "Malzahar": [
+    "Fanatic",
+    "Void's Prophet",
+    "Herald of the Void",
+    "Void's Herald"
+  ],
+  "Master Yi": [
+    "Meditative",
+    "Honed",
+    "Unstoppable",
+    "Tempered"
+  ],
+  "Mel": [
+    "Newly Awakened",
+    "Defiant Soul",
+    "Heir of Noxus",
+    "Defiant Heir"
+  ],
+  "Miss Fortune": [
+    "Captain",
+    "Buccaneer",
+    "Bilgewater's Bounty",
+    "Crimson Captain"
+  ],
+  "Morgana": [
+    "Vindictive",
+    "Fallen Angel",
+    "Thorned Rose",
+    "Bringer of Sin"
+  ],
+  "Nami": [
+    "Headstrong",
+    "Tidecaller",
+    "Voice of the Deep",
+    "Wavecaller"
+  ],
+  "Nasus": [
+    "Ascended",
+    "Guardian of Knowledge",
+    "Curator of the Sands",
+    "Keeper of Ages"
+  ],
+  "Nidalee": [
+    "Cat Form",
+    "Bestial Huntress",
+    "Shapeshifter",
+    "Cougar's Wrath"
+  ],
+  "Nilah": [
+    "Joyful Ascetic",
+    "Bound to Joy",
+    "Blade of Absolution",
+    "Radiant Blade"
+  ],
+  "Nocturne": [
+    "Horrifying",
+    "Eternal Nightmare",
+    "Fear Incarnate",
+    "Fear Given Form"
+  ],
+  "Ornn": [
+    "Blacksmith",
+    "Forge God",
+    "Fire Beneath the Mountain",
+    "Mountain Father"
+  ],
+  "Poppy": [
+    "Paragon",
+    "Defender of the Meek",
+    "Keeper of the Hammer",
+    "Unwavering"
+  ],
+  "Pyke": [
+    "Dockside Butcher",
+    "Returned",
+    "Bloodharbor Ripper",
+    "Undrowned"
+  ],
+  "Qiyana": [
+    "Victorious",
+    "Empress of the Elements",
+    "Ixtal's Pride",
+    "Elemental Fury"
+  ],
+  "Reksai": [
+    "Breacher",
+    "Swarm Queen",
+    "Void Burrower",
+    "Ravenous"
+  ],
+  "Rell": [
+    "Magnetic",
+    "Iron Maiden",
+    "Rebel of Noxus",
+    "Ferromancer"
+  ],
+  "Renata Glasc": [
+    "Mastermind",
+    "Industrialist",
+    "Chem-Baroness",
+    "Puppeteer of Zaun"
+  ],
+  "Renekton": [
+    "Rage Fueled",
+    "Brute",
+    "Sand-Scarred",
+    "Butcher of the Sands"
+  ],
+  "Rengar": [
+    "Pouncing",
+    "Unseen",
+    "Trophy Hunter",
+    "Vastayan Predator"
+  ],
+  "Riven": [
+    "Shattered",
+    "Exile",
+    "Broken Blade",
+    "Blade Without Honor"
+  ],
+  "Rumble": [
+    "Hotheaded",
+    "Scrapper",
+    "Mechanized Menace",
+    "Little Engine of Destruction"
+  ],
+  "Sett": [
+    "Brawler",
+    "Kingpin",
+    "Boss of the Boxes",
+    "Half-Vastayan Brawler"
+  ],
+  "Shen": [
+    "Kinkou",
+    "Scourge of Shadows",
+    "Leader of the Kinkou Order",
+    "Eye of Twilight"
+  ],
+  "Sivir": [
+    "Ambitious",
+    "Mercenary",
+    "Battle Mistress",
+    "Coin-Bound Mercenary"
+  ],
+  "Sona": [
+    "Harmonious",
+    "Maven of the Strings",
+    "Silent Melody",
+    "Etwahl's Voice"
+  ],
+  "Soraka": [
+    "Wanderer",
+    "Starchild",
+    "Celestial Healer",
+    "Wounded Star"
+  ],
+  "Syndra": [
+    "Transcendent",
+    "Dark Sovereign",
+    "Will Incarnate",
+    "Sovereign of Spheres"
+  ],
+  "Taric": [
+    "Protector",
+    "Shield of Valoran",
+    "Aspect of the Protector",
+    "Aspect of the Sun"
+  ],
+  "Teemo": [
+    "Strategist",
+    "Scout",
+    "Swift Scout",
+    "Curious Explorer"
+  ],
+  "Tryndamere": [
+    "Barbarian",
+    "Undying King",
+    "Barbarian King",
+    "Fury's King"
+  ],
+  "Twisted Fate": [
+    "Gambler",
+    "Card Master",
+    "Magician of the Deck",
+    "Destiny's Card"
+  ],
+  "Udyr": [
+    "Wildman",
+    "Spirit Walker",
+    "Beast of Five Forms",
+    "Beast Speaker"
+  ],
+  "Vayne": [
+    "Hunter",
+    "Night Hunter",
+    "Monster Slayer",
+    "Silverbolt"
+  ],
+  "Vex": [
+    "Cheerless",
+    "Mocking",
+    "Apathetic",
+    "Shadow-Born Yordle"
+  ],
+  "Vi": [
+    "Destructive",
+    "Hotheaded",
+    "Peacekeeper",
+    "Piltover Enforcer"
+  ],
+  "Viktor": [
+    "Innovator",
+    "Leader",
+    "Herald of the Glorious Evolution",
+    "Machine Prophet"
+  ],
+  "Volibear": [
+    "Furious",
+    "Imposing",
+    "Thunder's Roar",
+    "Storm-Wrath"
+  ],
+  "Warwick": [
+    "Hunter",
+    "Zaun's Feral Wolf",
+    "Blood Hunter",
+    "Uncaged Wrath"
+  ],
+  "Xerath": [
+    "Freed",
+    "Magus Ascendant",
+    "Shattered Tyrant",
+    "Ascended Magus"
+  ],
+  "Xin Zhao": [
+    "Vigilant",
+    "Seneschal of Demacia",
+    "Spear of the Court",
+    "Court's Blade"
+  ],
+  "Yasuo": [
+    "Remorseful",
+    "Windrider",
+    "Unforgiven",
+    "Wind's Grief"
+  ],
+  "Yone": [
+    "Blademaster",
+    "Half-Spirit Wanderer",
+    "Second Son",
+    "Hunter of Shadows"
+  ],
+  "Yuumi": [
+    "Magical Cat",
+    "Bookbound Companion",
+    "Magical Familiar",
+    "Whiskered Wanderer"
+  ],
+  "Zed": [
+    "From the Shadows",
+    "Without a Sound",
+    "Master of Shadows",
+    "Order of Shadow"
+  ],
+  "Zilean": [
+    "Time Mage",
+    "Chronokeeper",
+    "Timeless Wanderer",
+    "Keeper of Moments"
+  ]
+}
