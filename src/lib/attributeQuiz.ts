@@ -3,6 +3,7 @@ import { getAllCards } from "./quiz";
 import positionsConfig from "../data/quizPositions.json";
 import overridesConfig from "../data/quizOverrides.json";
 import questionsConfig from "../data/quizQuestions.json";
+import championEpithets from "../data/championEpithets.json";
 
 export type AttributeMode =
   | "energyCost"
@@ -602,22 +603,28 @@ function buildNameQuestion(card: Card, pool: Card[]) {
 
   const distractorNames = new Set<string>();
 
-  // Champions compare against OTHER VERSIONS OF THE SAME CHAMPION first
-  // (e.g. Kha'Zix - Mutating vs. Kha'Zix - Evolving vs. Kha'Zix -
-  // Voidreaver) — any available match is guaranteed to be included, even if
-  // there's only 1 or 2 (rather than requiring 3+ before using them at all).
   if (card.subtype === "Champion") {
+    // Champions ONLY ever compare against other epithets of the SAME named
+    // champion (e.g. Kha'Zix, Evolving Hunter vs. Kha'Zix, Mutating Horror)
+    // — never an unrelated card's name. Real in-game variants are used
+    // first; src/data/championEpithets.json (see scripts/build_epithets.py-
+    // authored review sheet) supplies additional thematically-fitting
+    // epithets for every champion so there are always at least 3 wrong
+    // answers, even for a champion with only one real printed variant.
     const base = championBaseName(card.name);
-    const sameChampion = sameType.filter((c) => championBaseName(c.name) === base);
-    for (const c of shuffle(sameChampion)) {
+    const sameChampionCards = sameType.filter((c) => championBaseName(c.name) === base);
+    for (const c of shuffle(sameChampionCards)) {
       if (distractorNames.size >= 3) break;
       distractorNames.add(c.name);
     }
-  }
-
-  // Pad any remaining slots from the general same-set+type pool (falling
-  // back to same-type only if that's too small).
-  if (distractorNames.size < 3) {
+    const bank: string[] = (championEpithets as Record<string, string[]>)[base] ?? [];
+    for (const epithet of shuffle([...bank])) {
+      if (distractorNames.size >= 3) break;
+      const candidate = `${base}, ${epithet}`;
+      if (candidate !== card.name) distractorNames.add(candidate);
+    }
+  } else {
+    // Non-champions keep the original same-set+type fallback pool.
     const sameSetAndType = sameType.filter((c) => c.setId === card.setId);
     const fallbackPool = shuffle(sameSetAndType.length >= 3 ? sameSetAndType : sameType);
     for (const c of fallbackPool) {

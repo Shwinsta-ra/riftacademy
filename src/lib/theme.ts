@@ -17,6 +17,17 @@ export const DOMAIN_COLORS: Record<string, string> = {
 // fill this in" — and it never means anything else.
 export const REQUIRED = "#EA6FD0";
 
+// PLATFORM CONVENTION: warm gold means "this is 'Rift'".
+//
+// Applied only to the literal word "Rift" wherever it prefixes a product
+// name (RiftAcademy, RiftRecall, RiftIQ, ...). The point is repetition, not
+// variation: coloring the one word that's identical across every product
+// name is what teaches the eye "these belong to one family" — the varying
+// suffix (Academy/Recall/IQ) already differentiates the products through
+// the words themselves and stays plain text. Close to but distinct from
+// DOMAIN_COLORS.Order — accepted as a deliberate choice, not a collision.
+export const RIFT_BRAND = "#E8B44A";
+
 export const theme = {
   bg: "#14141a",
   card: "#1f1f28",

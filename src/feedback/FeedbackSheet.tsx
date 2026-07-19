@@ -31,6 +31,26 @@ const COARSE_POINTER =
   typeof window.matchMedia === "function" &&
   window.matchMedia("(pointer: coarse)").matches;
 
+// After a feedback form is filled out on mobile web, the user may have
+// pinch-zoomed (to read the screenshot, tap a small field, etc.) and iOS
+// Safari leaves the page zoomed in. This nudges the viewport back to 1x:
+// briefly clamping maximum-scale forces Safari to reset the zoom, then we
+// restore the original content string so the user can pinch-zoom again.
+// Web-only and best-effort — if the platform ignores it, it's a silent no-op.
+function resetViewportZoom() {
+  if (Platform.OS !== "web" || typeof document === "undefined") return;
+  const vp = document.querySelector('meta[name="viewport"]');
+  if (!vp) return;
+  const original =
+    vp.getAttribute("content") || "width=device-width, initial-scale=1";
+  vp.setAttribute(
+    "content",
+    "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  );
+  setTimeout(() => vp.setAttribute("content", original), 350);
+}
+
+
 // On a phone the image can't span the full sheet width. touchAction is "none"
 // over the drawable area (it has to be, or the browser eats the drawing
 // gesture), so an edge-to-edge image is a dead zone the user can't scroll past —
@@ -148,6 +168,7 @@ export default function FeedbackSheet({ visible, shot, onClose }: Props) {
     trace("feedback.sent", tagIds.join(","));
     setSending(false);
     setResult(outcome);
+    resetViewportZoom();
     setTimeout(close, 1700);
   };
 
