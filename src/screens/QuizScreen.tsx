@@ -14,9 +14,9 @@ import { theme } from "../lib/theme";
 import { getFilteredCards } from "../lib/quiz";
 import { buildAttributeQuestion, AttributeQuestion, getMaskRegions } from "../lib/attributeQuiz";
 import { humanizeCardText } from "../lib/textDisplay";
-import { loadAllProgress, saveProgress } from "../lib/db";
-import { loadSessionSnapshot, saveSessionSnapshot } from "../lib/sessionState";
-import { buildQueue, applyResult, newProgress } from "../lib/leitner";
+import { loadAllProgress, saveProgress, getLastBatchCompletedAt, setLastBatchCompletedAt } from "../lib/db";
+import { loadSessionSnapshot, saveSessionSnapshot, clearSessionSnapshot } from "../lib/sessionState";
+import { buildBatch, applyResult, newProgress, BATCH_SIZE, BATCH_COOLDOWN_MIN } from "../lib/leitner";
 import { Card, CardProgress } from "../lib/types";
 import { useFilters } from "../lib/filtersStore";
 import { useFeedbackSafe } from "../feedback/context";
@@ -27,8 +27,6 @@ type Props = NativeStackScreenProps<RootStackParamList, "Quiz">;
 // Real card renders are 744x1039 — matching that ratio exactly means the
 // card fills its container edge to edge with no leftover letterboxing.
 const CARD_ASPECT_RATIO = 744 / 1039;
-
-const MAX_SESSION_SIZE = 50;
 
 export default function QuizScreen({ navigation }: Props) {
   const { filters } = useFilters();
@@ -47,6 +45,15 @@ export default function QuizScreen({ navigation }: Props) {
   const [sessionCorrect, setSessionCorrect] = useState(0);
   const [sessionTotal, setSessionTotal] = useState(0);
   const [nothingAvailable, setNothingAvailable] = useState(false);
+  // When set, a study batch was completed less than BATCH_COOLDOWN_MIN ago
+  // and a NEW batch can't start until this timestamp — see BATCH_SIZE /
+  // BATCH_COOLDOWN_MIN in leitner.ts. Does not apply to resuming an
+  // already-in-progress batch (see loadSession below) — only to starting a
+  // fresh one.
+  const [batchGateUntil, setBatchGateUntil] = useState<number | null>(null);
+  // Ticks once a second only while a gate is active, purely to drive the
+  // countdown display and to notice when the gate has expired.
+  const [nowTick, setNowTick] = useState(Date.now());
 
   const scrollRef = useRef<ScrollView>(null);
   // Explicit, unconditional guard: every card ID actually displayed this
@@ -63,50 +70,41 @@ export default function QuizScreen({ navigation }: Props) {
   // a fresh session starting with an empty history is fine.
   const recentModesRef = useRef<AttributeQuestion["mode"][]>([]);
 
-  useEffect(() => {
-    (async () => {
-      const cards = getFilteredCards(filters);
-      const progress = await loadAllProgress();
-      const ids = cards.map((c) => c.id);
-      // buildQueue's isDue() already bakes in the 10-minute cooldown, so
-      // anything it returns is genuinely safe to show. There is
-      // deliberately NO fallback that reshuffles the full pool when this
-      // comes back empty — that fallback used to ignore cooldowns entirely
-      // and was the actual cause of cards reappearing back-to-back. If
-      // nothing is available, the person sees a clear "come back later"
-      // message instead of being served a card they just saw.
-      const freshDueQueue = buildQueue(ids, progress).slice(0, MAX_SESSION_SIZE);
+  const loadSession = useCallback(async () => {
+    const cards = getFilteredCards(filters);
+    const progress = await loadAllProgress();
+    const ids = cards.map((c) => c.id);
+    const now = Date.now();
 
-      // Resume an in-progress session (refresh/back-nav within the same
-      // tab) only if it was captured under this exact filter set. The fresh
-      // due-queue above is always the source of truth for what's actually
-      // due right now — the snapshot only supplies ORDERING/position within
-      // that, and never hides a card that's become newly due since the
-      // last save (e.g. 10+ minutes passed between saves).
-      const snapshot = loadSessionSnapshot(filters);
-      let finalQueue = freshDueQueue;
-      let restoredShown = new Set<string>();
-      let restoredCorrect = 0;
-      let restoredTotal = 0;
+    // Resuming an in-progress batch (refresh/back-nav within the same tab)
+    // takes priority over the pacing gate below — the gate only blocks
+    // STARTING a new batch, never finishing one already underway. A snapshot
+    // only counts as "in progress" if it actually has cards left; an empty
+    // one means the last batch was already fully completed.
+    const snapshot = loadSessionSnapshot(filters);
+    const freshBatch = buildBatch(ids, progress, now, BATCH_SIZE);
 
-      if (snapshot) {
-        restoredShown = new Set(snapshot.shownThisSession);
-        restoredCorrect = snapshot.sessionCorrect;
-        restoredTotal = snapshot.sessionTotal;
+    if (snapshot && snapshot.queue.length > 0) {
+      const restoredShown = new Set(snapshot.shownThisSession);
+      const restoredCorrect = snapshot.sessionCorrect;
+      const restoredTotal = snapshot.sessionTotal;
 
-        const freshDueSet = new Set(freshDueQueue);
-        const resumedQueue = snapshot.queue.filter((id) => freshDueSet.has(id));
-        const alreadyIncluded = new Set(resumedQueue);
-        const newlyDue = freshDueQueue.filter(
-          (id) => !alreadyIncluded.has(id) && !restoredShown.has(id)
-        );
-        finalQueue = [...resumedQueue, ...newlyDue].slice(0, MAX_SESSION_SIZE);
-      }
+      // Never let a stale resume hide a card that's become newly due since
+      // the last save — reconcile against a fresh batch rather than trusting
+      // the snapshot's queue blindly.
+      const freshSet = new Set(freshBatch);
+      const resumedQueue = snapshot.queue.filter((id) => freshSet.has(id));
+      const alreadyIncluded = new Set(resumedQueue);
+      const newlyDue = freshBatch.filter(
+        (id) => !alreadyIncluded.has(id) && !restoredShown.has(id)
+      );
+      const finalQueue = [...resumedQueue, ...newlyDue].slice(0, BATCH_SIZE);
 
       setPool(cards);
       setProgressMap(progress);
       setQueue(finalQueue);
       setNothingAvailable(cards.length > 0 && finalQueue.length === 0);
+      setBatchGateUntil(null);
       shownThisSessionRef.current = restoredShown;
       setSessionCorrect(restoredCorrect);
       setSessionTotal(restoredTotal);
@@ -118,8 +116,65 @@ export default function QuizScreen({ navigation }: Props) {
         sessionTotal: restoredTotal,
       });
       setLoading(false);
-    })();
+      return;
+    }
+
+    // No batch to resume — check whether we're still within the pacing
+    // cooldown from the last COMPLETED batch before starting a fresh one.
+    const lastCompleted = await getLastBatchCompletedAt();
+    const gateUntil = lastCompleted ? lastCompleted + BATCH_COOLDOWN_MIN * 60_000 : null;
+    if (gateUntil && now < gateUntil) {
+      setPool(cards);
+      setProgressMap(progress);
+      setQueue([]);
+      setNothingAvailable(false);
+      setBatchGateUntil(gateUntil);
+      shownThisSessionRef.current = new Set();
+      setSessionCorrect(0);
+      setSessionTotal(0);
+      setLoading(false);
+      return;
+    }
+
+    // Clear to start a fresh batch.
+    setPool(cards);
+    setProgressMap(progress);
+    setQueue(freshBatch);
+    setNothingAvailable(cards.length > 0 && freshBatch.length === 0);
+    setBatchGateUntil(null);
+    shownThisSessionRef.current = new Set();
+    setSessionCorrect(0);
+    setSessionTotal(0);
+    saveSessionSnapshot({
+      filters,
+      queue: freshBatch,
+      shownThisSession: [],
+      sessionCorrect: 0,
+      sessionTotal: 0,
+    });
+    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
+
+  useEffect(() => {
+    loadSession();
+  }, [loadSession]);
+
+  // While gated, tick every second to drive the countdown and to notice the
+  // moment the gate expires — at which point we automatically build the
+  // next batch rather than making the person manually refresh.
+  useEffect(() => {
+    if (!batchGateUntil) return;
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [batchGateUntil]);
+
+  useEffect(() => {
+    if (batchGateUntil && nowTick >= batchGateUntil) {
+      setBatchGateUntil(null);
+      loadSession();
+    }
+  }, [nowTick, batchGateUntil, loadSession]);
 
   const nextQuestion = useCallback(
     (remainingQueue: string[], currentPool: Card[]) => {
@@ -251,6 +306,19 @@ export default function QuizScreen({ navigation }: Props) {
     const remaining = queue.slice(1);
     setQueue(remaining);
     nextQuestion(remaining, pool);
+
+    if (remaining.length === 0) {
+      // This batch is fully done — start the pacing cooldown for the next
+      // one (see BATCH_COOLDOWN_MIN) and clear the resumable snapshot, since
+      // there's nothing left in it to resume. loadSession's own gate check
+      // will pick this up the moment the countdown effect notices it expire.
+      const now = Date.now();
+      setLastBatchCompletedAt(now);
+      clearSessionSnapshot();
+      setBatchGateUntil(now + BATCH_COOLDOWN_MIN * 60_000);
+      return;
+    }
+
     saveSessionSnapshot({
       filters,
       queue: remaining,
@@ -274,6 +342,24 @@ export default function QuizScreen({ navigation }: Props) {
         <Text style={styles.emptyText}>
           No cards match your current filters. Adjust filters in Settings.
         </Text>
+      </View>
+    );
+  }
+
+  if (batchGateUntil && nowTick < batchGateUntil) {
+    const msLeft = batchGateUntil - nowTick;
+    const minutes = Math.floor(msLeft / 60_000);
+    const seconds = Math.floor((msLeft % 60_000) / 1000);
+    const mmss = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.emptyText}>
+          Nice work on that set! Your next batch of cards unlocks in {mmss} — short
+          breaks between sets help this actually stick.
+        </Text>
+        <Pressable style={styles.doneButton} onPress={() => navigation.navigate("Home")}>
+          <Text style={styles.doneButtonText}>Back to home</Text>
+        </Pressable>
       </View>
     );
   }
