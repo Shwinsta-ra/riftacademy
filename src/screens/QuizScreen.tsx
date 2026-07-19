@@ -11,6 +11,10 @@ import {
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { theme } from "../lib/theme";
+import ScreenGlow from "../components/ScreenGlow";
+import GlowButton from "../components/GlowButton";
+import QuizCardArt from "../components/QuizCardArt";
+import Sparklet from "../components/Sparklet";
 import { getFilteredCards } from "../lib/quiz";
 import { buildAttributeQuestion, AttributeQuestion, getMaskRegions } from "../lib/attributeQuiz";
 import { humanizeCardText } from "../lib/textDisplay";
@@ -44,6 +48,10 @@ export default function QuizScreen({ navigation }: Props) {
   const [selected, setSelected] = useState<number | null>(null);
   const [sessionCorrect, setSessionCorrect] = useState(0);
   const [sessionTotal, setSessionTotal] = useState(0);
+  // Bumped on every correct answer to (re)fire the Sparklet reaction. Starts at
+  // 0 (no reaction on mount); each increment plays a fresh, non-blocking
+  // celebration, so answering correctly in a streak re-triggers cleanly.
+  const [correctPlayKey, setCorrectPlayKey] = useState(0);
   const [nothingAvailable, setNothingAvailable] = useState(false);
   // When set, a study batch was completed less than BATCH_COOLDOWN_MIN ago
   // and a NEW batch can't start until this timestamp — see BATCH_SIZE /
@@ -280,6 +288,7 @@ export default function QuizScreen({ navigation }: Props) {
     const newCorrect = correct ? sessionCorrect + 1 : sessionCorrect;
     setSessionTotal(newTotal);
     setSessionCorrect(newCorrect);
+    if (correct) setCorrectPlayKey((k) => k + 1);
 
     const existing = progressMap[card.id] ?? newProgress(card.id);
     const updated = applyResult(existing, correct);
@@ -357,9 +366,12 @@ export default function QuizScreen({ navigation }: Props) {
           Nice work on that set! Your next batch of cards unlocks in {mmss} — short
           breaks between sets help this actually stick.
         </Text>
-        <Pressable style={styles.doneButton} onPress={() => navigation.navigate("Home")}>
-          <Text style={styles.doneButtonText}>Back to home</Text>
-        </Pressable>
+        <GlowButton
+          label="Back to home"
+          onPress={() => navigation.navigate("Home")}
+          radius={12}
+          contentStyle={styles.doneButtonBody}
+        />
       </View>
     );
   }
@@ -370,12 +382,12 @@ export default function QuizScreen({ navigation }: Props) {
         <Text style={styles.emptyText}>
           These are all the cards for you right now — check back in 10 minutes for new ones.
         </Text>
-        <Pressable
-          style={styles.doneButton}
+        <GlowButton
+          label="Back to home"
           onPress={() => navigation.navigate("Home")}
-        >
-          <Text style={styles.doneButtonText}>Back to home</Text>
-        </Pressable>
+          radius={12}
+          contentStyle={styles.doneButtonBody}
+        />
       </View>
     );
   }
@@ -386,12 +398,12 @@ export default function QuizScreen({ navigation }: Props) {
         <Text style={styles.emptyText}>
           Session complete: {sessionCorrect}/{sessionTotal} correct.
         </Text>
-        <Pressable
-          style={styles.doneButton}
+        <GlowButton
+          label="Back to home"
           onPress={() => navigation.navigate("Home")}
-        >
-          <Text style={styles.doneButtonText}>Back to home</Text>
-        </Pressable>
+          radius={12}
+          contentStyle={styles.doneButtonBody}
+        />
       </View>
     );
   }
@@ -401,12 +413,13 @@ export default function QuizScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
+      <ScreenGlow />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}
       >
-        <View style={styles.cardImageWrap}>
+        <QuizCardArt aspectRatio={CARD_ASPECT_RATIO}>
           <Image
             // Non-null assertion is safe here: getFilteredCards() (quiz.ts)
             // excludes every card with imageUrl === null from the pool this
@@ -434,7 +447,7 @@ export default function QuizScreen({ navigation }: Props) {
                 <Text style={styles.maskText}>?</Text>
               </View>
             ))}
-        </View>
+        </QuizCardArt>
 
         <View style={styles.controlsGroup}>
         <Text style={styles.prompt}>{question.prompt}</Text>
@@ -469,11 +482,13 @@ export default function QuizScreen({ navigation }: Props) {
                     key={`${opt}-${i}`}
                     disabled={revealed}
                     onPress={() => handleAnswer(i)}
-                    style={[
+                    style={({ pressed }) => [
                       styles.option,
                       itemStyle,
                       revealed && isCorrect && { backgroundColor: theme.correct },
                       revealed && isSelected && !isCorrect && { backgroundColor: theme.incorrect },
+                      // Motion-only press feedback (no hover on mobile).
+                      pressed && !revealed && styles.optionPressed,
                     ]}
                   >
                     <Text style={styles.optionText} numberOfLines={maxLines}>
@@ -487,12 +502,20 @@ export default function QuizScreen({ navigation }: Props) {
         })()}
 
         {revealed && (
-          <Pressable style={styles.nextButton} onPress={handleNext}>
-            <Text style={styles.nextButtonText}>Next card</Text>
-          </Pressable>
+          <GlowButton
+            label="Next card"
+            onPress={handleNext}
+            radius={12}
+            style={styles.nextButtonWrap}
+            contentStyle={styles.nextButtonBody}
+            textStyle={styles.nextButtonText}
+          />
         )}
         </View>
       </ScrollView>
+      {/* Correct-answer celebration — decorative, pointer-transparent overlay.
+          Never gates advancing: tapping "Next card" underneath works mid-play. */}
+      <Sparklet playKey={correctPlayKey} />
     </View>
   );
 }
@@ -512,13 +535,7 @@ const styles = StyleSheet.create({
   controlsGroup: { width: "100%" },
   centered: { alignItems: "center", justifyContent: "center", flex: 1 },
   emptyText: { color: theme.text, fontSize: 16, textAlign: "center", marginBottom: 16 },
-  doneButton: {
-    backgroundColor: theme.accent,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-  },
-  doneButtonText: { color: "#fff", fontWeight: "600" },
+  doneButtonBody: { paddingVertical: 14, paddingHorizontal: 24 },
   prompt: {
     color: theme.text,
     fontSize: 19,
@@ -535,18 +552,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 14,
   },
-  cardImageWrap: {
-    // Enlarged to 78% per device testing. The controls group is
-    // bottom-anchored (scrollContent uses space-between), leaving room for a
-    // bigger card up top without forcing a scroll on a normal phone. Tune
-    // this single value if it's too big/small on a given device.
-    width: "78%",
-    alignSelf: "center",
-    aspectRatio: CARD_ASPECT_RATIO,
-    borderRadius: 16,
-    overflow: "visible",
-    position: "relative",
-  },
+  // Card sizing/foil now lives in <QuizCardArt/> (78% width + this aspect
+  // ratio). The image fills that container.
   cardImage: { width: "100%", height: "100%", borderRadius: 16 },
   maskOverlay: {
     position: "absolute",
@@ -588,12 +595,8 @@ const styles = StyleSheet.create({
   // ~31.5% x3 + two gutters ≈ full width.
   optionThird: { flex: 1, minHeight: 52 },
   optionText: { color: theme.text, fontSize: 13, lineHeight: 17, textAlign: "center" },
-  nextButton: {
-    backgroundColor: theme.accent,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 20,
-  },
+  optionPressed: { transform: [{ scale: 0.97 }] },
+  nextButtonWrap: { marginTop: 20 },
+  nextButtonBody: { paddingVertical: 14 },
   nextButtonText: { color: "#fff", fontWeight: "600", fontSize: 15 },
 });
