@@ -3,7 +3,9 @@ import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
-import { theme, RIFT_BRAND } from "../lib/theme";
+import { theme, RIFT_BRAND, GLOW } from "../lib/theme";
+import ScreenGlow from "../components/ScreenGlow";
+import GlowButton from "../components/GlowButton";
 import { getAllCards, getFilteredCards } from "../lib/quiz";
 import { loadAllProgress, getLastBatchCompletedAt } from "../lib/db";
 import { loadSessionSnapshot } from "../lib/sessionState";
@@ -38,7 +40,7 @@ const LEGAL_TEXT =
 function RiftWord({ suffix, style }: { suffix: string; style: object }) {
   return (
     <Text style={style}>
-      <Text style={{ color: RIFT_BRAND }}>Rift</Text>
+      <Text style={[{ color: RIFT_BRAND }, GLOW.wordmark]}>Rift</Text>
       {suffix}
     </Text>
   );
@@ -100,6 +102,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   return (
     <View style={styles.screen}>
+      <ScreenGlow />
       <ScrollView style={styles.container} contentContainerStyle={{ padding: 20 }}>
         <RiftWord suffix="Academy" style={styles.title} />
         <Text style={styles.tagline}>Master the Rift.</Text>
@@ -117,12 +120,13 @@ export default function HomeScreen({ navigation }: Props) {
           <Text style={styles.purposeText}>
             Use spaced repetition and micro-learning to build lasting card awareness.
           </Text>
-          <Pressable
-            style={[styles.bigButton, { backgroundColor: theme.accent }]}
+          <GlowButton
+            label={reviewLabel}
             onPress={() => navigation.navigate("Quiz")}
-          >
-            <Text style={styles.bigButtonText}>{reviewLabel}</Text>
-          </Pressable>
+            style={styles.bigButtonWrap}
+            contentStyle={styles.bigButtonBody}
+            textStyle={styles.bigButtonText}
+          />
           <View style={styles.halfRow}>
             <Pressable
               style={[styles.secondaryButton, styles.halfButton]}
@@ -142,12 +146,13 @@ export default function HomeScreen({ navigation }: Props) {
         <FeatureBox>
           <RiftWord suffix="IQ" style={styles.boxLabel} />
           <Text style={styles.iqSubtitle}>Match analysis & strategy puzzles</Text>
-          <Pressable
-            style={[styles.bigButton, { backgroundColor: theme.accent }]}
+          <GlowButton
+            label="New Match"
             onPress={() => navigation.navigate("MatchList")}
-          >
-            <Text style={styles.bigButtonText}>New Match</Text>
-          </Pressable>
+            style={styles.bigButtonWrap}
+            contentStyle={styles.bigButtonBody}
+            textStyle={styles.bigButtonText}
+          />
           <Pressable style={styles.disabledButton} disabled>
             <Text style={styles.disabledButtonText}>Daily Puzzle (coming soon)</Text>
           </Pressable>
@@ -187,10 +192,13 @@ const styles = StyleSheet.create({
   tagline: { fontSize: 15, fontWeight: "700", color: "#bec1d6", marginBottom: 20 },
   featureBox: {
     borderWidth: 1,
-    borderColor: theme.border,
+    borderColor: "rgba(88,101,242,0.25)",
     borderRadius: 16,
     padding: 14,
     marginBottom: 16,
+    // Rune Glow: translucent surface + faint ambient blurple glow.
+    backgroundColor: "rgba(31,31,40,0.75)",
+    ...GLOW.feature,
   },
   featureBoxHighlight: { borderColor: RIFT_BRAND },
   boxHeaderRow: {
@@ -212,12 +220,8 @@ const styles = StyleSheet.create({
   cardCountText: { color: theme.textDim, fontSize: 12, fontWeight: "700" },
   purposeText: { color: "#c7c7d2", fontSize: 13, lineHeight: 18, marginBottom: 12 },
   iqSubtitle: { color: "#c7c7d2", fontSize: 13, marginBottom: 12 },
-  bigButton: {
-    borderRadius: 14,
-    paddingVertical: 18,
-    alignItems: "center",
-    marginBottom: 12,
-  },
+  bigButtonWrap: { marginBottom: 12 },
+  bigButtonBody: { paddingVertical: 18 },
   bigButtonText: { color: "#fff", fontSize: 17, fontWeight: "600" },
   halfRow: { flexDirection: "row", gap: 10 },
   halfButton: { flex: 1, marginBottom: 0 },
