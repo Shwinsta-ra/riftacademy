@@ -12,6 +12,8 @@ import StatsScreen from "./src/screens/StatsScreen";
 import MatchListScreen from "./src/screens/MatchListScreen";
 import MatchDetailScreen from "./src/screens/MatchDetailScreen";
 import { FiltersProvider } from "./src/lib/filtersStore";
+import { TutorialProvider } from "./src/lib/tutorialContext";
+import { TutorialCallout } from "./src/components/TutorialCallout";
 import { FeedbackProvider, useFeedback } from "./src/feedback/context";
 import { FeedbackOverlay } from "./src/feedback/FeedbackBubble";
 import { ROOT_ID } from "./src/feedback/capture";
@@ -121,6 +123,12 @@ function AppShell() {
       {/* Mounted once, here, rather than per screen — so every screen that
           exists today and every screen added later gets the button for free. */}
       <FeedbackOverlay />
+
+      {/* Same reasoning as FeedbackOverlay above: mounted once at the app
+          root (not per-screen) so it can render its ring/bubble on top of
+          whichever screen is currently active, regardless of which screen
+          owns the step's target element. */}
+      <TutorialCallout />
     </View>
   );
 }
@@ -129,9 +137,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <FiltersProvider>
-        <FeedbackProvider>
-          <AppShell />
-        </FeedbackProvider>
+        <TutorialProvider>
+          <FeedbackProvider>
+            <AppShell />
+          </FeedbackProvider>
+        </TutorialProvider>
       </FiltersProvider>
     </SafeAreaProvider>
   );
