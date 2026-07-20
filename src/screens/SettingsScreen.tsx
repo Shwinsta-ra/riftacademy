@@ -30,7 +30,7 @@ export default function SettingsScreen({ navigation }: Props) {
   const types = getAvailableTypes();
   const speeds = getAvailableSpeeds();
   const [deckPickerOpen, setDeckPickerOpen] = useState(false);
-  const { completeStepIfActive } = useTutorial();
+  const { completeStepIfActive, currentStep } = useTutorial();
   const newestSetChipTarget = useTutorialTarget("newestSetChip");
   const setFiltersCTATarget = useTutorialTarget("setFiltersCTA");
   // Staged selection: tapping a row in the deck picker highlights it but
@@ -146,7 +146,12 @@ export default function SettingsScreen({ navigation }: Props) {
                 // Chip is shared by domains/types/speeds too.
                 if (!isNewestSet) return chip;
                 return (
-                  <View key={group.label} ref={newestSetChipTarget.ref} onLayout={newestSetChipTarget.onLayout}>
+                  <View
+                    key={group.label}
+                    ref={newestSetChipTarget.ref}
+                    onLayout={newestSetChipTarget.onLayout}
+                    style={currentStep?.id === "newestSetChip" && styles.tutorialChipActive}
+                  >
                     {chip}
                   </View>
                 );
@@ -171,7 +176,7 @@ export default function SettingsScreen({ navigation }: Props) {
         )}
         {staged.deckId && (
           <Text style={[styles.helper, { marginTop: 20 }]}>
-            Sets and domains are hidden while testing against a deck — clear the deck filter
+            Sets and domains are hidden while testing against a deck. Clear the deck filter
             above to use them again.
           </Text>
         )}
@@ -203,7 +208,11 @@ export default function SettingsScreen({ navigation }: Props) {
         <Pressable
           ref={setFiltersCTATarget.ref}
           onLayout={setFiltersCTATarget.onLayout}
-          style={[styles.setFiltersButton, !dirty && styles.setFiltersButtonInactive]}
+          style={[
+            styles.setFiltersButton,
+            !dirty && styles.setFiltersButtonInactive,
+            currentStep?.id === "setFiltersCTA" && styles.tutorialTargetActive,
+          ]}
           onPress={() => {
             completeStepIfActive("setFiltersCTA");
             commitFilters();
@@ -331,6 +340,18 @@ const styles = StyleSheet.create({
   },
   setFiltersButtonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   setFiltersButtonTextInactive: { color: theme.textDim },
+  // Tutorial highlight: applied directly to the target's own style, not a
+  // separately-measured overlay — can't mismatch the element's actual
+  // bounds. Matches setFiltersButton's own borderRadius (12). Uses
+  // theme.text (near-white), not theme.accent -- once dirty, this button is
+  // already filled with theme.accent, so an accent border on top would be
+  // invisible (same reasoning as HomeScreen's tutorialTargetActive).
+  tutorialTargetActive: { borderColor: theme.text, borderWidth: 2, borderRadius: 12 },
+  // Same idea, but matching Chip's pill borderRadius (20) since this wraps
+  // the newest-set chip rather than a rectangular button. The chip turns
+  // theme.accent-filled once selected (see the "Pick a set" step, which is
+  // exactly when this highlight needs to be visible), so same fix applies.
+  tutorialChipActive: { borderColor: theme.text, borderWidth: 2, borderRadius: 20 },
   selectorButton: {
     backgroundColor: theme.card,
     borderWidth: 1,
