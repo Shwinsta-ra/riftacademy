@@ -32,6 +32,15 @@ export const MIN_COOLDOWN_MIN = 10;
 export const BATCH_SIZE = 20;
 export const BATCH_COOLDOWN_MIN = 10;
 
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 type CardCategory = "missed" | "new" | "review";
 
 function categorize(cardId: string, progressByCardId: Record<string, CardProgress>): CardCategory {
@@ -152,9 +161,16 @@ export function buildBatch(
 
   const pools: Record<CardCategory, string[]> = { missed: [], new: [], review: [] };
   for (const id of due) pools[categorize(id, progressByCardId)].push(id);
-  pools.missed.sort(sortFn);
-  pools.new.sort(sortFn);
-  pools.review.sort(sortFn);
+  // Shuffle before sorting, not after: Array.sort is stable, so cards that
+  // tie on (box, dueAt) keep whatever order they were in going in. Without
+  // this, the "new" pool -- every never-seen card ties at box 1 / dueAt 0 --
+  // would always sort back into allCardIds' own order, which is why a fresh
+  // account was always handed the same cards in the same order every batch.
+  // The shuffle only affects ties; a genuine priority difference (lower box,
+  // earlier due time) still wins regardless of shuffle order.
+  pools.missed = shuffle(pools.missed).sort(sortFn);
+  pools.new = shuffle(pools.new).sort(sortFn);
+  pools.review = shuffle(pools.review).sort(sortFn);
 
   const order: CardCategory[] = ["missed", "new", "review"];
   const cursor: Record<CardCategory, number> = { missed: 0, new: 0, review: 0 };
