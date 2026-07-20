@@ -12,18 +12,18 @@
   "might": {
     "default": [
       {
-        "top": 3.0,
-        "height": 17.9,
-        "left": 70.5,
-        "width": 25.0
+        "top": 3.09,
+        "height": 13.47,
+        "left": 80.24,
+        "width": 18.82
       }
     ],
     "Gear": [
       {
-        "top": 82.1,
-        "height": 17.9,
-        "left": 70.5,
-        "width": 25.0
+        "top": 81.67,
+        "height": 12.51,
+        "left": 79.31,
+        "width": 17.47
       }
     ]
   },
