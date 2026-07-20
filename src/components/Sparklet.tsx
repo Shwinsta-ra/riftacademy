@@ -48,9 +48,9 @@ type Props = {
 };
 
 /**
- * Sparklet — the correct-answer delight mascot. Plays a ~800ms concurrent
- * reaction (hop + cap nod + eureka sparkle + spark particles + "Correct!"
- * toast) and then fades out. It is a decorative, pointer-transparent overlay:
+ * Sparklet — the correct-answer delight mascot. Plays a concurrent reaction
+ * (hop + cap nod + eureka sparkle + spark particles + "Correct!" toast),
+ * holds for ~1.9s total, then fades out. It is a decorative, pointer-transparent overlay:
  * it never blocks advancing to the next question, and it encodes no state on
  * its own (the AnswerButton's green/red result is the real, announced cue).
  *
@@ -120,14 +120,16 @@ export default function Sparklet({ playKey, size = 120 }: Props) {
       v.setValue(0);
     });
 
-    // Overlay: quick fade in, hold, fade out (~900ms total).
+    // Overlay: quick fade in, hold, fade out (~1900ms total -- per Ashwin,
+    // bumped 1s longer than the original ~900ms so the reaction has time to
+    // actually be seen/read, not just flash by).
     Animated.sequence([
       Animated.timing(shown, {
         toValue: 1,
         duration: 120,
         useNativeDriver: true,
       }),
-      Animated.delay(560),
+      Animated.delay(1560),
       Animated.timing(shown, {
         toValue: 0,
         duration: 220,
@@ -136,9 +138,12 @@ export default function Sparklet({ playKey, size = 120 }: Props) {
     ]).start();
 
     // Toast fade/slide — runs in both normal and reduced-motion modes.
+    // Duration matches the overlay's total lifetime above so the "Correct!"
+    // label stays up as long as the mascot does, instead of fading out
+    // early and leaving the mascot sitting there unlabeled.
     Animated.timing(toast, {
       toValue: 1,
-      duration: 900,
+      duration: 1900,
       easing: Easing.out(Easing.quad),
       useNativeDriver: true,
     }).start();

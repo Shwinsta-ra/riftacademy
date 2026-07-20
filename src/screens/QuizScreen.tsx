@@ -368,28 +368,25 @@ export default function QuizScreen({ navigation }: Props) {
     const minutes = Math.floor(msLeft / 60_000);
     const seconds = Math.floor((msLeft % 60_000) / 1000);
     const mmss = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-    // Absolutely-positioned zones (per Ashwin's spec) instead of one centered
-    // block of text, so the headline, countdown, and tip/button pairing each
-    // land at their own deliberate spot on screen rather than stacking
-    // together in the middle.
+    // One vertically-centered column (per Ashwin's follow-up -- the earlier
+    // absolutely-positioned zones spread it too far down the screen). The
+    // headline/label/countdown read as one 3-line group, followed by the
+    // tip and button with a small gap before each.
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, styles.centered]}>
         <Text style={styles.doneHeadline}>Nice work on that set!</Text>
-        <View style={styles.doneCountdownBlock}>
-          <Text style={styles.doneCountdownLabel}>Your next batch of cards unlocks in:</Text>
-          <Text style={styles.doneCountdownValue}>{mmss}</Text>
-        </View>
-        <View style={styles.doneBottomBlock}>
-          <Text style={styles.doneTip}>
-            Short breaks between sets improves your card recall
-          </Text>
-          <GlowButton
-            label="Back to home"
-            onPress={() => navigation.navigate("Home")}
-            radius={12}
-            contentStyle={styles.doneButtonBody}
-          />
-        </View>
+        <Text style={styles.doneCountdownLabel}>Your next batch of cards unlocks in:</Text>
+        <Text style={styles.doneCountdownValue}>{mmss}</Text>
+        <Text style={styles.doneTip}>
+          Short breaks between sets improves your card recall
+        </Text>
+        <GlowButton
+          label="Back to home"
+          onPress={() => navigation.navigate("Home")}
+          radius={12}
+          contentStyle={styles.doneButtonBody}
+          style={styles.doneButtonWrap}
+        />
       </View>
     );
   }
@@ -430,18 +427,23 @@ export default function QuizScreen({ navigation }: Props) {
   const revealed = selected !== null;
   const cardAspectRatio =
     card.type === "Battlefield" ? BATTLEFIELD_ASPECT_RATIO : CARD_ASPECT_RATIO;
-  // Cost pips are printed as circular badges on the real card art (verified
-  // by measuring several cards' actual pixels: a perfect circle, ~82-88px
-  // diameter, centered ~11.3%/8.8%); the might/power badge itself is
-  // actually a rounded rectangle on the printed card, but per Ashwin's
+  // Cost pips are printed as circular badges on the real card art; the
+  // might/power badge itself is actually a rounded rectangle (or, on
+  // equipment, a "+N" flag icon) on the printed card, but per Ashwin's
   // follow-up feedback the might mask should visually match the cost mask's
-  // circular badge rather than mirror the real (rounded-rect) shape --
-  // consistency of the mask style reads better than exactly tracing what's
-  // underneath it. quizPositions.json's "cost"/"might" entries are
-  // calibrated to render as true circles at this ratio's ~78%-width
-  // container, so a full borderRadius here is enough -- no per-render
-  // aspect-ratio math needed, since cost/might questions only ever occur on
-  // portrait-oriented cards.
+  // circular badge rather than mirror the real shape -- consistency of the
+  // mask style reads better than exactly tracing what's underneath it.
+  // quizPositions.json's "might" regions are deliberately sized to just the
+  // printed digit(s) plus a comfortable safety margin (measured by locating
+  // the actual white digit pixels on several real cards), not the whole
+  // badge/banner -- an earlier pass sized the circle to cover the full
+  // banner shape and it read as oversized (per a later round of feedback);
+  // the shield icon next to the number doesn't need hiding since it's
+  // identical on every card and never reveals the might value. quizPositions
+  // entries are calibrated to render as true circles at this ratio's
+  // ~78%-width container, so a full borderRadius here is enough -- no
+  // per-render aspect-ratio math needed, since cost/might questions only
+  // ever occur on portrait-oriented cards.
   const isCircularMask =
     question.mode === "energyCost" || question.mode === "powerCost" || question.mode === "might";
 
@@ -572,39 +574,28 @@ const styles = StyleSheet.create({
   centered: { alignItems: "center", justifyContent: "center", flex: 1 },
   emptyText: { color: theme.text, fontSize: 16, textAlign: "center", marginBottom: 16 },
   doneButtonBody: { paddingVertical: 14, paddingHorizontal: 24 },
-  // The batch-cooldown screen (see the batchGateUntil block above) lays out
-  // as three independent zones down the container's full height, rather
-  // than one centered block -- percentages are relative to the screen, same
-  // pattern as the quiz-card mask regions.
+  doneButtonWrap: { marginTop: 24 },
+  // The batch-cooldown screen (see the batchGateUntil block above) is one
+  // vertically-centered column (styles.centered on the container) -- the
+  // headline/label/countdown read as a 3-line group with no gap between
+  // them, then a bigger gap before the tip and again before the button.
   doneHeadline: {
-    position: "absolute",
-    top: "10%",
-    left: 0,
-    right: 0,
     textAlign: "center",
     color: theme.text,
     fontSize: 26,
     fontWeight: "800",
     paddingHorizontal: 24,
+    marginBottom: 20,
   },
-  doneCountdownBlock: {
-    position: "absolute",
-    top: "42%",
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  doneCountdownLabel: { color: theme.textDim, fontSize: 14, textAlign: "center" },
+  doneCountdownLabel: { color: theme.textDim, fontSize: 16, textAlign: "center" },
   doneCountdownValue: { color: theme.text, fontSize: 34, fontWeight: "800", marginTop: 6 },
-  doneBottomBlock: {
-    position: "absolute",
-    top: "70%",
-    left: 0,
-    right: 0,
-    alignItems: "center",
+  doneTip: {
+    color: theme.textDim,
+    fontSize: 15,
+    textAlign: "center",
+    marginTop: 24,
     paddingHorizontal: 24,
   },
-  doneTip: { color: theme.textDim, fontSize: 13, textAlign: "center", marginBottom: 14 },
   prompt: {
     color: theme.text,
     fontSize: 19,
