@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
-import { theme } from "../lib/theme";
+import { theme, GLOW } from "../lib/theme";
 import ScreenGlow from "../components/ScreenGlow";
 import GlowButton from "../components/GlowButton";
 import QuizCardArt from "../components/QuizCardArt";
@@ -28,9 +28,16 @@ import { cardImageUri } from "../lib/cardImage";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Quiz">;
 
-// Real card renders are 744x1039 — matching that ratio exactly means the
-// card fills its container edge to edge with no leftover letterboxing.
+// Real card renders are 744x1039 (portrait) -- matching that ratio exactly
+// means the card fills its container edge to edge with no leftover
+// letterboxing. Battlefield cards are the same physical template rotated
+// 90 degrees (measured: 1038x744, the same numbers swapped), so they need
+// the inverse ratio -- using the portrait ratio for every card type used to
+// force battlefields into a tall container via resizeMode="contain",
+// letterboxing them top/bottom. cardAspectRatio (below, per-render) picks
+// the right one so the container always matches the card's actual shape.
 const CARD_ASPECT_RATIO = 744 / 1039;
+const BATTLEFIELD_ASPECT_RATIO = 1039 / 744;
 
 export default function QuizScreen({ navigation }: Props) {
   const { filters } = useFilters();
@@ -363,7 +370,7 @@ export default function QuizScreen({ navigation }: Props) {
     return (
       <View style={[styles.container, styles.centered]}>
         <Text style={styles.emptyText}>
-          Nice work on that set! Your next batch of cards unlocks in {mmss} — short
+          Nice work on that set! Your next batch of cards unlocks in {mmss}. Short
           breaks between sets help this actually stick.
         </Text>
         <GlowButton
@@ -380,7 +387,7 @@ export default function QuizScreen({ navigation }: Props) {
     return (
       <View style={[styles.container, styles.centered]}>
         <Text style={styles.emptyText}>
-          These are all the cards for you right now — check back in 10 minutes for new ones.
+          These are all the cards for you right now. Check back in 10 minutes for new ones.
         </Text>
         <GlowButton
           label="Back to home"
@@ -410,6 +417,17 @@ export default function QuizScreen({ navigation }: Props) {
 
   const maskRegions = getMaskRegions(question.mode, card);
   const revealed = selected !== null;
+  const cardAspectRatio =
+    card.type === "Battlefield" ? BATTLEFIELD_ASPECT_RATIO : CARD_ASPECT_RATIO;
+  // Cost pips are printed as circular badges on the real card art (verified
+  // by measuring several cards' actual pixels: a perfect circle, ~82-88px
+  // diameter, centered ~11.3%/8.8%); the might/power badge is a rounded
+  // rectangle, not a circle. quizPositions.json's "cost" entry is
+  // calibrated to render as a true circle at this ratio's ~78%-width
+  // container, so a full borderRadius here is enough -- no per-render
+  // aspect-ratio math needed, since cost/might questions only ever occur
+  // on portrait-oriented cards.
+  const isCircularMask = question.mode === "energyCost" || question.mode === "powerCost";
 
   return (
     <View style={styles.container}>
@@ -419,7 +437,10 @@ export default function QuizScreen({ navigation }: Props) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}
       >
-        <QuizCardArt aspectRatio={CARD_ASPECT_RATIO}>
+        <QuizCardArt
+          aspectRatio={cardAspectRatio}
+          decoration={<Sparklet playKey={correctPlayKey} />}
+        >
           <Image
             // Non-null assertion is safe here: getFilteredCards() (quiz.ts)
             // excludes every card with imageUrl === null from the pool this
@@ -427,7 +448,7 @@ export default function QuizScreen({ navigation }: Props) {
             // this render without real art.
             source={{ uri: imageProxyFailed ? card.imageUrl! : cardImageUri(card.imageUrl!) }}
             style={styles.cardImage}
-            resizeMode={card.type === "Battlefield" ? "contain" : "cover"}
+            resizeMode="cover"
             onError={() => setImageProxyFailed(true)}
           />
           {!revealed &&
@@ -436,6 +457,7 @@ export default function QuizScreen({ navigation }: Props) {
                 key={i}
                 style={[
                   styles.maskOverlay,
+                  isCircularMask && styles.maskOverlayCircle,
                   {
                     top: region.top,
                     left: region.left,
@@ -513,9 +535,6 @@ export default function QuizScreen({ navigation }: Props) {
         )}
         </View>
       </ScrollView>
-      {/* Correct-answer celebration — decorative, pointer-transparent overlay.
-          Never gates advancing: tapping "Next card" underneath works mid-play. */}
-      <Sparklet playKey={correctPlayKey} />
     </View>
   );
 }
@@ -555,16 +574,25 @@ const styles = StyleSheet.create({
   // Card sizing/foil now lives in <QuizCardArt/> (78% width + this aspect
   // ratio). The image fills that container.
   cardImage: { width: "100%", height: "100%", borderRadius: 16 },
+  // Zones are now tightly fitted to the actual printed element they cover
+  // (verified by measuring several cards' real pixels) rather than the
+  // generous quadrant-sized boxes this used to be, so the fill/border can
+  // read as a deliberate badge instead of a slab pasted over the art.
   maskOverlay: {
     position: "absolute",
-    backgroundColor: "#0d0d12",
-    borderWidth: 1,
-    borderColor: theme.accent,
-    borderRadius: 6,
+    // Fully opaque -- this exists to hide an answer, so unlike the rest of
+    // the Rune Glow surfaces it can't afford to be a translucent wash.
+    backgroundColor: "#0f0f16",
+    borderWidth: 1.5,
+    borderColor: "rgba(88,101,242,0.55)",
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+    ...GLOW.feature,
   },
-  maskText: { color: theme.accent, fontSize: 22, fontWeight: "800" },
+  // Cost pips are round on the actual card art -- see isCircularMask above.
+  maskOverlayCircle: { borderRadius: 999 },
+  maskText: { color: theme.accent, fontSize: 17, fontWeight: "800" },
   // Full-width single column — used only for long-answer text-mode questions.
   optionsColumn: { gap: 8, alignItems: "stretch" },
   // 2x2 grid — 4 short options (cost/might/name/keyword).

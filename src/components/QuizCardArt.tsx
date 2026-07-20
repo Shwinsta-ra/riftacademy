@@ -1,127 +1,49 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import Svg, {
-  Defs,
-  LinearGradient,
-  Rect,
-  Stop,
-} from "react-native-svg";
-import { FOIL, GLOW } from "../lib/theme";
+import { GLOW } from "../lib/theme";
 
 const RADIUS = 16;
 
 type Props = {
   aspectRatio: number;
   children: React.ReactNode;
+  /** Optional overlay rendered on the OUTER (unclipped, overflow: visible)
+   *  container -- for decoration that needs to be positioned relative to
+   *  the card's own box and allowed to bleed past its edge (e.g. Sparklet),
+   *  as opposed to `children`, which renders inside the clipped region and
+   *  gets masked at the card's rounded corners. */
+  decoration?: React.ReactNode;
 };
 
 /**
- * "Foil Rare" wrapper for the quiz card-art container — and the ONLY place the
- * foil treatment is used (never buttons, feature boxes, or nav). It layers,
- * from back to front:
- *   1. an outer blurple glow ring (GLOW.cardRing) on an unclipped wrapper,
- *   2. a clipped inner region with a gold rim (FOIL.rim) and rounded corners,
- *   3. the foil base gradient (shows during load / behind letterboxed art),
- *   4. the card image + quiz masks (passed as `children`),
- *   5. a diagonal holographic sheen over the art,
- *   6. a blurple→gold→blurple gradient border trim on top.
+ * Quiz card-art container: a rounded-corner clip around the card image, with
+ * an ambient blurple glow (GLOW.cardRing) rendered behind/around it via RN's
+ * shadow* props on the unclipped outer wrapper.
  *
- * SVG viewBoxes are stretched to fill (`preserveAspectRatio="none"`) so no
- * onLayout measurement is needed. All decorative layers are pointer-transparent
- * so taps still reach whatever the caller renders.
+ * Previously also drew an on-top "foil rare" treatment -- a gold rim, a
+ * holographic sheen, and a gradient border trim layered on top of the art
+ * via three separate SVG overlays. Dropped (per Ashwin, July 19 UI-polish
+ * pass) in favor of just the glow: the trim SVG's rounded-corner stroke
+ * kept drifting out of alignment with the clip's CSS borderRadius across
+ * different card aspect ratios (see git history for the specific artifact
+ * this caused on Blade Twirler), and the card art already has its own
+ * illustrated border doing the framing job -- an on-top rim was fighting
+ * the art rather than complementing it. The glow alone doesn't have that
+ * failure mode: RN shadows render outside the view's own bounds, so there's
+ * no edge-alignment to get wrong.
  */
-export default function QuizCardArt({ aspectRatio, children }: Props) {
+export default function QuizCardArt({ aspectRatio, children, decoration }: Props) {
   return (
     <View style={[styles.outer, { aspectRatio }, GLOW.cardRing]}>
-      <View style={styles.clip}>
-        {/* 3. base gradient (behind the image) */}
-        <Svg
-          style={StyleSheet.absoluteFill}
-          width="100%"
-          height="100%"
-          viewBox="0 0 100 140"
-          preserveAspectRatio="none"
-          pointerEvents="none"
-        >
-          <Defs>
-            <LinearGradient id="foilBase" x1="0.1" y1="0" x2="0.9" y2="1">
-              {FOIL.baseStops.map((s) => (
-                <Stop key={s.offset} offset={s.offset} stopColor={s.color} />
-              ))}
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100" height="140" fill="url(#foilBase)" />
-        </Svg>
-
-        {/* 4. card image + masks */}
-        {children}
-
-        {/* 5. holographic sheen (over the art) */}
-        <Svg
-          style={StyleSheet.absoluteFill}
-          width="100%"
-          height="100%"
-          viewBox="0 0 100 140"
-          preserveAspectRatio="none"
-          pointerEvents="none"
-        >
-          <Defs>
-            <LinearGradient id="foilSheen" x1="0" y1="1" x2="1" y2="0">
-              {FOIL.sheenStops.map((s, i) => (
-                <Stop
-                  key={i}
-                  offset={s.offset}
-                  stopColor={s.color}
-                  stopOpacity={s.opacity}
-                />
-              ))}
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100" height="140" fill="url(#foilSheen)" />
-        </Svg>
-      </View>
-
-      {/* 6. gradient border trim (on the unclipped outer, so it traces the rim) */}
-      <Svg
-        style={StyleSheet.absoluteFill}
-        width="100%"
-        height="100%"
-        viewBox="0 0 100 140"
-        preserveAspectRatio="none"
-        pointerEvents="none"
-      >
-        <Defs>
-          <LinearGradient id="foilTrim" x1="0" y1="0" x2="1" y2="1">
-            {FOIL.trimStops.map((s, i) => (
-              <Stop
-                key={i}
-                offset={s.offset}
-                stopColor={s.color}
-                stopOpacity={s.opacity}
-              />
-            ))}
-          </LinearGradient>
-        </Defs>
-        <Rect
-          x="0.6"
-          y="0.6"
-          width="98.8"
-          height="138.8"
-          rx="7"
-          ry="9"
-          fill="none"
-          stroke="url(#foilTrim)"
-          strokeWidth="1.2"
-          opacity={FOIL.trimOpacity}
-        />
-      </Svg>
+      <View style={styles.clip}>{children}</View>
+      {decoration}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  // 78% width + caller aspectRatio, matching the pre-foil card sizing exactly
-  // (no layout change). overflow visible so the glow ring can bleed past.
+  // 78% width + caller aspectRatio. overflow visible so the glow can bleed
+  // past, and so `decoration` (e.g. Sparklet) can peek past the edge too.
   outer: {
     width: "78%",
     alignSelf: "center",
@@ -129,12 +51,17 @@ const styles = StyleSheet.create({
     overflow: "visible",
     position: "relative",
   },
-  // Clipped, rounded, gold-rimmed region holding the gradient + art + sheen.
+  // Clipped, rounded region holding the card art. backgroundColor is a
+  // fallback fill visible only during image load or, for a landscape
+  // (Battlefield) card whose real aspect ratio isn't a perfect match for
+  // its container, in any thin letterboxed margin -- see BATTLEFIELD_ASPECT_RATIO
+  // in QuizScreen.tsx, which sizes the container to the card's actual
+  // orientation specifically to keep that margin near zero.
   clip: {
     width: "100%",
     height: "100%",
     borderRadius: RADIUS,
     overflow: "hidden",
-    ...FOIL.rim,
+    backgroundColor: "#1a1a24",
   },
 });
