@@ -66,10 +66,19 @@ type Props = {
  * Positioning: rendered via QuizCardArt's `decoration` slot, which places it
  * on the card's own unclipped outer container (position: relative, overflow:
  * visible) — so `styles.overlay` below is anchored to the CARD's box, not
- * the whole screen. Sits on the right side, ~30% up from the card's bottom
- * edge, peeking slightly past the card's own right edge, rather than
- * centered over the card (which used to overlap the caption/prompt/answers
- * below it).
+ * the whole screen. Pinned to the bottom-right corner (peeking slightly past
+ * both edges), rather than centered over the card (which used to overlap
+ * the caption/prompt/answers below it).
+ *
+ * Deliberately anchored from `bottom`/`right` with fixed offsets, NOT a
+ * `top: '70%'`-style percentage of container height: QuizCardArt's
+ * container aspect ratio varies by card orientation (portrait for most
+ * cards, landscape for Battlefields — see BATTLEFIELD_ASPECT_RATIO in
+ * QuizScreen.tsx), so a percentage-of-height anchor that looks right on a
+ * tall portrait card overshoots well past the bottom of a short landscape
+ * one. Anchoring from the corner with fixed pixel offsets keeps the mascot
+ * pinned to the actual card edge regardless of the container's aspect
+ * ratio.
  */
 export default function Sparklet({ playKey, size = 120 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -344,13 +353,13 @@ export default function Sparklet({ playKey, size = 120 }: Props) {
 }
 
 const styles = StyleSheet.create({
-  // Right side, peeking slightly past the card's own right edge, top edge
-  // ~30% up from the card's bottom (i.e. 70% of the card's height down from
-  // its top) -- not centered over the card, which used to overlap the
-  // caption/prompt/answers below it.
+  // Bottom-right corner, peeking slightly past both edges -- fixed pixel
+  // offsets rather than a percentage of container height, so it holds up
+  // for both portrait and landscape (Battlefield) cards. Not centered over
+  // the card, which used to overlap the caption/prompt/answers below it.
   overlay: {
     position: "absolute",
-    top: "70%",
+    bottom: -8,
     right: -10,
     alignItems: "center",
   },

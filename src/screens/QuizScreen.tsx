@@ -28,9 +28,16 @@ import { cardImageUri } from "../lib/cardImage";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Quiz">;
 
-// Real card renders are 744x1039 — matching that ratio exactly means the
-// card fills its container edge to edge with no leftover letterboxing.
+// Real card renders are 744x1039 (portrait) -- matching that ratio exactly
+// means the card fills its container edge to edge with no leftover
+// letterboxing. Battlefield cards are the same physical template rotated
+// 90 degrees (measured: 1038x744, the same numbers swapped), so they need
+// the inverse ratio -- using the portrait ratio for every card type used to
+// force battlefields into a tall container via resizeMode="contain",
+// letterboxing them top/bottom. cardAspectRatio (below, per-render) picks
+// the right one so the container always matches the card's actual shape.
 const CARD_ASPECT_RATIO = 744 / 1039;
+const BATTLEFIELD_ASPECT_RATIO = 1039 / 744;
 
 export default function QuizScreen({ navigation }: Props) {
   const { filters } = useFilters();
@@ -410,6 +417,8 @@ export default function QuizScreen({ navigation }: Props) {
 
   const maskRegions = getMaskRegions(question.mode, card);
   const revealed = selected !== null;
+  const cardAspectRatio =
+    card.type === "Battlefield" ? BATTLEFIELD_ASPECT_RATIO : CARD_ASPECT_RATIO;
 
   return (
     <View style={styles.container}>
@@ -420,7 +429,7 @@ export default function QuizScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={true}
       >
         <QuizCardArt
-          aspectRatio={CARD_ASPECT_RATIO}
+          aspectRatio={cardAspectRatio}
           decoration={<Sparklet playKey={correctPlayKey} />}
         >
           <Image
@@ -430,7 +439,7 @@ export default function QuizScreen({ navigation }: Props) {
             // this render without real art.
             source={{ uri: imageProxyFailed ? card.imageUrl! : cardImageUri(card.imageUrl!) }}
             style={styles.cardImage}
-            resizeMode={card.type === "Battlefield" ? "contain" : "cover"}
+            resizeMode="cover"
             onError={() => setImageProxyFailed(true)}
           />
           {!revealed &&
