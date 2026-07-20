@@ -52,7 +52,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "setFiltersCTA",
     screen: "Settings",
-    text: "Tap Set filters to lock in your choice.",
+    text: "Tap Set Filters to lock in your choice.",
   },
   {
     id: "reviewCardsButton",

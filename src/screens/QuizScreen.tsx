@@ -7,6 +7,7 @@ import {
   Image,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
@@ -17,7 +18,7 @@ import QuizCardArt from "../components/QuizCardArt";
 import Sparklet from "../components/Sparklet";
 import { getFilteredCards } from "../lib/quiz";
 import { buildAttributeQuestion, AttributeQuestion, getMaskRegions } from "../lib/attributeQuiz";
-import { humanizeCardText } from "../lib/textDisplay";
+import { humanizeCardText, preventOrphanWord } from "../lib/textDisplay";
 import { loadAllProgress, saveProgress, getLastBatchCompletedAt, setLastBatchCompletedAt } from "../lib/db";
 import { loadSessionSnapshot, saveSessionSnapshot, clearSessionSnapshot } from "../lib/sessionState";
 import { buildBatch, applyResult, newProgress, BATCH_SIZE, BATCH_COOLDOWN_MIN } from "../lib/leitner";
@@ -367,18 +368,28 @@ export default function QuizScreen({ navigation }: Props) {
     const minutes = Math.floor(msLeft / 60_000);
     const seconds = Math.floor((msLeft % 60_000) / 1000);
     const mmss = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    // Absolutely-positioned zones (per Ashwin's spec) instead of one centered
+    // block of text, so the headline, countdown, and tip/button pairing each
+    // land at their own deliberate spot on screen rather than stacking
+    // together in the middle.
     return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.emptyText}>
-          Nice work on that set! Your next batch of cards unlocks in {mmss}. Short
-          breaks between sets help this actually stick.
-        </Text>
-        <GlowButton
-          label="Back to home"
-          onPress={() => navigation.navigate("Home")}
-          radius={12}
-          contentStyle={styles.doneButtonBody}
-        />
+      <View style={styles.container}>
+        <Text style={styles.doneHeadline}>Nice work on that set!</Text>
+        <View style={styles.doneCountdownBlock}>
+          <Text style={styles.doneCountdownLabel}>Your next batch of cards unlocks in:</Text>
+          <Text style={styles.doneCountdownValue}>{mmss}</Text>
+        </View>
+        <View style={styles.doneBottomBlock}>
+          <Text style={styles.doneTip}>
+            Short breaks between sets improves your card recall
+          </Text>
+          <GlowButton
+            label="Back to home"
+            onPress={() => navigation.navigate("Home")}
+            radius={12}
+            contentStyle={styles.doneButtonBody}
+          />
+        </View>
       </View>
     );
   }
@@ -421,13 +432,18 @@ export default function QuizScreen({ navigation }: Props) {
     card.type === "Battlefield" ? BATTLEFIELD_ASPECT_RATIO : CARD_ASPECT_RATIO;
   // Cost pips are printed as circular badges on the real card art (verified
   // by measuring several cards' actual pixels: a perfect circle, ~82-88px
-  // diameter, centered ~11.3%/8.8%); the might/power badge is a rounded
-  // rectangle, not a circle. quizPositions.json's "cost" entry is
-  // calibrated to render as a true circle at this ratio's ~78%-width
+  // diameter, centered ~11.3%/8.8%); the might/power badge itself is
+  // actually a rounded rectangle on the printed card, but per Ashwin's
+  // follow-up feedback the might mask should visually match the cost mask's
+  // circular badge rather than mirror the real (rounded-rect) shape --
+  // consistency of the mask style reads better than exactly tracing what's
+  // underneath it. quizPositions.json's "cost"/"might" entries are
+  // calibrated to render as true circles at this ratio's ~78%-width
   // container, so a full borderRadius here is enough -- no per-render
-  // aspect-ratio math needed, since cost/might questions only ever occur
-  // on portrait-oriented cards.
-  const isCircularMask = question.mode === "energyCost" || question.mode === "powerCost";
+  // aspect-ratio math needed, since cost/might questions only ever occur on
+  // portrait-oriented cards.
+  const isCircularMask =
+    question.mode === "energyCost" || question.mode === "powerCost" || question.mode === "might";
 
   return (
     <View style={styles.container}>
@@ -472,7 +488,7 @@ export default function QuizScreen({ navigation }: Props) {
         </QuizCardArt>
 
         <View style={styles.controlsGroup}>
-        <Text style={styles.prompt}>{question.prompt}</Text>
+        <Text style={styles.prompt}>{preventOrphanWord(question.prompt)}</Text>
         {question.caption && (
           <Text style={styles.caption}>{humanizeCardText(question.caption)}</Text>
         )}
@@ -541,20 +557,54 @@ export default function QuizScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.bg },
-  // flexGrow lets the content fill the viewport so space-between can push the
-  // card to the top and the controls group to the bottom. It still scrolls as
-  // a fallback if a particular card's content is taller than the screen.
+  // flexGrow lets the content fill the viewport even on a short card. No
+  // justifyContent here on purpose -- space-between used to stretch the gap
+  // between the card and the question text to fill any leftover viewport
+  // height; controlsGroup's own marginTop is what sets that gap now, so it
+  // stays a fixed, reasonable size regardless of screen height.
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 20,
-    justifyContent: "space-between",
   },
   controlsGroup: { width: "100%" },
   centered: { alignItems: "center", justifyContent: "center", flex: 1 },
   emptyText: { color: theme.text, fontSize: 16, textAlign: "center", marginBottom: 16 },
   doneButtonBody: { paddingVertical: 14, paddingHorizontal: 24 },
+  // The batch-cooldown screen (see the batchGateUntil block above) lays out
+  // as three independent zones down the container's full height, rather
+  // than one centered block -- percentages are relative to the screen, same
+  // pattern as the quiz-card mask regions.
+  doneHeadline: {
+    position: "absolute",
+    top: "10%",
+    left: 0,
+    right: 0,
+    textAlign: "center",
+    color: theme.text,
+    fontSize: 26,
+    fontWeight: "800",
+    paddingHorizontal: 24,
+  },
+  doneCountdownBlock: {
+    position: "absolute",
+    top: "42%",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  doneCountdownLabel: { color: theme.textDim, fontSize: 14, textAlign: "center" },
+  doneCountdownValue: { color: theme.text, fontSize: 34, fontWeight: "800", marginTop: 6 },
+  doneBottomBlock: {
+    position: "absolute",
+    top: "70%",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  doneTip: { color: theme.textDim, fontSize: 13, textAlign: "center", marginBottom: 14 },
   prompt: {
     color: theme.text,
     fontSize: 19,
@@ -562,6 +612,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 16,
     marginBottom: 14,
+    // react-native-web's default Text styling sets overflow-wrap: break-word,
+    // which lets the browser break INSIDE a non-breaking-space-joined pair
+    // when the pair alone doesn't fit a line -- silently defeating
+    // preventOrphanWord's whole point. Native Text layout has no such
+    // default, so this override is web-only.
+    ...(Platform.OS === "web" ? ({ wordBreak: "keep-all" } as object) : null),
   },
   caption: {
     color: theme.textDim,
