@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
-import { theme } from "../lib/theme";
+import { theme, GLOW } from "../lib/theme";
 import ScreenGlow from "../components/ScreenGlow";
 import GlowButton from "../components/GlowButton";
 import QuizCardArt from "../components/QuizCardArt";
@@ -419,6 +419,15 @@ export default function QuizScreen({ navigation }: Props) {
   const revealed = selected !== null;
   const cardAspectRatio =
     card.type === "Battlefield" ? BATTLEFIELD_ASPECT_RATIO : CARD_ASPECT_RATIO;
+  // Cost pips are printed as circular badges on the real card art (verified
+  // by measuring several cards' actual pixels: a perfect circle, ~82-88px
+  // diameter, centered ~11.3%/8.8%); the might/power badge is a rounded
+  // rectangle, not a circle. quizPositions.json's "cost" entry is
+  // calibrated to render as a true circle at this ratio's ~78%-width
+  // container, so a full borderRadius here is enough -- no per-render
+  // aspect-ratio math needed, since cost/might questions only ever occur
+  // on portrait-oriented cards.
+  const isCircularMask = question.mode === "energyCost" || question.mode === "powerCost";
 
   return (
     <View style={styles.container}>
@@ -448,6 +457,7 @@ export default function QuizScreen({ navigation }: Props) {
                 key={i}
                 style={[
                   styles.maskOverlay,
+                  isCircularMask && styles.maskOverlayCircle,
                   {
                     top: region.top,
                     left: region.left,
@@ -564,16 +574,25 @@ const styles = StyleSheet.create({
   // Card sizing/foil now lives in <QuizCardArt/> (78% width + this aspect
   // ratio). The image fills that container.
   cardImage: { width: "100%", height: "100%", borderRadius: 16 },
+  // Zones are now tightly fitted to the actual printed element they cover
+  // (verified by measuring several cards' real pixels) rather than the
+  // generous quadrant-sized boxes this used to be, so the fill/border can
+  // read as a deliberate badge instead of a slab pasted over the art.
   maskOverlay: {
     position: "absolute",
-    backgroundColor: "#0d0d12",
-    borderWidth: 1,
-    borderColor: theme.accent,
-    borderRadius: 6,
+    // Fully opaque -- this exists to hide an answer, so unlike the rest of
+    // the Rune Glow surfaces it can't afford to be a translucent wash.
+    backgroundColor: "#0f0f16",
+    borderWidth: 1.5,
+    borderColor: "rgba(88,101,242,0.55)",
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+    ...GLOW.feature,
   },
-  maskText: { color: theme.accent, fontSize: 22, fontWeight: "800" },
+  // Cost pips are round on the actual card art -- see isCircularMask above.
+  maskOverlayCircle: { borderRadius: 999 },
+  maskText: { color: theme.accent, fontSize: 17, fontWeight: "800" },
   // Full-width single column — used only for long-answer text-mode questions.
   optionsColumn: { gap: 8, alignItems: "stretch" },
   // 2x2 grid — 4 short options (cost/might/name/keyword).
