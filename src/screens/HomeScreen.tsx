@@ -11,6 +11,7 @@ import { loadAllProgress, getLastBatchCompletedAt } from "../lib/db";
 import { loadSessionSnapshot } from "../lib/sessionState";
 import { buildBatch, BATCH_SIZE, BATCH_COOLDOWN_MIN } from "../lib/leitner";
 import { useFilters } from "../lib/filtersStore";
+import { useTutorialTarget, useTutorial } from "../lib/tutorialContext";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 
@@ -62,6 +63,9 @@ export default function HomeScreen({ navigation }: Props) {
   const { filters } = useFilters();
   const [total, setTotal] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
+  const { completeStepIfActive } = useTutorial();
+  const setFiltersTarget = useTutorialTarget("setFiltersButton");
+  const reviewCardsTarget = useTutorialTarget("reviewCardsButton");
 
   useFocusEffect(
     useCallback(() => {
@@ -112,7 +116,7 @@ export default function HomeScreen({ navigation }: Props) {
             <View style={styles.boxHeaderLeft}>
               <RiftWord suffix="Recall" style={styles.boxLabel} />
               <View style={styles.newBadge}>
-                <Text style={styles.newBadgeText}>\u2605 NEW</Text>
+                <Text style={styles.newBadgeText}>{"\u2605"} NEW</Text>
               </View>
             </View>
             <Text style={styles.cardCountText}>{total} total cards</Text>
@@ -120,17 +124,27 @@ export default function HomeScreen({ navigation }: Props) {
           <Text style={styles.purposeText}>
             Use spaced repetition and micro-learning to build lasting card awareness.
           </Text>
-          <GlowButton
-            label={reviewLabel}
-            onPress={() => navigation.navigate("Quiz")}
-            style={styles.bigButtonWrap}
-            contentStyle={styles.bigButtonBody}
-            textStyle={styles.bigButtonText}
-          />
+          <View ref={reviewCardsTarget.ref} onLayout={reviewCardsTarget.onLayout}>
+            <GlowButton
+              label={reviewLabel}
+              onPress={() => {
+                completeStepIfActive("reviewCardsButton");
+                navigation.navigate("Quiz");
+              }}
+              style={styles.bigButtonWrap}
+              contentStyle={styles.bigButtonBody}
+              textStyle={styles.bigButtonText}
+            />
+          </View>
           <View style={styles.halfRow}>
             <Pressable
+              ref={setFiltersTarget.ref}
+              onLayout={setFiltersTarget.onLayout}
               style={[styles.secondaryButton, styles.halfButton]}
-              onPress={() => navigation.navigate("Settings")}
+              onPress={() => {
+                completeStepIfActive("setFiltersButton");
+                navigation.navigate("Settings");
+              }}
             >
               <Text style={styles.secondaryButtonText}>Set filters</Text>
             </Pressable>
@@ -159,7 +173,7 @@ export default function HomeScreen({ navigation }: Props) {
         </FeatureBox>
 
         <FeatureBox>
-          <Text style={styles.whatsNewTitle}>What's new \u2014 {APP_VERSION}</Text>
+          <Text style={styles.whatsNewTitle}>What's new {"\u2014"} {APP_VERSION}</Text>
           {WHATS_NEW.map((line, i) => {
             const isHighlighted = line.trim().startsWith("\u2605");
             return (

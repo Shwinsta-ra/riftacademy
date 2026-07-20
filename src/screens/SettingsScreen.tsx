@@ -7,19 +7,11 @@ import { getAvailableDomains, getAvailableTypes, getAvailableSpeeds } from "../l
 import { getAllDecks, getCardsForDeck } from "../lib/deckPool";
 import { DeckList, QuizFilters } from "../lib/types";
 import { useFilters } from "../lib/filtersStore";
+import { SET_GROUPS } from "../lib/setGroups";
+import { useTutorialTarget, useTutorial } from "../lib/tutorialContext";
 import AppModal from "../components/AppModal";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
-
-// Four set groups, matching how Ashwin actually wants to practice by set —
-// Origins and Proving Grounds are small/old enough to always study together.
-// Swap this list once a set after Vendetta needs its own group.
-const SET_GROUPS: { label: string; ids: string[] }[] = [
-  { label: "Origins & Proving Grounds", ids: ["OGN", "OGS"] },
-  { label: "Spiritforged", ids: ["SFD"] },
-  { label: "Unleashed", ids: ["UNL"] },
-  { label: "Vendetta", ids: ["VEN"] },
-];
 
 // Deck names are stored as "Legend — placement (pilot)", e.g.
 // "Diana, Scorn of the Moon — Hartford 2nd (bsweitz)". Splitting on the em
@@ -38,6 +30,9 @@ export default function SettingsScreen({ navigation }: Props) {
   const types = getAvailableTypes();
   const speeds = getAvailableSpeeds();
   const [deckPickerOpen, setDeckPickerOpen] = useState(false);
+  const { completeStepIfActive } = useTutorial();
+  const newestSetChipTarget = useTutorialTarget("newestSetChip");
+  const setFiltersCTATarget = useTutorialTarget("setFiltersCTA");
   // Staged selection: tapping a row in the deck picker highlights it but
   // doesn't apply or close anything — only the picker's CTA commits it.
   const [stagedDeckId, setStagedDeckId] = useState<string | null>(null);
@@ -132,14 +127,30 @@ export default function SettingsScreen({ navigation }: Props) {
             <Text style={styles.sectionTitle}>Sets</Text>
             <Text style={styles.helper}>None selected = all sets included.</Text>
             <View style={styles.chipRow}>
-              {SET_GROUPS.map((group) => (
-                <Chip
-                  key={group.label}
-                  label={group.label}
-                  active={isGroupActive(group.ids)}
-                  onPress={() => toggleSetGroup(group.ids)}
-                />
-              ))}
+              {SET_GROUPS.map((group, i) => {
+                const isNewestSet = i === SET_GROUPS.length - 1;
+                const chip = (
+                  <Chip
+                    key={group.label}
+                    label={group.label}
+                    active={isGroupActive(group.ids)}
+                    onPress={() => {
+                      toggleSetGroup(group.ids);
+                      if (isNewestSet) completeStepIfActive("newestSetChip");
+                    }}
+                  />
+                );
+                // Only the newest set's chip needs to be measurable for the
+                // tutorial (see tutorialSteps.ts) — wrapping it in a plain
+                // View rather than changing Chip's own ref-forwarding, since
+                // Chip is shared by domains/types/speeds too.
+                if (!isNewestSet) return chip;
+                return (
+                  <View key={group.label} ref={newestSetChipTarget.ref} onLayout={newestSetChipTarget.onLayout}>
+                    {chip}
+                  </View>
+                );
+              })}
             </View>
 
             <Text style={styles.sectionTitle}>Domains</Text>
@@ -190,8 +201,13 @@ export default function SettingsScreen({ navigation }: Props) {
         </View>
 
         <Pressable
+          ref={setFiltersCTATarget.ref}
+          onLayout={setFiltersCTATarget.onLayout}
           style={[styles.setFiltersButton, !dirty && styles.setFiltersButtonInactive]}
-          onPress={commitFilters}
+          onPress={() => {
+            completeStepIfActive("setFiltersCTA");
+            commitFilters();
+          }}
           disabled={!dirty}
         >
           <Text
