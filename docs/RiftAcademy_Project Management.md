@@ -2,23 +2,38 @@
 
 **Owner:** Ashwin Sathe (sole dev, Sathe Consulting LLC) · **Repo:** `github.com/shwinsta-ra/riftacademy` (private, GitHub Pro)
 **Hard deadline:** **July 31, 2026** (Vendetta set release) · **Launch posture:** web-only, free, LJJ-compliant
-**Last updated:** July 19, 2026
-**Status:** This is now the **single** canonical project doc. `RiftAcademy_Project_Management.docx` has been merged into this file and should be removed from Project Knowledge — its content lives here now (Sections 4–8).
+**Last updated:** July 19, 2026 (evening) — final manual full reconciliation. Folds in: RiftRecall's overnight build-out (shipped in code via PRs #29/#32/#33, but never previously reflected in this doc — a real gap, not a stylistic gap), the three-copy sync model, the GitHub PAT security incident, the TickTick restructure, and PR #45 (Rune Glow)/#46 (onboarding) detail already present. **Starting tonight, this doc is no longer edited directly by feature/fix PRs — see Section 1a and `docs/updates/TEMPLATE.md`.**
+**Canonical file name:** `RiftAcademy_Project Management` — fixed name across GitHub, Project Knowledge, and Google Drive.
+**Status:** This is the single canonical project doc. If you're holding any other copy — a download from earlier today, a different thread's local merge — discard it.
 
-> **What this doc is.** The one cross-thread source of truth for RiftAcademy, kept in **Project Knowledge** so every thread (chat, Cowork, Claude Code) can read and update it. When a thread changes something structural — ships a feature, changes a convention, makes a decision — it updates this doc and re-uploads it. That upload is the "commit" to shared context. Do **not** create a second project-level doc; append to this one.
+> **Three forks happened today before this system existed** (see prior git history / PR #44 if curious). The root cause each time: either a stale pasted copy, or multiple PRs editing this same file concurrently. Both are now structurally prevented: new threads read the doc from a freshly-generated zip (Section 5) instead of a pasted copy, and day-to-day updates go into per-thread fragment files (Section 1a) instead of direct edits to this file. This is the last manual full reconciliation this doc should need under normal conditions.
+
+> **What this doc is.** The one cross-thread source of truth for RiftAcademy, kept in **Project Knowledge** so every thread (chat, Cowork, Claude Code) can read it. Real edits happen via the fragment system (Section 1a) and land here only at end-of-day reconciliation.
 
 ---
 
 ## 0. Open this section first — what to do right now
 
-**In progress / right now:**
-- RiftRecall (renamed from "Card Recall") cleanup + polish pass, targeting shareable-to-Discord state by Sun July 19 (Mon–Tue acceptable) ahead of Friday's pre-rifts. Being handled in a dedicated RiftRecall thread.
-- RiftNotes rework (simpler, fast-game-usable) — separate thread, in parallel today.
-- Setting up Claude Code + Claude Cowork for this project (this thread).
+**Just shipped (today):**
+- Vendetta card-count reconciliation (161 → 141 of 166, with full reasoning) — PR #40.
+- Visual-direction "Rune Glow" pass (ambient glow, foil card art, Sparklet mascot) — PR #45, merged.
+- First-launch onboarding tutorial for RiftRecall — PR #46, open, clean, ready to merge pending an on-device native check (web fully verified).
 
-**Waiting / not yet done:**
-- Sync-down automation (`sync-down.yml`) and the Jest test suite are both fully written but deliberately unmerged — revisit once feature work slows down.
-- Game-log / match-state snapshot schema (feeds both RiftIQ puzzles and RiftNotes) — needs dedicated iteration with Opus in a separate RiftIQ thread. **Reminder flagged for later today**, once RiftRecall is in good shape.
+**Active right now:**
+- RiftNotes rework — separate thread, in parallel.
+- Whichever new parallel threads get kicked off this evening to test the fragment-file process for the first time.
+
+**Big features still open, priority order:**
+1. **Vendetta Prep highlight + 3-step guided tour** — distinct from the onboarding tutorial (#46); this is specifically the "filter to Vendetta → quiz" fast path for Discord-referred players ahead of Friday's pre-rifts. Still not started as its own piece — confirm with the RiftRecall thread whether #46's tutorial already covers this or whether it's still a separate task.
+2. **Puzzle content**: 3–5 strategy puzzles + 3–5 Vendetta-card puzzles, for app launch.
+3. **Opus strategy track** (parallel, doesn't block launch): the decision-tree task, the pen-and-paper game-state capture task, and the game-log/match-state schema (feeds both RiftIQ and RiftNotes) — these are one workstream, not three; see Section 10.
+
+**Waiting on Ashwin:**
+- Review `champion_epithet_review.csv` (94 champions, ~189 authored synthetic epithets).
+- Updated master card inventory upload (casing fixes, ban dates).
+- Confirm whether the onboarding tutorial (#46) needs on-device (iOS/Android) verification before merging, or whether web verification is sufficient to ship.
+
+**Format note:** refresh this section every session; move completed items to Section 9's log rather than deleting them silently.
 
 ---
 
@@ -33,7 +48,27 @@
   - News / ecosystem updates → riftbound.gg
   - Prices / inventory / market → tcgplayer.com
 - **Every strategic recommendation shows its reasoning + evidence.**
-- **TickTick** (`RiftAcademy` list) is the live task backlog — see Section 8. This doc holds status/history/decisions; TickTick holds the granular day-to-day task queue. Don't duplicate task-level detail here.
+- **TickTick** (`RiftAcademy` list) is the live task backlog — see Section 8. This doc holds status/history/decisions; TickTick holds the granular day-to-day task queue.
+- **Feature status lives in ONE place** — the table in Section 3. Don't re-describe status elsewhere.
+
+### 1a. Two systems working together: three-copy sync model + daily fragment files
+
+**The three-copy model** (unchanged in principle, refined below):
+
+| Copy | Role | Who writes it | Written how |
+|---|---|---|---|
+| **GitHub** (`docs/RiftAcademy_Project Management.md`) | Canonical, version-controlled source of truth. | This control thread, once daily | **End-of-day reconciliation only** — reads every fragment in `docs/updates/pending/` dated that day, folds them into the real sections, commits the updated doc, and deletes the day's fragments, all in one PR. Never edited by a feature/fix PR directly anymore. |
+| **Claude Project Knowledge** | Ambient reference cache for threads without a fresh zip in hand. Never authoritative for a substantial rewrite. | Ashwin, manually | One upload after each day's reconciliation PR merges. |
+| **Google Drive** (local Drive-for-Desktop synced path) | Disaster-recovery backup only. | Claude Code, writing directly to the local synced folder so Drive versions it in place | `/Users/ashwinsathe/Library/CloudStorage/GoogleDrive-ashwin.sathe86@gmail.com/My Drive/RiftAcademy/RiftAcademy_Project Management.md` |
+
+**The fragment system** (new as of tonight — this is what actually prevents the conflicts from recurring):
+- Every thread doing a feature/fix PR adds one new file at `docs/updates/pending/YYYY-MM-DD-short-topic.md` (template at `docs/updates/TEMPLATE.md`) **instead of** editing this doc directly.
+- Unique filenames mean concurrent threads never conflict on this — the exact failure mode that killed PR #44 and silently dropped RiftRecall's build-out from ever reaching this doc.
+- Because fragments merge into `integration` progressively (riding each PR, same as any other file), **a thread starting later the same day already sees earlier threads' fragments** just by pulling — this is same-day cross-thread visibility without waiting for nightly reconciliation, for anything already merged. It does not solve two threads editing genuinely simultaneously on branches neither has merged yet; that residual overlap risk is accepted, same as it would be for any solo-dev parallel workflow — git's merge-conflict detection at the code level remains the real backstop for anything that actually collides.
+- **Why this replaces "doc rides with the code" rather than refining it:** that rule sounded right but failed in both directions today — it caused a conflict (PR #44) and it silently didn't happen (RiftRecall's PRs shipped without updating the doc at all). A shared mutable file edited by many concurrent writers is the actual problem, independent of how carefully anyone follows the rule.
+- **Concurrency/locking for the reconciliation step itself:** unchanged — Ashwin manually merges every PR to `main`/`integration`, so the reconciliation PR is subject to the same single-human-checkpoint protection as everything else.
+
+**Sync cadence:** fragments accumulate all day; reconciliation + all three copies get synced once, end of session.
 
 ---
 
@@ -41,68 +76,85 @@
 
 ### Infrastructure
 - Branch pipeline: `main` (prod, `riftacademy-tau.vercel.app`) → `staging` (public preview, `riftacademy-staging.vercel.app`, also hotfix validation) → `beta` (premium testers, no domain yet) → `integration` (target for `feature/*`, `fix/*`, `hotfix/*`).
-- All four core branches: branch protection + 2 required checks — `typecheck` (`ci.yml`) and `check-source-branch` (`enforce-branch-flow.yml`). Requires GitHub Pro (private repo).
-- Vercel via GitHub integration (push → auto preview deploy). Hobby plan = 1 concurrent build; a full promotion chain takes 10–20 min, that's normal.
-- Mac git identity (global): `shwinsta-ra` / `ashwin.sathe86@gmail.com` — required, or Vercel blocks the deploy with a "commit author email is not valid" error. npm global prefix `~/.npm-global`.
+- All four core branches: branch protection + 2 required checks — `typecheck` (`ci.yml`) and `check-source-branch` (`enforce-branch-flow.yml`).
+- Vercel via GitHub integration (push → auto preview deploy). Hobby plan = 1 concurrent build; a full promotion chain takes 10–20 min.
+- Mac git identity (global): `shwinsta-ra` / `ashwin.sathe86@gmail.com` — required, or Vercel blocks the deploy.
+- **GitHub CLI (`gh`) authenticated via OAuth device flow**, scopes `repo`/`workflow`/`read:org`/`gist` — this is what Claude Code uses for all push/PR operations. Not a Personal Access Token (a PAT was found and revoked July 19 — see Section 9 — it was never load-bearing).
+- **Claude plan: Max** — Cowork on web/mobile, computer-use preview, and phone-based Remote Control/Dispatch all available.
 
 ### Card database
 - Master Card Inventory: 929+ cards across OGN, OGS, SFD, UNL, VEN.
-- Vendetta ingestion in progress: **141 of 166** base cards currently in `cards.json` (all numbered within 1–166, no duplicates, no over-total codes). The remaining **25 collector numbers are unreleased/not-yet-on-Riftcodex slots** ahead of the July 31 launch — genuine gaps, not ingestion errors; they fill in as cards reveal. (Earlier "327 raw rows → 161 base / 196 variants" figure was the pre-cleanup count.)
-- **Verified July 19:** all Vendetta cards in the current Riftcodex export have valid `image_url` values (checked directly against raw source — zero null/empty). The earlier "art-less new VEN cards excluded from quiz pool" note describes a now-stale pre-backfill state; if the live app still shows gaps, it's a merge-step or `new`-flag issue, not missing source art.
-- The 8 provisional overnumbered VEN champion codes (Vi, Jinx, Jayce, Viktor, Rengar, Khazix, Diana, Leona; `ven-167..184-166`) have been **removed** by `cleanup_ven_reprints.py`, along with 6 signature "SP" champion reprints (`ven-sp1..sp6`) and 6 VEN domain runes (`ven-r01..r06`) — 20 cards total. Each was an exact `Name, Epithet` duplicate of a card already in an earlier set, carrying degraded data; none referenced by any deck/override/question. This is what took the VEN count from 161 → 141.
-- Baron Nashor (Ultimate) permanently blacklisted (`BLACKLISTED_IDS`) — `merge_sheet.py` won't let it silently return on re-run.
+- **VEN: 141 of 166 base cards** currently in `cards.json` (all numbered 1–166, no dups, no over-total codes). The remaining 25 collector numbers are genuinely unreleased/not-yet-on-Riftcodex slots ahead of the July 31 launch, not ingestion errors.
+- `cleanup_ven_reprints.py` removed 20 cards from the earlier 161 count: 8 provisional overnumbered champion codes (Vi/Jinx/Jayce/Viktor/Rengar/Khazix/Diana/Leona), 6 signature "SP" champion reprints, 6 VEN domain runes — each an exact duplicate of a card already in an earlier set.
+- All present VEN cards (and all cards overall) confirmed to have non-null `imageUrl`. RiftRecall's art-exclusion logic in `src/lib/quiz.ts` keys strictly off `imageUrl === null` — there is no `new` flag in `cards.json`, so no stale-flag path can bench a card that has art.
+- Baron Nashor (Ultimate) permanently blacklisted (`BLACKLISTED_IDS`).
 - Champion/Equipment stored as `Unit`/`Gear` + `subtype`; `Champion`/`Equipment` no longer valid `type` values.
 - Set filters grouped: Origins & Proving Grounds / Spiritforged / Unleashed / Vendetta. Speed filter (Action/Reaction) added.
-- Only the 4 old Unleashed tokens (Baron Pit, Bird, Brush, Reflection) remain without art — unrelated, unchanged, low priority.
+- Only 4 old Unleashed tokens remain without art — unrelated, low priority.
 
 ### Shipped app features
-- **Match Tracker (core):** full live match dashboard — points/hand/deck/rune tracking, undo, CSV export, Conquer/Hold, Hidden-play mechanic, 20 real Hartford decklists.
-- **Feedback widget:** draggable floating bubble, category dropdown + free text + screenshot capture/annotation, Discord webhook delivery, offline queue.
-- **Opponent Deck Knowledge Filter:** "Deck" filter on quiz Settings, using the 20-deck library, to drill "what could this specific opponent have had."
-- **GitHub + Vercel pipeline:** live, branch-protected, connected (see Infrastructure above).
-- **Card database refresh + Vendetta prep:** corrected names/text/speeds/domains, new `subtype` field, Vendetta cards added, Baron Nashor dup removed, Champion/Equipment filter semantics fixed, Speed filter added, quiz layout reordered (question now below card image, larger).
-- **Vendetta card images:** backfilled via `apply_vendetta_images.py` (matches Riftcodex data to `cards.json`, handles the signature-champion `-006` id quirk; safe to re-run as more art is revealed pre-July 31).
-- Unified `AppModal` across 6 modals; platform-aware CSV export (Web Share API mobile / clipboard desktop).
+- **RiftRecall** (renamed from "Card Recall"/"Memory Game"), fully overhauled July 18–19 across PRs #29/#32/#33 — **this build-out shipped in code well before tonight but was never reflected here until now:**
+  - **Session persistence & batch pacing:** long-term box/due-date state persists across sessions; in-session progress survives refresh; sessions capped at 20 cards with round-robin missed/new/review composition and a mandatory 10-minute gate between batches.
+  - **Question-quality overhaul:** split Energy/Power cost into independently-testable modes; sane non-negative sequential numeric distractors; battlefield/equipment text-question handling that never leaks the answer; recency-weighted mode picker; fill-in-the-blank mode for cards with exactly 2 numeric effect values; champion name-quiz distractors restricted to the same champion's other epithets (189 authored synthetic epithets, pending Ashwin's review).
+  - **Control-sheet pipeline:** `build_master_sheet.py`/`apply_master_sheet.py` — one XLSX matching Ashwin's exact format, blank = auto-generated question, filled = permanently pinned.
+  - **UI:** 2×2 answer grid (1×3 for exactly 3 options), larger card, bottom-anchored controls.
+  - **Home screen rebuild:** `RIFT_BRAND` gold wordmark convention across RiftAcademy/RiftRecall/RiftIQ; RiftIQ introduced as an umbrella (placeholder content); live review-count preview; "What's New" box; fixed LJJ footer.
+- **Visual-direction "Rune Glow" pass** (PR #45, merged): ambient screen glow, glowing primary buttons (`GlowButton`), holographic foil card-art frames (`QuizCardArt`), a `Sparklet` mascot that celebrates correct answers (respects reduce-motion). `RIFT_BRAND` gold widened to also cover the foil rim/trim + Sparklet cap only — nowhere else. No Reanimated/expo-blur in the project; glows use RN `shadow*`, foil/Sparklet use `react-native-svg`.
+- **First-launch onboarding tutorial** (PR #46, open): coach-mark style — highlighted ring + tip bubble walks through setting filters and starting a session using the real UI, advances on real taps. Content-agnostic engine (`tutorialContext.tsx`) separate from the swappable 4-step script (`tutorialSteps.ts`) — deliberately temporary per Ashwin, meant to be replaced by a broader tour later without an engine rewrite. Two real conflicts surfaced against the just-merged Rune Glow work and were resolved without touching `GlowButton` itself (wrapped in a `View` instead) — see Section 9 for full detail. Web fully verified; native (iOS/Android) unverified.
+- **Match Tracker (core):** full live match dashboard.
+- **Feedback widget:** draggable bubble, screenshot/annotation, Discord webhook. (`REQUIRED` tag removal on the "What happened" field still pending — see Section 0/3.)
+- **Opponent Deck Knowledge Filter**, **GitHub + Vercel pipeline**, **Claude Code + Cowork** (both authenticated and validated July 19).
+- Unified `AppModal` across 6 modals; platform-aware CSV export.
 
 ### Data pipeline
-- Google Sheets master workbook = source of truth; Python (`merge_sheet.py`, `apply_*.py`) does CSV→JSON.
-- `merge_sheet.py` applies canonical champion-name transforms + permanent blacklist on every run.
-- Supabase migration deferred until Vendetta fully stabilizes (single combined ingestion then — card inventory, archetype index, decklists, app config/rules files).
+- Google Sheets master workbook = source of truth; `merge_sheet.py`/`apply_*.py`/`build_master_sheet.py`/`apply_master_sheet.py` do CSV/XLSX↔JSON.
+- `merge_sheet.py` applies canonical champion-name transforms, dynamic ban filter, and permanent blacklist on every run.
+- Supabase migration deferred until Vendetta fully stabilizes.
 
 ---
 
 ## 3. Feature tracker & roadmap
 
-*Single row per feature — update in place rather than re-describing elsewhere in this doc. Status legend: **Completed** — **Not started** (scheduled) — **Unresolved** (needs a decision before scheduling) — **Deferred** (deliberate) — **Blocked** — **Pending import** (waiting on external data).*
+*Single row per feature — update in place. Status legend: **Completed** — **Not started** — **Unresolved** — **Deferred** — **Blocked** — **Pending import**.*
 
 | Feature | Status | Description | Target | Dependencies / Blockers | Notes |
 |---|---|---|---|---|---|
 | **SHIPPED** |
-| Match Tracker (core) | Completed | Full live match dashboard | Shipped | — | Largest feature to date |
-| Feedback widget | Completed | In-app feedback form | Shipped | — | Built in a separate thread |
-| Opponent Deck Knowledge Filter | Completed | "Deck" filter dimension for quiz drilling | Shipped July 16 | — | — |
-| GitHub integration | Completed | Repo + Vercel deploy pipeline | Shipped July 16 | — | Branch model as above |
-| Master Card Inventory + Vendetta prep | Completed | Full DB refresh, 161 VEN cards, Baron dup removed | Shipped to staging July 16 | — | — |
-| Vendetta card images | Completed | All VEN cards have real art | Shipped July 17 | — | Verified again July 19 against raw source |
+| Match Tracker (core) | Completed | Full live match dashboard | Shipped | — | — |
+| Feedback widget | Completed | In-app feedback form | Shipped | — | `REQUIRED` tag removal still pending |
+| Opponent Deck Knowledge Filter | Completed | "Deck" filter for quiz drilling | Shipped Jul 16 | — | — |
+| GitHub integration | Completed | Repo + Vercel pipeline | Shipped Jul 16 | — | — |
+| Master Card Inventory + Vendetta prep | Completed | Full DB refresh, dedup/ban cleanup | Shipped | — | — |
+| Vendetta card images | Completed | All VEN cards have real art | Shipped Jul 17 | — | Re-verified Jul 19 |
+| VEN card-count reconciliation | Completed | 161 → 141 of 166, full reasoning documented | Fixed Jul 19 | — | PR #40 |
+| RiftRecall — session persistence & batch pacing | Completed | Long-term + in-session state, 20-card capped batches | Shipped | — | PR #29/#33 — **previously undocumented here** |
+| RiftRecall — question-quality overhaul | Completed | Split cost modes, sane distractors, epithet-restricted name quiz | Shipped | Epithet CSV review pending | PR #29/#32/#33 — **previously undocumented here** |
+| RiftRecall — control-sheet pipeline | Completed | `build_master_sheet.py`/`apply_master_sheet.py` | Shipped | — | PR #29 — **previously undocumented here** |
+| Home screen rebuild | Completed | `RIFT_BRAND` convention, RiftIQ umbrella, What's New | Shipped | — | PR #33 — **previously undocumented here** |
+| Visual-direction "Rune Glow" pass | Completed | Ambient glow, foil art, Sparklet mascot | Shipped Jul 19 | — | PR #45 |
+| Claude Code + Cowork setup | Completed | Both authenticated and validated | Done Jul 19 | — | PAT found + revoked same day, non-load-bearing |
+| **IN REVIEW** |
+| First-launch onboarding tutorial | In review | 4-step coach-mark tour, real-tap advancement | PR #46 open, clean | Native on-device check | Deliberately temporary script; engine is reusable |
 | **ACTIVE THIS WEEK** |
-| RiftRecall cleanup/polish/rename | In progress | Vendetta Prep highlight + 3-step guided tour, zero-typing UI, question-quality pass, art/theme polish, session persistence | Target Sun Jul 19, Mon–Tue acceptable | Pre-rifts is Friday | Dedicated RiftRecall thread |
-| RiftNotes rework | In progress | Simpler, fast-game-usable post-match coaching flow | This week | Shares schema work with RiftIQ (see below) | Separate thread, parallel today |
-| TickTick integration | Completed (setup) | RiftAcademy list tagged (type/state/area); columns unchanged | Done July 19 | — | Task-level detail now lives in TickTick, not this doc |
-| New User Ingestion Flow | Not started | Short onboarding survey, segments new users | Before next invite push | Needs decision on survey questions/segments | Time-sensitive once mass invites resume |
-| New-user guided app intro | In review | Coach-mark tutorial: ring + speech-bubble on real UI elements, advances on real taps (not a canned click-through) | PR open into `integration` | None | 4-step Vendetta-launch script (filter → study), deliberately temporary — 2-4 week stand-in per Ashwin (Jul 19); replace with a broader multi-feature tour later. Engine (`tutorialContext.tsx`) is content-agnostic — swapping the script later is a `tutorialSteps.ts` edit, not an engine change. `feature/onboarding-tutorial` |
+| Vendetta Prep highlight + guided tour | Not started | Distinct from #46 — confirm scope isn't already covered | This week, launch-blocking | Depends on #46's scope | See Section 0 |
+| Puzzle content (initial + Vendetta) | Not started | 3–5 strategy + 3–5 Vendetta puzzles | For app launch | None | — |
+| RiftNotes rework | In progress | Simpler, fast-game-usable coaching flow | This week | Shares schema w/ RiftIQ | Separate thread |
+| Vendetta full-set repull | In progress | Bring VEN from 141 to full 166 | Ahead of next week's pre-rift | Riftcodex indexing pace | — |
+| New User Ingestion Flow | Not started | Onboarding survey, user segmentation | Before next invite push | Survey design | — |
 | **THIS MONTH (BEFORE JULY 31)** |
-| Deckbuilder v1 | Not started | Template deck, swap cards, save personal version | Hard deadline: before Jul 31 | None blocking | Don't let it crowd out ingestion flow |
-| Game-log / match-state schema | Not started | Shared snapshot schema for RiftIQ puzzles + RiftNotes | ASAP, needs Opus iteration | Needs dedicated RiftIQ thread | Reminder flagged in Section 0 |
+| Deckbuilder v1 | Not started | Template deck, save personal version | Before Jul 31 | None | — |
+| Game-log / match-state schema | Not started | Shared snapshot schema, RiftIQ + RiftNotes | Needs Opus iteration | Dedicated RiftIQ thread | See Section 10 |
+| RiftIQ real module design | Not started | What goes in the umbrella beyond placeholders | This month | None | — |
 | **DEFERRED / UNSCHEDULED** |
-| Sync-down automation + Jest test suite | Deferred | Both written, not merged | Paused | None blocking | Pick back up once feature velocity slows |
-| Price-history storage + non-destructive ROI import | Deferred | Own stable price-history store | Wait for Supabase/Firebase | Supabase migration | Nice-to-have, unrelated to gameplay improvement |
-| Keyword badge styling | Unresolved | Styled badges/icons for `[Deflect]`-style keywords | Undecided | Was contingent on Riot API, now deferred | — |
-| Local daily reminder (OS push) | Deferred | Push notification for daily practice | After TestFlight | Needs on-device permission; not possible from Vercel web build | — |
-| In-app daily/weekly quiz reminders | Deferred | In-app streak/reminder indicator | After TestFlight | Bundled with above | — |
-| Riot API exploration | Deferred | Card data/images/tournament stats access | → August | IP/policy caution; attorney consult first | Precondition for monetization, not an obstacle to current dev |
-| Structured Discord community | Deferred | Discussion, growth, PMF signal | After a build people return to consistently | Needs intake architecture (Section 8) first | — |
-| Donate link | Unresolved | Community support toward hosting/dev costs, possibly tiered | TBD | Riot LJJ policy check first | Leaning Ko-fi/Patreon; Freshbooks available once launched; not urgent |
-| Account management | Deferred | Persistent user identity on web app | Longer-term roadmap | None blocking, just unscheduled | Interim: session/local-storage persistence per feature |
+| Sync-down automation + Jest suite | Deferred | Both written, unmerged | Paused | None | — |
+| Price-history storage | Deferred | Own store, non-destructive ROI import | Wait for Supabase | — | — |
+| Keyword badge styling | Unresolved | — | — | Contingent on Riot API | — |
+| Local/in-app reminders | Deferred | — | After TestFlight | — | — |
+| Riot API exploration | Deferred | — | → August | Attorney consult first | — |
+| Structured Discord community | Deferred | — | After consistent retention | Intake architecture (Section 8) | — |
+| Donate link | Unresolved | — | TBD | LJJ policy check | — |
+| Account management | Deferred | — | Longer-term | — | Interim: session persistence per feature |
+| Stale GitHub branch cleanup | Deferred, low priority | Safe process documented | Whenever there's a lull | None | Tracked in TickTick "New" bucket |
 
 ---
 
@@ -111,13 +163,13 @@
 Branch pipeline: `feature/*` / `fix/*` / `hotfix/*` → `integration` → `beta` → `staging` → `main`.
 
 - `main` = production — `riftacademy-tau.vercel.app`
-- `staging` = public preview — `riftacademy-staging.vercel.app` — hotfix testing + final pre-release validation
-- `beta` = premium/beta-tester tier, no public domain yet
-- `integration` = first line of defense; combines feature/fix work for testing
+- `staging` = public preview — `riftacademy-staging.vercel.app`
+- `beta` = premium/beta-tester tier
+- `integration` = first line of defense
 
-All four branches require a PR + passing status checks (`typecheck`, `check-source-branch`) before merging.
+All four branches require a PR + passing status checks (`typecheck`, `check-source-branch`).
 
-**Step 1 — create and push your branch (Terminal, on your Mac):**
+**Step 1 — create and push your branch (Terminal):**
 ```
 cd ~/Downloads/riftacademy-current
 git checkout integration
@@ -127,38 +179,25 @@ git add .
 git commit -m "<describe what changed>"
 git push -u origin feature/<short-name>
 ```
-*(use `feature/<short-name>` for new functionality, `fix/<short-name>` for a bug/UI fix; make your changes between `checkout -b` and `add .`)*
 
-**Steps 2–4 — promote up the chain (Browser, GitHub — no terminal needed):**
-1. Open `compare/integration...feature/<short-name>` → create pull request → merge.
-2. Open `compare/beta...integration` → create → merge.
-3. Open `compare/staging...beta` → create → merge. *(This triggers the Vercel staging build.)*
-4. Test on staging. Only when satisfied: open `compare/main...staging` → create → merge. *(This triggers production.)*
+**Steps 2–4 — promote up the chain (Browser):**
+1. `compare/integration...feature/<short-name>` → create PR → merge.
+2. `compare/beta...integration` → create → merge.
+3. `compare/staging...beta` → create → merge (triggers Vercel staging build).
+4. Test on staging, then `compare/main...staging` → create → merge (triggers production).
 
-**Two gotchas every time:**
-- Double-check the base branch on GitHub's compare page before creating a PR — it defaults to `main`, which has caused accidental wrong-target PRs before.
-- Vercel Hobby plan allows 1 concurrent build account-wide — a full promotion chain queues sequentially and can take 10–20 minutes to show up. That's normal.
+**Gotchas:**
+- Double-check the base branch — GitHub defaults to `main`.
+- Branch prefix must match the target's allowed pattern (`feature|fix|hotfix` for `integration`) — mismatches fail `check-source-branch` instantly regardless of content.
+- Vercel Hobby = 1 concurrent build; promotion chains queue sequentially, 10–20 min normal.
 
-**Git identity:** Mac's global git email must match a verified GitHub email (`ashwin.sathe86@gmail.com`), or Vercel blocks the deploy with "commit author email is not valid."
+**Git identity:** global email must be `ashwin.sathe86@gmail.com`.
 
-**Worked example (single-file data update, Vendetta images, Jul 17):**
-```
-cd ~/Downloads/riftacademy-current
-git checkout integration
-git pull
-git checkout -b feature/vendetta-images
-unzip -o ~/Downloads/vendetta-images-update.zip
-git add src/data/cards.json scripts/apply_vendetta_images.py
-git commit -m "Add Vendetta card images"
-git push -u origin feature/vendetta-images
-```
-Then PR into `integration` on GitHub as usual → promote through `beta` → `staging` → `main`.
+**GitHub CLI auth:** OAuth device flow (`gho_` token), not a PAT.
 
 ---
 
 ## 5. New thread creation flow
-
-Do this before starting a new feature in a brand-new thread — even within this same Claude project.
 
 **Every time (Terminal):**
 ```
@@ -167,12 +206,13 @@ git checkout integration
 git pull
 git archive --format=zip -o ~/Downloads/riftacademy-upload.zip HEAD
 ```
-*(use `main` instead of `integration` if the new thread is for a hotfix. `git archive` packages exactly what's tracked in git — no `node_modules`, no `.git`, respects `.gitignore`. Uncommitted changes are intentionally excluded — this captures the clean merged state, not mid-work changes.)*
+*(use `main` instead of `integration` for a hotfix)*
 
 **Then, in the new thread:**
-- Attach `~/Downloads/riftacademy-upload.zip` to your first message.
-- Give the thread a one-line status note — use the latest dated entry from Section 7.
-- This doc is in Project Knowledge, so you don't need to re-upload it — the new thread already has it.
+- Attach `~/Downloads/riftacademy-upload.zip`. **Don't separately paste another copy of this doc** — the zip already contains the current version at `docs/RiftAcademy_Project Management.md`, and the `git pull` immediately before archiving guarantees it's as current as GitHub, seconds old.
+- **Also check `docs/updates/pending/` inside the zip** for today's fragments from other threads — that's your cheapest way to learn what else changed today.
+- Give the thread a one-line status note — use the latest dated entry from **Section 9** (not Section 7 — that was a stale cross-reference in an earlier version of this doc).
+- If the thread runs long (hours) and is about to make a substantial change, re-verify against GitHub directly rather than trusting an aging zip snapshot: `git show origin/main:"docs/RiftAcademy_Project Management.md"`.
 
 ---
 
@@ -180,93 +220,111 @@ git archive --format=zip -o ~/Downloads/riftacademy-upload.zip HEAD
 
 **Workflow**
 - Hotfixes go through **staging for validation first**, never straight to `main`.
-- **Batch staging changes** before promoting to `main` (not continuous deploy).
-- Deliverables as **complete ready-to-deploy zips**, not snippets. Deploy commands = **bare terminal commands, no inline `#` comments** (they break copy-paste into terminal). Any explanation goes as prose before/after the code block.
-- Instructions must be **granular, exact commands, full paths with version numbers**.
-- Git UI caution: GitHub's "Delete branch" has nuked core branches before. Diagnose real state with `git fetch origin` + `git diff origin/X origin/Y`, not the GitHub UI.
+- Batch staging changes before promoting to `main`.
+- Deliverables as complete ready-to-deploy zips. Deploy commands = bare terminal commands, **no inline `#` comments**.
+- Instructions must be granular, exact, full paths.
+- Diagnose real git state with `git fetch origin` + `git diff origin/X origin/Y`, never the GitHub UI's "Delete branch."
+- **Doc updates use the fragment system (Section 1a), not direct edits to this file** — the single most important process rule as of tonight.
+- **No credentials in TickTick, docs, or any note-taking tool.** A GitHub PAT was found pasted in plaintext in a TickTick task July 19 — revoked immediately, never load-bearing (Claude Code uses `gh` OAuth). Use macOS Keychain or a real password manager if a credential must be stored anywhere retrievable.
 
 **Card data (Riftcodex ingestion)**
-- Trailing-letter codes (`ven-088a-166`) = alt art → drop, use base numeric.
-- Over-total numbers (`ven-177-166`, total=166) = overnumbered dup → drop for normal-range code, UNLESS no lower twin exists yet → keep temporarily, reconcile later.
-- Champion apostrophes: **Kaisa, Khazix, Leblanc, Reksai — no apostrophes** (override source styling).
-- Naming: always **"Name, Epithet"**, sentence case, minor words (of/the) lowercase.
-- Card-text domain color-letter codes (in-text parens): Fury (R), Calm (G), Mind (B), Body (O), Chaos (P), Order (Y) — color-based, not first-letter. (Any)/rainbow spelled out.
-- `TYPE_FILTER_PREDICATES`: Unit includes all champions; Champion = subtype Champion only. Gear includes all equipment; Equipment = subtype Equipment only.
-- **Naming collision guard:** never name a feature RiftMind / RiftBody / RiftCalm / RiftFury / RiftChaos / RiftOrder — these collide with the six domain names.
+- Trailing-letter codes = alt art → drop, use base numeric.
+- Over-total numbers = overnumbered dup → drop, unless no lower twin exists yet.
+- Champion apostrophes: Kaisa, Khazix, Leblanc, Reksai — no apostrophes.
+- Naming: "Name, Epithet", sentence case matching the physical card exactly.
+- Domain color-letter codes (in-text parens): Fury (R), Calm (G), Mind (B), Body (O), Chaos (P), Order (Y).
+- `TYPE_FILTER_PREDICATES`: Unit includes all champions; Champion = subtype Champion only. Same pattern for Gear/Equipment.
+- Competitive bans are dynamic (`Bans` column, every merge run): 1v1 bans auto-remove; 2v2-only bans stay.
+- Never name a feature RiftMind/RiftBody/RiftCalm/RiftFury/RiftChaos/RiftOrder — collides with domain names.
 
 **Design / theme**
-- `REQUIRED` magenta `#EA6FD0` (from `src/lib/theme.ts`) = required fields only, never reused for anything else (including CTAs).
+- `REQUIRED` magenta `#EA6FD0` = required fields only, never CTAs.
 - Domain hex: Fury `#CC2929`, Calm `#3FA34D`, Mind `#2B73C2`, Body `#E57921`, Chaos `#8629B3`, Order `#EBB113`.
-- `RIFT_BRAND` gold `#E8B44A` (from `src/lib/theme.ts`) = the "Rift" brand accent. Primary use is the literal word "Rift" in every product name (RiftAcademy/RiftRecall/RiftIQ). **Widened July 19 (visual-direction pass):** gold is now also allowed as a small non-semantic brand accent in exactly two approved spots — the foil card-art rim/trim and Sparklet's graduation-cap tassel — signed off as "brand accent, not a new semantic color." It does **not** open gold for general use; everywhere other than the wordmark, foil rim, and Sparklet cap, gold still carries no meaning and must not be introduced.
-- Visual direction should reflect actual Riftbound card-art aesthetic (cartoony, colorful, intense) — avoid flat/black-only UI. The "Rune Glow" treatment (ambient blurple glow, glowing primary CTAs, foil card-art with gold rim + sheen) and the `Sparklet` correct-answer mascot are the first delivery of this direction.
+- `RIFT_BRAND` gold `#E8B44A` = the word "Rift" in every product name, plus (as of Rune Glow) the foil rim/trim + Sparklet cap only. No other new use without explicit sign-off.
+- Visual direction reflects Riftbound card-art aesthetic (cartoony, colorful, intense) — the Rune Glow treatment is the first delivery of this.
 
 **Culture**
-- Explicit correction culture: apply corrections immediately, carry forward, no repeated pushback.
-- Feature deferral is explicit and intentional; don't re-surface deferred items unprompted.
-- Defer legal/architecture decisions until PMF; don't burn cycles on compliance before core functionality is proven.
+- Explicit correction culture: apply corrections immediately, carry forward.
+- Feature deferral is explicit and intentional.
+- Defer legal/architecture decisions until PMF.
 
 ---
 
 ## 7. Tooling & model routing decisions
 
-**Model routing** (match to cognitive load, not feature/stage):
-- Menial/mechanical (CSV→JSON, file tidy, routine PR churn, moderation triage, format enforcement) → **Haiku 4.5** (or Sonnet 5 if judgment needed).
-- Feature building / everyday coding → **Sonnet 5** (default workhorse).
-- Gnarly bugs, architecture, strategic reasoning (RiftIQ, puzzles, matchups) → **Opus 4.8**, effort up for hard problems.
-- Cowork runs flagship-class under the hood → reserve for genuine multi-step work.
+**Model routing:**
+- Menial/mechanical → Haiku 4.5 (or Sonnet 5 if judgment needed).
+- Feature building → Sonnet 5 (default).
+- Gnarly bugs, architecture, strategy → Opus 4.8.
+- Cowork runs flagship-class under the hood — reserve for genuine multi-step work.
 
 **Capability decisions:**
-- **GitHub/PRs:** use **Claude Code** for branch/commit/PR/push. Keep branch protection + 2 checks. Claude opens PRs; human merges to `main`. Credentials stay manual.
-- **Google Drive hygiene:** "update in place, don't duplicate" so Drive's native version history handles versions; scheduled Cowork task can enforce naming/folders; hard deletes stay manual. (Drive read tool ignores `gid` tabs → keep per-tab CSV exports.)
-- **Discord:** no first-party connector. Fix is architectural — route intake (bugs/puzzles/feedback) into TickTick manually for now; Cowork prioritizes from there. Revisit automation once bug-report volume exceeds manual capacity.
-- **Strategic training (RiftIQ):** strong Opus fit — matchup matrices, sequencing flowcharts, decision filters, archetype trees, every claim tied to JSON card truth + current meta.
-- **Pro-footage analysis:** no direct video ingestion. Use transcripts, board-state screenshots, and the game-log schema (Section 0) as the durable path to the puzzle pipeline.
-- **Claude plan:** Max — Cowork on web/mobile, computer-use preview, and phone-based Remote Control/Dispatch are all available.
+- GitHub/PRs: Claude Code, via `gh` OAuth. Claude opens PRs; Ashwin merges to `main`.
+- Google Drive: local-path write for this doc (Section 1a); API connector can only create, not update in place, for anything else.
+- Discord: no connector — intake goes through TickTick manually.
+- Strategic training (RiftIQ): Opus track, every claim tied to card truth + meta.
+- Pro-footage analysis: no video ingestion — transcripts, screenshots, game-log schema instead.
+- Claude plan: Max.
+- When Claude Code flags its own command as security-sensitive: explain before approving, prefer a scratchpad file over an inline one-liner.
 
 ---
 
-## 8. Discord intake → TickTick design
+## 8. TickTick task management design
 
-- TickTick's `RiftAcademy` list keeps its existing **area-based columns** (Notes, Riftbound Gameplay Improvements, Feature Ideas, Marketing & Community, App Development) — unchanged, not workflow states.
-- **Workflow state, type, and area are tags**, layered on top so a task can live in any column and still carry status:
+- **Columns**: `New` (added Jul 19 — intake bucket for Cowork/system-created tasks), `Riftbound Gameplay` (renamed Jul 19 from "Riftbound Gameplay Improvements" — now personal skill-improvement work, not app features), `Notes`, `Feature Ideas`, `Marketing & Community`, `App Development`.
+- **Tags** layer workflow state/type/area on top of columns:
   - Type: `#feature` `#bug` `#puzzle` `#idea` `#chore` `#legal`
-  - State: `#inbox-triage` `#this-week` `#in-progress` `#review-deploy` (no tag = backlog; completing the task = done)
+  - State: `#inbox-triage` `#this-week` `#in-progress` `#review-deploy`
   - Area: `#riftrecall` `#riftiq` `#riftnotes` `#tracker` `#data-pipeline` `#infra` `#community`
-- Priority uses TickTick's native High/Med/Low field — no separate tag.
-- Discord → TickTick stays **manual** until bug-report volume exceeds manual capacity; automation revisited then.
+- Priority uses TickTick's native High/Med/Low field.
+- Discord → TickTick stays manual until volume demands automation.
+- No credentials in task content — see Section 6.
 
 ---
 
 ## 9. Recent updates log
 
-*Two audiences: customer-facing lines are copyable straight into app-store notes, in-app changelogs, or Discord announcements. Team-facing lines are internal context for future threads.*
+*Customer-facing lines are copyable into changelogs. Team-facing lines are internal context.*
 
-**July 19**
+**July 19 (evening — fragment system adopted, full reconciliation)**
 - Customer-facing: —
-- Team-facing: Feature formerly "Card Recall"/"Memory Game" is now named **RiftRecall**. Merged the two project-management docs (this file + the prior `.docx`) into one canonical doc — the `.docx` should be removed from Project Knowledge. TickTick `RiftAcademy` list tagged for type/state/area (columns unchanged). Verified all Vendetta cards have valid art directly against raw Riftcodex source files (zero null `image_url`) — any remaining app-side gap is a merge-step or `new`-flag issue, not missing source data.
-- Team-facing (VEN count reconcile): `cleanup_ven_reprints.py` removed 20 VEN cards — 8 overnumbered champion reprints (`ven-167..184-166`), 6 signature "SP" champion reprints (`ven-sp1..sp6`), 6 domain runes (`ven-r01..r06`) — all exact duplicates of earlier-set cards with degraded data. VEN went **161 → 141**. Set total is **166**; the 25 absent collector numbers are unreleased/not-yet-on-Riftcodex slots ahead of the July 31 launch, not ingestion errors. Confirmed all 141 present VEN cards (and all 893 cards overall) have non-null `imageUrl`, and RiftRecall's art-exclusion in `src/lib/quiz.ts` keys strictly off `imageUrl === null` — there is no `new` flag in `cards.json`, so no stale-flag path can bench a card that has art.
-- Customer-facing: RiftRecall got a visual glow-up — a soft ambient glow across the screen, glowing action buttons, a holographic "foil" frame around each card, and a little mascot that pops in to celebrate when you answer correctly (respects your device's reduce-motion setting).
-- Team-facing (visual-direction "Rune Glow" pass): first skin-pass delivery — new glow/foil tokens in `theme.ts` (`GLOW.*`, `FOIL.*`, `GLOW_AMBIENT`, `accentLight`/`accentDeep`); four new components (`ScreenGlow`, `GlowButton`, `QuizCardArt`, `Sparklet`). Sparklet uses RN's built-in `Animated` (no Reanimated in the project) and fires non-blocking on correct answers. **`RIFT_BRAND` gold rule widened** (see Section 6 Design/theme) — gold now allowed on the foil rim/trim + Sparklet cap, nowhere else new. Deliberate deviation flagged for on-device review: quiz answer options keep their green/red correct-incorrect semantics rather than the spec's blurple "selected-correct" variant, to avoid encoding state in color/glow alone (a11y). No Reanimated / `expo-blur` / gradient lib available, so glows use RN `shadow*` and gradients/foil/Sparklet use `react-native-svg`. Landed via `feature/visual-direction-rune-glow`.
-- Customer-facing: New RiftRecall users now get a short guided tutorial on first launch — a highlighted ring + tip bubble walks through setting filters and starting a study session using the real buttons, not a slideshow. Replayable any time via "Replay tutorial" on the Progress screen.
-- Team-facing (onboarding tutorial): design/prototype handed off from a separate chat thread and integrated in `feature/onboarding-tutorial` (branched off `integration`, not off the visual-direction branch — kept as its own PR per the handoff spec). New: `tutorialContext.tsx` (content-agnostic `TutorialProvider`/`useTutorial`/`useTutorialTarget` engine — walks `tutorialSteps.ts` by `id`, doesn't know what the steps mean), `TutorialCallout.tsx` (ring + bubble, mounted once at app root like `FeedbackOverlay`), `tutorialSteps.ts` (the swappable 4-step script), `setGroups.ts` (extracted `SET_GROUPS` out of `SettingsScreen.tsx` so the tutorial script can reference the newest set without a circular import). **Two real conflicts surfaced against the just-merged `feature/visual-direction-rune-glow` PR** (integration moved forward mid-session): (1) the tutorial's step-4 target ("Review Cards") had become a `GlowButton` component with no ref/onLayout passthrough — resolved by wrapping it in a plain `View` for measurement, same pattern already used for `SettingsScreen`'s newest-set chip wrapping the shared `Chip` component, rather than modifying `GlowButton` itself; (2) confirmed via DOM measurement that the ring/bubble rendered ~400px off-target on desktop-width web specifically — `useTutorialTarget` measures via `measureInWindow` (viewport-relative), but `TutorialCallout` renders inside `App.tsx`'s centered `webWrapper` column (side margins on any viewport wider than 480px), double-applying that margin. Fixed by having `TutorialCallout` measure its own container's window-relative rect and position everything relative to that instead of raw `Dimensions.get("window")` — verified correct at both mobile width and 1280px desktop width post-fix. Also carries two unrelated pre-existing `HomeScreen.tsx` bugs fixed in the same reference implementation: a bare star (★) and em dash (—) sitting directly in JSX text instead of `{"★"}` / `{"—"}` expressions, so they rendered as literal backslash text.
+- Team-facing: This is the last manual full reconciliation of this doc under normal conditions. Adopted a fragment-file system (`docs/updates/pending/`, template at `docs/updates/TEMPLATE.md`) to replace direct doc edits in feature/fix PRs — root-caused to two failure modes today: a shared-file conflict (PR #44) and a silent no-update (RiftRecall's build-out shipping in code across PRs #29/#32/#33 without ever reaching this doc). Folded that entire build-out into Sections 2/3 tonight since it was real, already-shipped work that had simply never been documented here. Fixed a stale cross-reference (Section 5 pointed to "Section 7" for the log; corrected to Section 9). Full PR history reviewed #1–46: only #44 (doc reconcile, now superseded/closeable) and #46 (onboarding, clean and ready) were open; everything else merged cleanly with a healthy linear `integration` history.
+- Team-facing (security): Found and revoked a GitHub Personal Access Token pasted in plaintext in a TickTick task — confirmed via `gh auth status` that Claude Code never depended on it (uses OAuth device flow).
+- Team-facing (TickTick): Added a "New" intake bucket for Cowork/system tasks; renamed "Riftbound Gameplay Improvements" → "Riftbound Gameplay" (personal skill-improvement scope, separate from app features).
+
+**July 19 (afternoon)**
+- Customer-facing: New RiftRecall users now get a short guided tutorial on first launch — a highlighted ring + tip bubble walks through setting filters and starting a study session using the real buttons. Replayable via "Replay tutorial" on the Progress screen.
+- Team-facing (onboarding tutorial, PR #46): Content-agnostic engine (`tutorialContext.tsx`) walks a swappable script (`tutorialSteps.ts`) by id — replacing the script later is not an engine change. `setGroups.ts` extracted `SET_GROUPS` out of `SettingsScreen.tsx` so the tutorial can reference the newest set without a circular import. Two real conflicts surfaced against the just-merged Rune Glow PR (integration moved forward mid-session): (1) the step-4 target ("Review Cards") had become a `GlowButton` with no ref/onLayout passthrough — resolved by wrapping it in a `View` rather than modifying `GlowButton`, matching the existing pattern used for `SettingsScreen`'s chip wrapping; (2) the ring/bubble rendered ~400px off-target on desktop-width web — `TutorialCallout` was double-applying `App.tsx`'s centered-column margin by measuring the raw window instead of its own container; fixed by measuring its own container's rect instead, verified at both mobile and 1280px desktop widths. Also fixed two unrelated pre-existing `HomeScreen.tsx` bugs found during testing: a bare ★ and — sitting directly in JSX text instead of `{"★"}`/`{"—"}` expressions. Full click-through tested in-browser (all 4 steps, persistence, replay, both bugfixes); native iOS/Android unverified.
+
+**July 19 (midday — Rune Glow)**
+- Customer-facing: RiftRecall got a visual glow-up — a soft ambient glow, glowing action buttons, a holographic "foil" frame around each card, and a mascot that celebrates correct answers (respects reduce-motion).
+- Team-facing (PR #45): New glow/foil tokens in `theme.ts` (`GLOW.*`, `FOIL.*`, `GLOW_AMBIENT`, `accentLight`/`accentDeep`). Four new components: `ScreenGlow`, `GlowButton`, `QuizCardArt`, `Sparklet` (uses RN's built-in `Animated`, no Reanimated in the project; fires non-blocking on correct answers). `RIFT_BRAND` gold widened to the foil rim/trim + Sparklet cap only. Deliberate deviation flagged for review: quiz answer options keep green/red correct-incorrect semantics rather than the spec's blurple variant, to avoid encoding state in color/glow alone (accessibility). No expo-blur/gradient lib available — glows use RN `shadow*`, foil/Sparklet use `react-native-svg`.
+
+**July 19 (midday — VEN reconciliation, PR #40)**
+- Team-facing: `cleanup_ven_reprints.py` removed 20 VEN cards (8 overnumbered champion reprints, 6 SP reprints, 6 domain runes) — all exact duplicates of earlier-set cards with degraded data. VEN went 161 → 141 of a 166 total; the 25 absent numbers are unreleased slots, not errors. Confirmed the art-exclusion logic keys strictly off `imageUrl`, not any `new` flag.
+
+**July 19 (morning — Claude Code + Cowork setup)**
+- Team-facing: Feature formerly "Card Recall"/"Memory Game" named **RiftRecall**. Set up and validated Claude Code (branch/PR workflow) and Claude Cowork (Drive + TickTick connectors). TickTick tagged for type/state/area.
 
 **July 17**
-- Customer-facing: All Vendetta cards now show their real card art in Card Recall — no longer placeholder-only.
-- Team-facing: Riftcodex ingested Vendetta card images ahead of the July 31 release. New reusable script (`scripts/apply_vendetta_images.py`) backfills `imageUrl` on `cards.json` by matching Riftcodex, handling the signature-champion `-006` id quirk. Deployed via `feature/vendetta-images` → `integration` → promoted as usual.
+- Customer-facing: All Vendetta cards now show real card art in RiftRecall.
+- Team-facing: `apply_vendetta_images.py` backfills `imageUrl` from Riftcodex, handling the signature-champion `-006` id quirk.
 
 **July 16**
-- Customer-facing: Added Vendetta card data ahead of the set's July 31 release (art followed July 17). Removed a duplicate "Ultimate" Baron Nashor. Corrected card types/subtypes — Champions and Equipment now filter correctly and independently from Units and Gear. Added a Speed filter (Action/Reaction). Sets filter now breaks out Origins & Proving Grounds, Spiritforged, Unleashed, Vendetta individually. Quiz screen layout improved.
-- Team-facing: GitHub repo live with branch protection + required CI checks. Vercel connected: `main` = production, `staging` = public preview. `merge_sheet.py` now supports a permanent blacklist (used for Baron Nashor removal). Sync-down automation + first Jest suite written, not yet merged. Resolved a git-identity issue silently blocking Vercel deploys.
+- Customer-facing: Vendetta card data added ahead of July 31 release. Duplicate "Ultimate" Baron Nashor removed. Champion/Equipment filtering fixed. Speed filter added. Sets broken out individually. Quiz layout improved.
+- Team-facing: GitHub repo live with branch protection + CI. Vercel connected. `merge_sheet.py` supports a permanent blacklist.
 
 **July 14**
-- Customer-facing: Match Tracker shipped — full live match dashboard with point/hand/deck/rune tracking, undo, CSV export. In-app feedback form added. New "Deck" filter for quiz practice.
-- Team-facing: None beyond the above — entirely customer-facing feature work.
+- Customer-facing: Match Tracker shipped. Feedback form added. "Deck" filter for quiz practice.
 
 ---
 
 ## 10. Open decisions / questions
 
-1. Game-log / match-state snapshot schema — needs Opus iteration in a dedicated RiftIQ thread (reminder flagged, Section 0).
+1. Game-log / match-state snapshot schema — needs Opus iteration in a dedicated RiftIQ thread, bundled with the decision-tree and pen-and-paper capture-format tasks (one workstream, see Section 0).
 2. New-user ingestion survey: exact questions/segments not yet decided.
 3. Donate link platform + Riot LJJ policy check — unresolved, not urgent.
 4. Keyword badge styling — undecided, low priority.
+5. RiftIQ real module design — what goes in it beyond placeholders.
+6. Whether the onboarding tutorial (#46) already covers the "Vendetta Prep guided tour" scope from Section 0, or whether that's still a distinct piece of work — needs a decision before more effort goes into either.
+7. Stale GitHub branch cleanup — process documented, not yet executed.
