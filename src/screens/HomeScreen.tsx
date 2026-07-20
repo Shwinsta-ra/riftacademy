@@ -63,7 +63,7 @@ export default function HomeScreen({ navigation }: Props) {
   const { filters } = useFilters();
   const [total, setTotal] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
-  const { completeStepIfActive } = useTutorial();
+  const { completeStepIfActive, currentStep } = useTutorial();
   const setFiltersTarget = useTutorialTarget("setFiltersButton");
   const reviewCardsTarget = useTutorialTarget("reviewCardsButton");
 
@@ -124,14 +124,20 @@ export default function HomeScreen({ navigation }: Props) {
           <Text style={styles.purposeText}>
             Use spaced repetition and micro-learning to build lasting card awareness.
           </Text>
-          <View ref={reviewCardsTarget.ref} onLayout={reviewCardsTarget.onLayout}>
+          <View
+            ref={reviewCardsTarget.ref}
+            onLayout={reviewCardsTarget.onLayout}
+            style={[
+              styles.bigButtonWrap,
+              currentStep?.id === "reviewCardsButton" && styles.tutorialTargetActive,
+            ]}
+          >
             <GlowButton
               label={reviewLabel}
               onPress={() => {
                 completeStepIfActive("reviewCardsButton");
                 navigation.navigate("Quiz");
               }}
-              style={styles.bigButtonWrap}
               contentStyle={styles.bigButtonBody}
               textStyle={styles.bigButtonText}
             />
@@ -140,7 +146,11 @@ export default function HomeScreen({ navigation }: Props) {
             <Pressable
               ref={setFiltersTarget.ref}
               onLayout={setFiltersTarget.onLayout}
-              style={[styles.secondaryButton, styles.halfButton]}
+              style={[
+                styles.secondaryButton,
+                styles.halfButton,
+                currentStep?.id === "setFiltersButton" && styles.tutorialTargetActive,
+              ]}
               onPress={() => {
                 completeStepIfActive("setFiltersButton");
                 navigation.navigate("Settings");
@@ -173,7 +183,7 @@ export default function HomeScreen({ navigation }: Props) {
         </FeatureBox>
 
         <FeatureBox>
-          <Text style={styles.whatsNewTitle}>What's new {"\u2014"} {APP_VERSION}</Text>
+          <Text style={styles.whatsNewTitle}>What's new ({APP_VERSION})</Text>
           {WHATS_NEW.map((line, i) => {
             const isHighlighted = line.trim().startsWith("\u2605");
             return (
@@ -186,15 +196,13 @@ export default function HomeScreen({ navigation }: Props) {
             );
           })}
         </FeatureBox>
-      </ScrollView>
 
-      {/* Fixed footer -- pinned to the bottom of the visible screen (a
-          sibling of the ScrollView, not its last scrollable item) so the
-          legal notice stays reachable without scrolling regardless of how
-          much content is above it. */}
-      <View style={styles.legalFooter}>
+        {/* Reverted from a fixed footer back to normal scrollable content
+            (per Ashwin, July 19 evening) -- it should not be pinned or cover
+            other UI elements, just reachable by scrolling like anything
+            else. */}
         <Text style={styles.legalText}>{LEGAL_TEXT}</Text>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -236,6 +244,15 @@ const styles = StyleSheet.create({
   iqSubtitle: { color: "#c7c7d2", fontSize: 13, marginBottom: 12 },
   bigButtonWrap: { marginBottom: 12 },
   bigButtonBody: { paddingVertical: 18 },
+  // Tutorial highlight: applied directly to the target element's own style
+  // (not a separately-measured overlay) so it can never mismatch the
+  // element's actual bounds or rounded corners. borderRadius matches both
+  // GlowButton's default radius and secondaryButton's own radius (both 14).
+  // Uses theme.text (near-white), not theme.accent -- Review Cards/GlowButton
+  // and the "Set filters" CTA (once dirty) are already filled with
+  // theme.accent, so an accent-colored border on top of an accent-colored
+  // fill would be invisible.
+  tutorialTargetActive: { borderColor: theme.text, borderWidth: 2, borderRadius: 14 },
   bigButtonText: { color: "#fff", fontSize: 17, fontWeight: "600" },
   halfRow: { flexDirection: "row", gap: 10 },
   halfButton: { flex: 1, marginBottom: 0 },
@@ -272,15 +289,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   whatsNewLineHighlight: { color: theme.correct },
-  legalFooter: {
-    paddingHorizontal: 20,
-    paddingBottom: 14,
-    paddingTop: 6,
-  },
   legalText: {
     textAlign: "center",
     color: "#6e6e7a",
     fontSize: 10,
     lineHeight: 14,
+    marginTop: 8,
   },
 });

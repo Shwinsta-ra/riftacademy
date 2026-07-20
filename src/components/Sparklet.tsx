@@ -62,6 +62,14 @@ type Props = {
  * Reduced motion: when the OS reduce-motion setting is on, the hop/rotate/spark
  * animations are skipped — the static pose plus the "Correct!" toast still
  * appear and fade, per the spec's edge cases.
+ *
+ * Positioning: rendered via QuizCardArt's `decoration` slot, which places it
+ * on the card's own unclipped outer container (position: relative, overflow:
+ * visible) — so `styles.overlay` below is anchored to the CARD's box, not
+ * the whole screen. Sits on the right side, ~30% up from the card's bottom
+ * edge, peeking slightly past the card's own right edge, rather than
+ * centered over the card (which used to overlap the caption/prompt/answers
+ * below it).
  */
 export default function Sparklet({ playKey, size = 120 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -194,7 +202,7 @@ export default function Sparklet({ playKey, size = 120 }: Props) {
   const height = size * (150 / 140);
 
   return (
-    <View style={styles.overlay} pointerEvents="none">
+    <View style={[styles.overlay, { width: size }]} pointerEvents="none">
       <Animated.View style={[styles.stack, { opacity: shown }]}>
         {/* "Correct!" toast, above the mascot */}
         <Animated.View
@@ -336,10 +344,15 @@ export default function Sparklet({ playKey, size = 120 }: Props) {
 }
 
 const styles = StyleSheet.create({
+  // Right side, peeking slightly past the card's own right edge, top edge
+  // ~30% up from the card's bottom (i.e. 70% of the card's height down from
+  // its top) -- not centered over the card, which used to overlap the
+  // caption/prompt/answers below it.
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: "70%",
+    right: -10,
     alignItems: "center",
-    justifyContent: "center",
   },
   stack: { alignItems: "center", justifyContent: "center" },
   toast: {

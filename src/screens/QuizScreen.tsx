@@ -363,7 +363,7 @@ export default function QuizScreen({ navigation }: Props) {
     return (
       <View style={[styles.container, styles.centered]}>
         <Text style={styles.emptyText}>
-          Nice work on that set! Your next batch of cards unlocks in {mmss} — short
+          Nice work on that set! Your next batch of cards unlocks in {mmss}. Short
           breaks between sets help this actually stick.
         </Text>
         <GlowButton
@@ -380,7 +380,7 @@ export default function QuizScreen({ navigation }: Props) {
     return (
       <View style={[styles.container, styles.centered]}>
         <Text style={styles.emptyText}>
-          These are all the cards for you right now — check back in 10 minutes for new ones.
+          These are all the cards for you right now. Check back in 10 minutes for new ones.
         </Text>
         <GlowButton
           label="Back to home"
@@ -419,7 +419,10 @@ export default function QuizScreen({ navigation }: Props) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}
       >
-        <QuizCardArt aspectRatio={CARD_ASPECT_RATIO}>
+        <QuizCardArt
+          aspectRatio={CARD_ASPECT_RATIO}
+          decoration={<Sparklet playKey={correctPlayKey} />}
+        >
           <Image
             // Non-null assertion is safe here: getFilteredCards() (quiz.ts)
             // excludes every card with imageUrl === null from the pool this
@@ -513,9 +516,6 @@ export default function QuizScreen({ navigation }: Props) {
         )}
         </View>
       </ScrollView>
-      {/* Correct-answer celebration — decorative, pointer-transparent overlay.
-          Never gates advancing: tapping "Next card" underneath works mid-play. */}
-      <Sparklet playKey={correctPlayKey} />
     </View>
   );
 }

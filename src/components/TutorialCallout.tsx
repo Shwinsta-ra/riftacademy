@@ -3,24 +3,31 @@ import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useTutorial } from "../lib/tutorialContext";
 import { theme } from "../lib/theme";
 
-const RING_PADDING = 6;
 const GAP = 14;
 
 type ContainerRect = { x: number; y: number; width: number; height: number };
 
-/** Renders a highlight ring around whatever target the active tutorial step
- *  has registered, plus a speech-bubble "cloud" with a small triangular
- *  arrow pointing at it. Mounted once at the app root (same pattern as
- *  FeedbackOverlay) so it can render on top of whichever screen is
- *  currently active — screens don't render their own copy of this. Renders
- *  nothing when the tutorial isn't running or hasn't measured a target yet.
+/** Renders the speech-bubble "cloud" (with a small triangular arrow pointing
+ *  at the active tutorial step's target) near wherever that target is.
+ *  Mounted once at the app root (same pattern as FeedbackOverlay) so it can
+ *  render on top of whichever screen is currently active — screens don't
+ *  render their own copy of this. Renders nothing when the tutorial isn't
+ *  running or hasn't measured a target yet.
+ *
+ *  Does NOT draw a highlight ring — each screen that owns a tutorial target
+ *  applies a conditional border directly to that element instead (see
+ *  HomeScreen/SettingsScreen), since a separately-measured overlay rectangle
+ *  can never be guaranteed to match the target's actual rounded corners,
+ *  padding, and exact bounds — the target already knows its own bounds
+ *  perfectly, by definition. This removes an entire class of "ring doesn't
+ *  match the button" bugs; the bubble's positioning is a smaller, more
+ *  tractable problem than ring+bubble both needing to agree.
  *
  *  `targetRect` (from useTutorialTarget) is window-relative, via
  *  measureInWindow. On web, App.tsx's webWrapper centers a max-480px column
  *  with side margins on any viewport wider than that, so this component's
  *  own absoluteFill container does NOT start at the window's left edge —
- *  positioning directly off targetRect would double-apply that margin and
- *  place the ring/bubble off to the right of the real element. This
+ *  positioning directly off targetRect would double-apply that margin. This
  *  container measures its own window-relative rect (also via
  *  measureInWindow, triggered from onLayout so the ref is guaranteed
  *  attached) and every position below is expressed relative to THAT rect,
@@ -62,47 +69,33 @@ export function TutorialCallout() {
     );
 
     const anchorY = placeBelow
-      ? localY + targetRect.height + RING_PADDING + GAP
-      : localY - RING_PADDING - GAP;
+      ? localY + targetRect.height + GAP
+      : localY - GAP;
 
     content = (
-      <>
+      <View
+        style={[
+          styles.bubble,
+          {
+            width: bubbleWidth,
+            left: bubbleLeft,
+            ...(placeBelow ? { top: anchorY } : { bottom: containerHeight - anchorY }),
+          },
+        ]}
+      >
         <View
           pointerEvents="none"
           style={[
-            styles.ring,
-            {
-              left: localX - RING_PADDING,
-              top: localY - RING_PADDING,
-              width: targetRect.width + RING_PADDING * 2,
-              height: targetRect.height + RING_PADDING * 2,
-            },
+            styles.arrow,
+            placeBelow ? styles.arrowUp : styles.arrowDown,
+            { left: arrowLeft },
           ]}
         />
-        <View
-          style={[
-            styles.bubble,
-            {
-              width: bubbleWidth,
-              left: bubbleLeft,
-              ...(placeBelow ? { top: anchorY } : { bottom: containerHeight - anchorY }),
-            },
-          ]}
-        >
-          <View
-            pointerEvents="none"
-            style={[
-              styles.arrow,
-              placeBelow ? styles.arrowUp : styles.arrowDown,
-              { left: arrowLeft },
-            ]}
-          />
-          <Text style={styles.bubbleText}>{currentStep.text}</Text>
-          <Pressable onPress={skip} hitSlop={8} style={styles.skipButton}>
-            <Text style={styles.skipText}>Skip tutorial</Text>
-          </Pressable>
-        </View>
-      </>
+        <Text style={styles.bubbleText}>{currentStep.text}</Text>
+        <Pressable onPress={skip} hitSlop={8} style={styles.skipButton}>
+          <Text style={styles.skipText}>Skip tutorial</Text>
+        </Pressable>
+      </View>
     );
   }
 
@@ -119,12 +112,6 @@ export function TutorialCallout() {
 }
 
 const styles = StyleSheet.create({
-  ring: {
-    position: "absolute",
-    borderWidth: 3,
-    borderColor: theme.accent,
-    borderRadius: 16,
-  },
   bubble: {
     position: "absolute",
     backgroundColor: "#232336",
@@ -150,5 +137,5 @@ const styles = StyleSheet.create({
   arrowDown: { bottom: -8, borderBottomWidth: 1, borderRightWidth: 1 },
   bubbleText: { color: theme.text, fontSize: 14, lineHeight: 20, marginBottom: 10 },
   skipButton: { alignSelf: "flex-end" },
-  skipText: { color: theme.textDim, fontSize: 12 },
+  skipText: { color: theme.textDim, fontSize: 12, fontStyle: "italic" },
 });

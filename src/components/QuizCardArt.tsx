@@ -13,6 +13,13 @@ const RADIUS = 16;
 type Props = {
   aspectRatio: number;
   children: React.ReactNode;
+  /** Optional overlay rendered on the OUTER (unclipped, overflow: visible)
+   *  container, after the trim SVG — for decoration that needs to be
+   *  positioned relative to the card's own box and allowed to bleed past
+   *  its edge (e.g. Sparklet), as opposed to `children`, which renders
+   *  inside the clipped region and gets masked at the card's rounded
+   *  corners. */
+  decoration?: React.ReactNode;
 };
 
 /**
@@ -30,7 +37,24 @@ type Props = {
  * onLayout measurement is needed. All decorative layers are pointer-transparent
  * so taps still reach whatever the caller renders.
  */
-export default function QuizCardArt({ aspectRatio, children }: Props) {
+export default function QuizCardArt({ aspectRatio, children, decoration }: Props) {
+  // All three SVG overlays below use a 100-wide viewBox whose HEIGHT is
+  // derived from the real `aspectRatio` prop, rather than a hardcoded
+  // approximation (previously "0 0 100 140", i.e. a fixed ratio of
+  // 100/140 = 0.7143). The real card ratio (744/1039 = 0.7161) is close but
+  // not identical, and preserveAspectRatio="none" stretches each SVG
+  // non-uniformly to fill its box -- any mismatch between the viewBox's
+  // ratio and the box's actual rendered ratio scales the trim stroke's
+  // rounded corners into a slight ellipse, which doesn't line up with the
+  // `clip` View's perfectly circular CSS borderRadius and shows up as a
+  // stray line segment at the corner. Deriving the viewBox height from the
+  // same aspectRatio the box itself uses keeps the stretch uniform (and
+  // therefore corner-radius-safe) for whatever ratio is passed in, not just
+  // today's card art.
+  const viewBoxHeight = 100 / aspectRatio;
+  const viewBox = `0 0 100 ${viewBoxHeight.toFixed(3)}`;
+  const trimRadius = 8; // single consistent rx=ry now that scaling is uniform
+
   return (
     <View style={[styles.outer, { aspectRatio }, GLOW.cardRing]}>
       <View style={styles.clip}>
@@ -39,7 +63,7 @@ export default function QuizCardArt({ aspectRatio, children }: Props) {
           style={StyleSheet.absoluteFill}
           width="100%"
           height="100%"
-          viewBox="0 0 100 140"
+          viewBox={viewBox}
           preserveAspectRatio="none"
           pointerEvents="none"
         >
@@ -50,7 +74,7 @@ export default function QuizCardArt({ aspectRatio, children }: Props) {
               ))}
             </LinearGradient>
           </Defs>
-          <Rect x="0" y="0" width="100" height="140" fill="url(#foilBase)" />
+          <Rect x="0" y="0" width="100" height={viewBoxHeight} fill="url(#foilBase)" />
         </Svg>
 
         {/* 4. card image + masks */}
@@ -61,7 +85,7 @@ export default function QuizCardArt({ aspectRatio, children }: Props) {
           style={StyleSheet.absoluteFill}
           width="100%"
           height="100%"
-          viewBox="0 0 100 140"
+          viewBox={viewBox}
           preserveAspectRatio="none"
           pointerEvents="none"
         >
@@ -77,7 +101,7 @@ export default function QuizCardArt({ aspectRatio, children }: Props) {
               ))}
             </LinearGradient>
           </Defs>
-          <Rect x="0" y="0" width="100" height="140" fill="url(#foilSheen)" />
+          <Rect x="0" y="0" width="100" height={viewBoxHeight} fill="url(#foilSheen)" />
         </Svg>
       </View>
 
@@ -86,7 +110,7 @@ export default function QuizCardArt({ aspectRatio, children }: Props) {
         style={StyleSheet.absoluteFill}
         width="100%"
         height="100%"
-        viewBox="0 0 100 140"
+        viewBox={viewBox}
         preserveAspectRatio="none"
         pointerEvents="none"
       >
@@ -106,15 +130,17 @@ export default function QuizCardArt({ aspectRatio, children }: Props) {
           x="0.6"
           y="0.6"
           width="98.8"
-          height="138.8"
-          rx="7"
-          ry="9"
+          height={viewBoxHeight - 1.2}
+          rx={trimRadius}
+          ry={trimRadius}
           fill="none"
           stroke="url(#foilTrim)"
           strokeWidth="1.2"
           opacity={FOIL.trimOpacity}
         />
       </Svg>
+
+      {decoration}
     </View>
   );
 }
