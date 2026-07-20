@@ -62,6 +62,23 @@ type Props = {
  * Reduced motion: when the OS reduce-motion setting is on, the hop/rotate/spark
  * animations are skipped — the static pose plus the "Correct!" toast still
  * appear and fade, per the spec's edge cases.
+ *
+ * Positioning: rendered via QuizCardArt's `decoration` slot, which places it
+ * on the card's own unclipped outer container (position: relative, overflow:
+ * visible) — so `styles.overlay` below is anchored to the CARD's box, not
+ * the whole screen. Pinned to the bottom-right corner (peeking slightly past
+ * both edges), rather than centered over the card (which used to overlap
+ * the caption/prompt/answers below it).
+ *
+ * Deliberately anchored from `bottom`/`right` with fixed offsets, NOT a
+ * `top: '70%'`-style percentage of container height: QuizCardArt's
+ * container aspect ratio varies by card orientation (portrait for most
+ * cards, landscape for Battlefields — see BATTLEFIELD_ASPECT_RATIO in
+ * QuizScreen.tsx), so a percentage-of-height anchor that looks right on a
+ * tall portrait card overshoots well past the bottom of a short landscape
+ * one. Anchoring from the corner with fixed pixel offsets keeps the mascot
+ * pinned to the actual card edge regardless of the container's aspect
+ * ratio.
  */
 export default function Sparklet({ playKey, size = 120 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -194,7 +211,7 @@ export default function Sparklet({ playKey, size = 120 }: Props) {
   const height = size * (150 / 140);
 
   return (
-    <View style={styles.overlay} pointerEvents="none">
+    <View style={[styles.overlay, { width: size }]} pointerEvents="none">
       <Animated.View style={[styles.stack, { opacity: shown }]}>
         {/* "Correct!" toast, above the mascot */}
         <Animated.View
@@ -336,10 +353,15 @@ export default function Sparklet({ playKey, size = 120 }: Props) {
 }
 
 const styles = StyleSheet.create({
+  // Bottom-right corner, peeking slightly past both edges -- fixed pixel
+  // offsets rather than a percentage of container height, so it holds up
+  // for both portrait and landscape (Battlefield) cards. Not centered over
+  // the card, which used to overlap the caption/prompt/answers below it.
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    bottom: -8,
+    right: -10,
     alignItems: "center",
-    justifyContent: "center",
   },
   stack: { alignItems: "center", justifyContent: "center" },
   toast: {
