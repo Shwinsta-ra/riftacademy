@@ -40,6 +40,10 @@ const BATCH_GATE_KEY = "lastBatchCompletedAt";
 // a separate key from both progress and the batch gate — none of these
 // three should reset each other as a side effect.
 const TUTORIAL_SEEN_KEY = "hasSeenTutorial";
+// Whether the person has dismissed the one-time first-launch welcome/alpha
+// screen -- separate from TUTORIAL_SEEN_KEY, see db.web.ts's copy of this
+// comment for why.
+const WELCOME_SEEN_KEY = "hasSeenWelcome";
 
 export async function getLastBatchCompletedAt(): Promise<number | null> {
   const db = await getDb();
@@ -74,6 +78,24 @@ export async function setHasSeenTutorial(seen: boolean): Promise<void> {
     `INSERT INTO settings (key, value) VALUES (?, ?)
      ON CONFLICT(key) DO UPDATE SET value = excluded.value;`,
     [TUTORIAL_SEEN_KEY, seen ? "true" : "false"]
+  );
+}
+
+export async function getHasSeenWelcome(): Promise<boolean> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>(
+    "SELECT value FROM settings WHERE key = ?",
+    [WELCOME_SEEN_KEY]
+  );
+  return row?.value === "true";
+}
+
+export async function setHasSeenWelcome(seen: boolean): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value;`,
+    [WELCOME_SEEN_KEY, seen ? "true" : "false"]
   );
 }
 

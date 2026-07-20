@@ -1,9 +1,18 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useTutorial } from "../lib/tutorialContext";
 import { theme } from "../lib/theme";
 
 const GAP = 14;
+// A step transition can coincide with the target's screen re-measuring
+// itself (e.g. SettingsScreen's newest-set-chip tap both advances the step
+// AND kicks off an auto-scroll to reveal "Set Filters" -- see that screen's
+// re-measure-after-scroll effect). Rendering the bubble the instant a
+// targetRect first arrives can catch the PRE-scroll position, then visibly
+// snap to the corrected one a moment later. Holding the bubble hidden for
+// this long after a step change gives any in-flight re-measure time to
+// land first, so it only ever appears already in the right place.
+const STEP_SETTLE_MS = 500;
 
 type ContainerRect = { x: number; y: number; width: number; height: number };
 
@@ -44,7 +53,18 @@ export function TutorialCallout() {
     });
   }, []);
 
-  const ready = currentStep && targetRect && containerRect;
+  // Resets to false on every step change (including the very first step),
+  // then flips true after STEP_SETTLE_MS -- see the constant's comment for
+  // why. A fresh timer per step id, cleared on the next change/unmount.
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    setSettled(false);
+    if (!currentStep) return;
+    const id = setTimeout(() => setSettled(true), STEP_SETTLE_MS);
+    return () => clearTimeout(id);
+  }, [currentStep?.id]);
+
+  const ready = currentStep && targetRect && containerRect && settled;
 
   let content: React.ReactNode = null;
   if (ready) {
