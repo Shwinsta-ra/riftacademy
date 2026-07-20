@@ -55,8 +55,19 @@ export default function SettingsScreen({ navigation }: Props) {
   useEffect(() => {
     if (dirty && !wasDirty.current) {
       requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+      // This same tap can also be what advances the tutorial onto
+      // setFiltersCTA (see the newest-set chip's onPress below), whose
+      // target re-measures itself via useTutorialTarget's own effect at
+      // roughly the same tick as the scrollToEnd call above -- a race that
+      // let the bubble measure the button's PRE-scroll on-screen position
+      // and render pinned to where the button used to be. Re-measuring once
+      // the scroll animation has had time to settle corrects that; this is
+      // a no-op via registerTarget's own step-id check whenever some other
+      // step is active.
+      setTimeout(() => setFiltersCTATarget.onLayout(), 400);
     }
     wasDirty.current = dirty;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dirty]);
 
   const decks = getAllDecks();
