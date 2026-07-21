@@ -1,0 +1,273 @@
+// RiftCore schema (v1). Pure types — no imports beyond TS. See
+// docs/design/RiftCore_Spec.md §2, §5, §8 for the source spec.
+//
+// This file is the shared contract every other Riftbound module (RiftEngine,
+// RiftLab, RiftCoach, RiftIQ) imports. It intentionally has zero dependency
+// on the rest of this app (no React, no storage, no screens/, no puzzle
+// types) so it can be lifted into a standalone package.
+
+// ---------------------------------------------------------------------------
+// Card-level enums (mirror src/data/cards.json's actual value set)
+// ---------------------------------------------------------------------------
+
+export type Domain =
+  | "Fury"
+  | "Calm"
+  | "Body"
+  | "Mind"
+  | "Order"
+  | "Chaos"
+  | "Colorless";
+
+export type CardType = "Unit" | "Spell" | "Gear" | "Battlefield" | "Legend" | "Rune";
+
+export type CardSubtype =
+  | "Champion"
+  | "Equipment"
+  | "Combat Trick"
+  | "Removal"
+  | "Counterspell"
+  | "Utility"
+  | null;
+
+export type Speed = "Action" | "Reaction" | "Normal";
+
+export type Keyword =
+  | "Accelerate"
+  | "Ambush"
+  | "Assault"
+  | "Backline"
+  | "Buff"
+  | "Burn"
+  | "Deathknell"
+  | "Deflect"
+  | "Empower"
+  | "Equip"
+  | "Flow"
+  | "Ganking"
+  | "Hidden"
+  | "Hunt"
+  | "Legion"
+  | "Level"
+  | "Mighty"
+  | "Predict"
+  | "Quick-Draw"
+  | "Repeat"
+  | "Shield"
+  | "Stun"
+  | "Tank"
+  | "Temporary"
+  | "Unique"
+  | "Vision"
+  | "Weaponmaster";
+
+// Physical locations a card/unit instance can occupy.
+export type ZoneKind = "hand" | "deck" | "discard" | "banished" | "base" | "battlefield";
+
+// Info-state of an object instance — faceDown ("hidden") vs face up.
+export type Privacy = "public" | "hidden";
+
+export type CombatRole = "attacker" | "defender";
+
+export type PlayerId = "A" | "B";
+
+// How long a temporary modification/grant lasts.
+export type Duration = "thisCombat" | "thisTurn" | "permanent";
+
+// ---------------------------------------------------------------------------
+// Cost
+// ---------------------------------------------------------------------------
+
+export type PowerPip = { domain: Domain; count: number };
+
+export type Cost = {
+  energy: number;
+  powerCount: number; // total recycles required
+  powerPips: PowerPip[]; // Σcount ≤ powerCount; remainder = "Any" recycles
+};
+
+// ---------------------------------------------------------------------------
+// Might chain
+// ---------------------------------------------------------------------------
+
+// A single Might modification in a resolution chain. `floor` — when present —
+// clamps the running total no lower than `floor` at the moment THIS mod is
+// applied; later mods in the chain may still push the result below that
+// floor. This is what makes chain order observable (see rulesKernel.test.ts).
+export type MightMod = {
+  amount: number;
+  floor?: number;
+  duration?: Duration;
+  source?: string;
+};
+
+// A temporary or permanent keyword grant (e.g. Cleave granting Assault 3).
+export type KeywordGrant = {
+  keyword: Keyword;
+  value?: number;
+  duration: Duration;
+  source?: string;
+};
+
+// ---------------------------------------------------------------------------
+// Object / unit / rune instances
+// ---------------------------------------------------------------------------
+
+// A card instance sitting in a zone that doesn't need full battle state
+// (hand, deck, discard, banished).
+export type ObjectInstance = {
+  instanceId: string;
+  cardId: string;
+  privacy: Privacy;
+  knownToOpponent: boolean;
+};
+
+// A unit instance in play (at base or a battlefield).
+export type UnitState = {
+  instanceId: string;
+  cardId: string;
+  controller: PlayerId;
+  might: number; // current base Might (post-permanent mods, pre-combat)
+  mightMods: MightMod[]; // active chain-style mods, in LIFO-resolution order
+  keywordGrants: KeywordGrant[]; // dynamic grants; printed keywords come from the card itself
+  damage: number; // damage marked on this unit
+  stunned: boolean;
+  tapped: boolean;
+  zone: "base" | "battlefield";
+  battlefieldId?: string;
+  role?: CombatRole; // set while this unit is participating in combat
+};
+
+export type RuneState = {
+  instanceId: string;
+  domain: Domain;
+  tapped: boolean;
+};
+
+// ---------------------------------------------------------------------------
+// Player / battlefield / game state
+// ---------------------------------------------------------------------------
+
+export type PlayerState = {
+  id: PlayerId;
+  hand: ObjectInstance[];
+  deck: ObjectInstance[];
+  discard: ObjectInstance[];
+  banished: ObjectInstance[];
+  base: UnitState[];
+  runes: RuneState[];
+  points: number;
+};
+
+export type Battlefield = {
+  battlefieldId: string;
+  cardId?: string;
+  units: UnitState[];
+};
+
+// An item queued on the resolution chain. `mightMod`, when present, is what
+// resolveMightChain folds — LIFO order is a property of how the chain is
+// built (most-recently-added item resolves first), not of this type itself.
+export type ChainItem = {
+  id: string;
+  controller: PlayerId;
+  sourceCardInstanceId: string;
+  targets: string[];
+  mightMod?: MightMod;
+};
+
+export type GameState = {
+  players: Record<PlayerId, PlayerState>;
+  battlefields: Battlefield[];
+  chain: ChainItem[];
+  turn: number;
+  activePlayer: PlayerId;
+  pendingDirectPoints: Record<PlayerId, number>;
+};
+
+// ---------------------------------------------------------------------------
+// Winning lines / scoring
+// ---------------------------------------------------------------------------
+
+// The three ways a player can score a point (mirrors this app's existing
+// MatchNoteActionType taxonomy: Conquer BF / Hold BF / +1 Point).
+export type WinningLine = "conquer" | "hold" | "direct";
+
+export type PointSource = {
+  line: WinningLine;
+  battlefieldId?: string;
+  amount: number;
+};
+
+export type ScoreEvent = {
+  player: PlayerId;
+  source: PointSource;
+};
+
+// ---------------------------------------------------------------------------
+// Game events — the event-sourced substrate. A GameState snapshot is a fold
+// of a GameEvent[] via applyEvent.
+// ---------------------------------------------------------------------------
+
+export type ZoneRef = { zone: ZoneKind; battlefieldId?: string; player: PlayerId };
+
+export type GameEvent =
+  | { type: "cardPlayed"; player: PlayerId; cardInstanceId: string }
+  | { type: "unitEntered"; handInstanceId: string; unit: UnitState }
+  | { type: "damageDealt"; targetInstanceId: string; amount: number }
+  | { type: "mightModApplied"; targetInstanceId: string; mod: MightMod }
+  | { type: "mightSet"; targetInstanceId: string; value: number; duration: Duration }
+  | { type: "keywordGranted"; targetInstanceId: string; grant: KeywordGrant }
+  | { type: "unitStunned"; targetInstanceId: string }
+  | { type: "unitKilled"; targetInstanceId: string }
+  | { type: "unitMoved"; unitInstanceId: string; to: ZoneRef }
+  | { type: "unitReturnedToHand"; unitInstanceId: string }
+  | { type: "cardDrawn"; player: PlayerId; count: number }
+  | { type: "runeExhausted"; instanceId: string }
+  | { type: "runeRecycled"; instanceId: string }
+  | { type: "spellCountered"; chainItemId: string }
+  | { type: "pointScored"; player: PlayerId; source: PointSource };
+
+// ---------------------------------------------------------------------------
+// E1 envelope (deferred, optional, unpopulated) — §2 deltas
+// ---------------------------------------------------------------------------
+
+export type MatchStateSnapshot = {
+  state: GameState;
+  perspective: PlayerId;
+  completeness?: "full" | "partial";
+  confidence?: number;
+  provenance?: {
+    source: "authored" | "field" | "player" | "selfplay";
+    fidelity?: number;
+  };
+};
+
+// ---------------------------------------------------------------------------
+// Play (§5) — one candidate move at a decision point
+// ---------------------------------------------------------------------------
+
+export type Play =
+  | { kind: "castSpell"; cardInstanceId: string; targets: string[]; repeat?: boolean }
+  | { kind: "playUnit"; cardInstanceId: string; battlefieldId?: string; targets?: string[] }
+  | { kind: "activateAbility"; sourceInstanceId: string; targets: string[]; repeat?: boolean }
+  | { kind: "moveUnit"; unitInstanceId: string; to: ZoneRef }
+  | { kind: "attack"; attackerInstanceIds: string[]; battlefieldId: string }
+  | { kind: "block"; blockerInstanceIds: string[]; battlefieldId: string }
+  | { kind: "pass" };
+
+// ---------------------------------------------------------------------------
+// Decision point (§8) — RiftCore-owned; RiftIQ's Puzzle wraps this
+// ---------------------------------------------------------------------------
+
+export type Candidate = {
+  id: string;
+  play: Play | Play[];
+  isCorrect: boolean;
+};
+
+export type DecisionPoint = {
+  snapshot: MatchStateSnapshot;
+  goal?: string;
+  candidates: Candidate[];
+};
