@@ -28,6 +28,13 @@ const BATCH_GATE_KEY = "riftboundTrainerLastBatchCompletedAt";
 // both progress and the batch gate: none of these three should reset each
 // other as a side effect.
 const TUTORIAL_SEEN_KEY = "riftboundTrainerHasSeenTutorial";
+// Whether the person has dismissed the one-time first-launch welcome/alpha
+// screen. Deliberately separate from TUTORIAL_SEEN_KEY -- the welcome
+// screen and the tutorial are two independent "seen it once" gates that
+// happen to run back to back, not one combined flag, so a future change to
+// either (e.g. replaying just the tutorial) can't accidentally re-trigger
+// the other.
+const WELCOME_SEEN_KEY = "riftboundTrainerHasSeenWelcome";
 
 function readAll(): Record<string, CardProgress> {
   try {
@@ -93,6 +100,22 @@ export async function getHasSeenTutorial(): Promise<boolean> {
 export async function setHasSeenTutorial(seen: boolean): Promise<void> {
   try {
     localStorage.setItem(TUTORIAL_SEEN_KEY, seen ? "true" : "false");
+  } catch {
+    // no-op
+  }
+}
+
+export async function getHasSeenWelcome(): Promise<boolean> {
+  try {
+    return localStorage.getItem(WELCOME_SEEN_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export async function setHasSeenWelcome(seen: boolean): Promise<void> {
+  try {
+    localStorage.setItem(WELCOME_SEEN_KEY, seen ? "true" : "false");
   } catch {
     // no-op
   }

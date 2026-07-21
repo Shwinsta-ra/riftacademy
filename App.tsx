@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Platform, Pressable, Text } from "react-native";
 import { NavigationContainer, DefaultTheme, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import WelcomeScreen from "./src/screens/WelcomeScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import QuizScreen from "./src/screens/QuizScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
@@ -17,9 +18,11 @@ import { TutorialCallout } from "./src/components/TutorialCallout";
 import { FeedbackProvider, useFeedback } from "./src/feedback/context";
 import { FeedbackOverlay } from "./src/feedback/FeedbackBubble";
 import { ROOT_ID } from "./src/feedback/capture";
+import { getHasSeenWelcome } from "./src/lib/db";
 import { theme } from "./src/lib/theme";
 
 export type RootStackParamList = {
+  Welcome: undefined;
   Home: undefined;
   Quiz: undefined;
   Settings: undefined;
@@ -62,6 +65,25 @@ function CustomBackButton() {
 function AppShell() {
   const { setRoute, clearScreenContext, trace } = useFeedback();
 
+  // A Stack.Navigator's initialRouteName is fixed at mount -- it can't be
+  // swapped later without an explicit reset -- so the one-time hasSeenWelcome
+  // check has to resolve BEFORE the navigator ever renders, not after.
+  // `initialRoute === null` is the brief "still checking" state; in
+  // practice this resolves within a frame (a single AsyncStorage/SQLite
+  // read), so there's nothing to show for it.
+  const [initialRoute, setInitialRoute] = useState<"Welcome" | "Home" | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    getHasSeenWelcome().then((seen) => {
+      if (mounted) setInitialRoute(seen ? "Home" : "Welcome");
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (!initialRoute) return null;
+
   return (
     // nativeID becomes a real DOM id on web. capture.web.ts screenshots this
     // element rather than document.body, so a desktop capture is the 480px app
@@ -82,7 +104,7 @@ function AppShell() {
       >
         <StatusBar style="light" />
         <Stack.Navigator
-          initialRouteName="Home"
+          initialRouteName={initialRoute}
           screenOptions={{
             headerLeft: () => <CustomBackButton />,
             headerStyle: { backgroundColor: theme.bg },
@@ -91,6 +113,11 @@ function AppShell() {
             headerShadowVisible: false,
           }}
         >
+          <Stack.Screen
+            name="Welcome"
+            component={WelcomeScreen}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen
             name="Home"
             component={HomeScreen}
