@@ -428,22 +428,30 @@ export default function QuizScreen({ navigation }: Props) {
   const cardAspectRatio =
     card.type === "Battlefield" ? BATTLEFIELD_ASPECT_RATIO : CARD_ASPECT_RATIO;
   // Cost pips are printed as circular badges on the real card art; the
-  // might/power badge itself is actually a rounded rectangle (or, on
-  // equipment, a "+N" flag icon) on the printed card, but per Ashwin's
-  // follow-up feedback the might mask should visually match the cost mask's
-  // circular badge rather than mirror the real shape -- consistency of the
-  // mask style reads better than exactly tracing what's underneath it.
-  // quizPositions.json's "might" regions are deliberately sized to just the
-  // printed digit(s) plus a comfortable safety margin (measured by locating
-  // the actual white digit pixels on several real cards), not the whole
-  // badge/banner -- an earlier pass sized the circle to cover the full
-  // banner shape and it read as oversized (per a later round of feedback);
-  // the shield icon next to the number doesn't need hiding since it's
-  // identical on every card and never reveals the might value. quizPositions
-  // entries are calibrated to render as true circles at this ratio's
-  // ~78%-width container, so a full borderRadius here is enough -- no
-  // per-render aspect-ratio math needed, since cost/might questions only
-  // ever occur on portrait-oriented cards.
+  // might badge is actually a rounded rectangle (or, on equipment, a "+N"
+  // flag icon), and power cost is a stack of 1-4 small pip icons, not a
+  // fixed circle at all (see getMaskRegions' powerCost branch). Per
+  // Ashwin's follow-up feedback, might's and power's masks still use this
+  // same circular styling rather than mirroring their real shapes --
+  // consistency of the mask style reads better than exactly tracing what's
+  // underneath it (and for power's tall, narrow pip-stack region, a full
+  // borderRadius renders it as a rounded capsule, which happens to match
+  // the real capsule shape anyway).
+  // quizPositions.json's "might.default" is now sized to exactly match
+  // "cost" (same width/height) per Ashwin's direct comparison -- it was
+  // previously a bit larger than cost, which read as inconsistent. It's
+  // still positioned to safely cover the printed digit(s) with a
+  // comfortable margin, verified against several cards including a
+  // Champion template's wider printed numerals. "might.Gear" is
+  // deliberately NOT shrunk to match: equipment's "+N" text measures
+  // noticeably wider on some cards (verified up to ~98px on a 744px-wide
+  // card image) than cost's circle can safely cover without risking a
+  // leak, so it stays at its own, slightly larger, safe size.
+  // quizPositions entries are calibrated to render as true circles (or,
+  // for power, a correctly-proportioned capsule) at this ratio's ~78%-width
+  // container, so a full borderRadius here is enough -- no per-render
+  // aspect-ratio math needed, since cost/might/power questions only ever
+  // occur on portrait-oriented cards.
   const isCircularMask =
     question.mode === "energyCost" || question.mode === "powerCost" || question.mode === "might";
 

@@ -42,7 +42,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "setFiltersButton",
     screen: "Home",
-    text: "Welcome to RiftRecall! Let's set up your first study session. Tap Set filters to choose which cards to practice.",
+    text: "Welcome to RiftAcademy! Let's set up your first study session. Tap Set filters to choose which cards to practice.",
   },
   {
     id: "newestSetChip",
@@ -57,6 +57,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "reviewCardsButton",
     screen: "Home",
-    text: "You're ready! Tap here to start studying. RiftRecall will bring back anything you miss.",
+    text: "You're ready. Tap here to start studying!",
   },
 ];
