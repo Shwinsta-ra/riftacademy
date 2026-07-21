@@ -6,6 +6,7 @@ import { RootStackParamList } from "../../App";
 import { theme, RIFT_BRAND, GLOW } from "../lib/theme";
 import ScreenGlow from "../components/ScreenGlow";
 import GlowButton from "../components/GlowButton";
+import RiftWord from "../components/RiftWord";
 import { getAllCards, getFilteredCards } from "../lib/quiz";
 import { loadAllProgress, getLastBatchCompletedAt } from "../lib/db";
 import { loadSessionSnapshot } from "../lib/sessionState";
@@ -31,21 +32,6 @@ const LEGAL_TEXT =
   "RiftAcademy is an unofficial fan project for Riftbound: League of Legends Trading Card Game. " +
   "It uses Riot Games-owned IP under Riot Games\u2019 \u201cLegal Jibber Jabber\u201d policy. Riot Games " +
   "does not endorse or sponsor this project.";
-
-/** Renders "Rift" in the shared brand color followed by `suffix` in normal
- *  text color -- e.g. RiftWord("Academy") -> RiftAcademy, RiftWord("Recall")
- *  -> RiftRecall. Centralized here so every "Rift___" label across the app
- *  stays visually consistent without repeating the split at each call site.
- *  See RIFT_BRAND in lib/theme.ts for why "Rift" (not the suffix) is the
- *  part that's colored. */
-function RiftWord({ suffix, style }: { suffix: string; style: object }) {
-  return (
-    <Text style={style}>
-      <Text style={[{ color: RIFT_BRAND }, GLOW.wordmark]}>Rift</Text>
-      {suffix}
-    </Text>
-  );
-}
 
 function FeatureBox({
   children,
