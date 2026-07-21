@@ -5,19 +5,30 @@ export type Card = {
   energy: number | null;
   might: number | null;
   power: number | null;
-  // Ashwin's sheet now keeps these as clean, mutually exclusive categories
-  // directly in its Type column (Champion separate from Unit, Equipment
-  // separate from Gear) — so the canonical type here mirrors that directly
-  // rather than collapsing distinctions into boolean side-flags.
-  type: "Unit" | "Champion" | "Spell" | "Gear" | "Equipment" | "Battlefield" | "Legend" | "Rune";
+  // NOTE: type is now ALWAYS the sheet's literal Type value — Champion and
+  // Equipment are never their own `type` (reversed from an earlier pass).
+  // A champion is type "Unit" with subtype "Champion"; equipment is type
+  // "Gear" with subtype "Equipment". See TYPE_FILTER_PREDICATES in quiz.ts
+  // for how the UI still offers them as independent filter categories.
+  type: "Unit" | "Spell" | "Gear" | "Battlefield" | "Legend" | "Rune";
   supertype: "Basic" | "Signature" | "Champion" | "Token" | null;
+  // From the Master Card Inventory's own Subtype column (Champion,
+  // Equipment, Combat Trick, Removal, Counterspell, Utility, etc). Kept
+  // separate from `type` even where it also feeds a `type` derivation
+  // (e.g. a Champion's subtype is still "Champion" even though that's
+  // also what made `type` resolve to "Champion" instead of "Unit").
+  subtype: string | null;
   rarity: string;
   domain: string[];
   text: string;
   flavour: string | null;
   setId: string;
   setLabel: string;
-  imageUrl: string;
+  // Null specifically means "no art exists yet" — a brand-new card merged
+  // in from the Master Card Inventory ahead of its set's release / a
+  // Riftcodex API pull (e.g. Vendetta before July 31). Never shown as a
+  // quiz question subject while null; see getFilteredCards in quiz.ts.
+  imageUrl: string | null;
   tags: string[];
   // Curated from Ashwin's master sheet (validated columns only)
   keywords: string[];
@@ -62,6 +73,12 @@ export type QuizFilters = {
   // can match two of them, so combining any subset via OR always adds up
   // cleanly (e.g. Gear + Equipment = every Gear-family card).
   types: string[];
+  // Only "Action" and "Reaction" are ever offered as chips (Settings
+  // screen) — "Normal"-speed cards are the overwhelming majority and
+  // aren't a meaningful thing to filter toward/away from, so that value
+  // deliberately has no chip even though it exists in the data. Empty =
+  // all speeds included, same convention as every other filter here.
+  speeds: string[];
   // References DeckList.id (see decks.json / deckPool.ts). When set, the
   // quiz pool is scoped to that one deck's resolved cards instead of the
   // full card set — sets/domains are ignored while a deck is active (a

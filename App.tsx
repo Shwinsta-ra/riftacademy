@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Platform, Pressable, Text } from "react-native";
 import { NavigationContainer, DefaultTheme, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import WelcomeScreen from "./src/screens/WelcomeScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import QuizScreen from "./src/screens/QuizScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
@@ -12,12 +13,16 @@ import StatsScreen from "./src/screens/StatsScreen";
 import MatchListScreen from "./src/screens/MatchListScreen";
 import MatchDetailScreen from "./src/screens/MatchDetailScreen";
 import { FiltersProvider } from "./src/lib/filtersStore";
+import { TutorialProvider } from "./src/lib/tutorialContext";
+import { TutorialCallout } from "./src/components/TutorialCallout";
 import { FeedbackProvider, useFeedback } from "./src/feedback/context";
 import { FeedbackOverlay } from "./src/feedback/FeedbackBubble";
 import { ROOT_ID } from "./src/feedback/capture";
+import { getHasSeenWelcome } from "./src/lib/db";
 import { theme } from "./src/lib/theme";
 
 export type RootStackParamList = {
+  Welcome: undefined;
   Home: undefined;
   Quiz: undefined;
   Settings: undefined;
@@ -60,6 +65,25 @@ function CustomBackButton() {
 function AppShell() {
   const { setRoute, clearScreenContext, trace } = useFeedback();
 
+  // A Stack.Navigator's initialRouteName is fixed at mount -- it can't be
+  // swapped later without an explicit reset -- so the one-time hasSeenWelcome
+  // check has to resolve BEFORE the navigator ever renders, not after.
+  // `initialRoute === null` is the brief "still checking" state; in
+  // practice this resolves within a frame (a single AsyncStorage/SQLite
+  // read), so there's nothing to show for it.
+  const [initialRoute, setInitialRoute] = useState<"Welcome" | "Home" | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    getHasSeenWelcome().then((seen) => {
+      if (mounted) setInitialRoute(seen ? "Home" : "Welcome");
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (!initialRoute) return null;
+
   return (
     // nativeID becomes a real DOM id on web. capture.web.ts screenshots this
     // element rather than document.body, so a desktop capture is the 480px app
@@ -80,7 +104,7 @@ function AppShell() {
       >
         <StatusBar style="light" />
         <Stack.Navigator
-          initialRouteName="Home"
+          initialRouteName={initialRoute}
           screenOptions={{
             headerLeft: () => <CustomBackButton />,
             headerStyle: { backgroundColor: theme.bg },
@@ -90,11 +114,20 @@ function AppShell() {
           }}
         >
           <Stack.Screen
+            name="Welcome"
+            component={WelcomeScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
             name="Home"
             component={HomeScreen}
             options={{ title: "Home", headerLeft: () => null }}
           />
-          <Stack.Screen name="Quiz" component={QuizScreen} options={{ title: "" }} />
+          <Stack.Screen
+            name="Quiz"
+            component={QuizScreen}
+            options={{ title: "", headerTitleAlign: "center" }}
+          />
           <Stack.Screen
             name="Settings"
             component={SettingsScreen}
@@ -117,6 +150,12 @@ function AppShell() {
       {/* Mounted once, here, rather than per screen — so every screen that
           exists today and every screen added later gets the button for free. */}
       <FeedbackOverlay />
+
+      {/* Same reasoning as FeedbackOverlay above: mounted once at the app
+          root (not per-screen) so it can render its ring/bubble on top of
+          whichever screen is currently active, regardless of which screen
+          owns the step's target element. */}
+      <TutorialCallout />
     </View>
   );
 }
@@ -125,9 +164,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <FiltersProvider>
-        <FeedbackProvider>
-          <AppShell />
-        </FeedbackProvider>
+        <TutorialProvider>
+          <FeedbackProvider>
+            <AppShell />
+          </FeedbackProvider>
+        </TutorialProvider>
       </FiltersProvider>
     </SafeAreaProvider>
   );

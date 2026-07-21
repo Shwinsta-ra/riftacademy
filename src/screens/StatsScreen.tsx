@@ -1,20 +1,27 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { theme } from "../lib/theme";
 import { getAllCards } from "../lib/quiz";
-import { loadAllProgress } from "../lib/db";
+import { loadAllProgress, resetAllProgress } from "../lib/db";
+import { clearSessionSnapshot } from "../lib/sessionState";
 import { MAX_BOX } from "../lib/leitner";
 import { BOX_LABELS, BOX_INTERVAL_LABELS, BOX_COLORS, NEW_LABEL, NEW_COLOR } from "../lib/boxMeta";
+import { useTutorial } from "../lib/tutorialContext";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Stats">;
 
-export default function StatsScreen(_: Props) {
+export default function StatsScreen({ navigation }: Props) {
   const [counts, setCounts] = useState<Record<number, number>>({});
   const [unseen, setUnseen] = useState(0);
   const [total, setTotal] = useState(0);
+  const [confirming, setConfirming] = useState(false);
+  // Bumped after a reset to force the focus effect's loader to re-run so the
+  // bars visibly drop to zero without needing to leave and return.
+  const [refreshTick, setRefreshTick] = useState(0);
+  const { restart } = useTutorial();
 
   useFocusEffect(
     useCallback(() => {
@@ -41,7 +48,7 @@ export default function StatsScreen(_: Props) {
       return () => {
         cancelled = true;
       };
-    }, [])
+    }, [refreshTick])
   );
 
   const maxCount = Math.max(unseen, ...Object.values(counts), 1);
@@ -68,6 +75,44 @@ export default function StatsScreen(_: Props) {
         Higher boxes wait longer before resurfacing, so time goes to the cards
         you actually don't know yet.
       </Text>
+
+      <Pressable
+        style={styles.resetButton}
+        onPress={() => {
+          if (confirming) return;
+          setConfirming(true);
+          Alert.alert(
+            "Reset all progress?",
+            "This clears every card's Leitner box back to new. This can't be undone.",
+            [
+              { text: "Cancel", style: "cancel", onPress: () => setConfirming(false) },
+              {
+                text: "Reset",
+                style: "destructive",
+                onPress: async () => {
+                  await resetAllProgress();
+                  clearSessionSnapshot();
+                  setConfirming(false);
+                  setRefreshTick((t) => t + 1);
+                  Alert.alert("Done", "Progress reset.");
+                },
+              },
+            ]
+          );
+        }}
+      >
+        <Text style={styles.resetButtonText}>Reset progress</Text>
+      </Pressable>
+
+      <Pressable
+        style={styles.replayTutorialButton}
+        onPress={() => {
+          restart();
+          navigation.navigate("Home");
+        }}
+      >
+        <Text style={styles.replayTutorialButtonText}>Replay tutorial</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -117,4 +162,22 @@ const styles = StyleSheet.create({
   barFill: { height: "100%", borderRadius: 7 },
   barCount: { color: theme.textDim, fontSize: 11, marginTop: 2 },
   note: { color: theme.textDim, fontSize: 12, lineHeight: 17, marginTop: 20 },
+  resetButton: {
+    marginTop: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: theme.incorrect,
+  },
+  resetButtonText: { color: theme.incorrect, fontWeight: "600" },
+  replayTutorialButton: {
+    marginTop: 12,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  replayTutorialButtonText: { color: theme.text, fontWeight: "600" },
 });

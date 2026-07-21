@@ -1,25 +1,17 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, Alert } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { theme, DOMAIN_COLORS } from "../lib/theme";
-import { getAvailableDomains, getAvailableTypes } from "../lib/quiz";
+import { getAvailableDomains, getAvailableTypes, getAvailableSpeeds } from "../lib/quiz";
 import { getAllDecks, getCardsForDeck } from "../lib/deckPool";
-import { DeckList } from "../lib/types";
-import { resetAllProgress } from "../lib/db";
+import { DeckList, QuizFilters } from "../lib/types";
 import { useFilters } from "../lib/filtersStore";
+import { SET_GROUPS } from "../lib/setGroups";
+import { useTutorialTarget, useTutorial } from "../lib/tutorialContext";
 import AppModal from "../components/AppModal";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
-
-// Set groupings: individual set selection matters mainly once a new set
-// (currently Unleashed) needs isolated practice. Everything before it is
-// lumped as "Old Sets." Swap OLD_SET_IDS / LATEST_SET_IDS here when Vendetta
-// becomes the new latest set.
-const OLD_SET_IDS = ["OGN", "OGS", "SFD"];
-const LATEST_SET_IDS = ["UNL"];
-const OLD_SETS_LABEL = "Old Sets (Origins, Proving Grounds, Spiritforged)";
-const LATEST_SET_LABEL = "Latest Set (Unleashed)";
 
 // Deck names are stored as "Legend — placement (pilot)", e.g.
 // "Diana, Scorn of the Moon — Hartford 2nd (bsweitz)". Splitting on the em
@@ -32,18 +24,54 @@ function splitDeckName(deck: DeckList): { title: string; subtitle: string } {
   return { title: deck.legend, subtitle: deck.name.slice(idx + 3) };
 }
 
-export default function SettingsScreen(_: Props) {
+export default function SettingsScreen({ navigation }: Props) {
   const { filters, setFilters } = useFilters();
   const domains = getAvailableDomains();
   const types = getAvailableTypes();
-  const [confirming, setConfirming] = useState(false);
+  const speeds = getAvailableSpeeds();
   const [deckPickerOpen, setDeckPickerOpen] = useState(false);
-  // Staged selection: tapping a row in the picker highlights it but doesn't
-  // apply or close anything — only the CTA button commits it to `filters`.
+  const { completeStepIfActive, currentStep } = useTutorial();
+  const newestSetChipTarget = useTutorialTarget("newestSetChip");
+  const setFiltersCTATarget = useTutorialTarget("setFiltersCTA");
+  // Staged selection: tapping a row in the deck picker highlights it but
+  // doesn't apply or close anything — only the picker's CTA commits it.
   const [stagedDeckId, setStagedDeckId] = useState<string | null>(null);
 
+  // All filter edits are STAGED locally and only committed to the shared
+  // store when the user taps "Set filters" at the bottom — a deliberate
+  // accept step, rather than the old behavior where every chip tap applied
+  // live and "Back" was the only (implicit) way to accept. `staged` seeds
+  // from the current live filters each time the screen mounts.
+  const [staged, setStaged] = useState<QuizFilters>(filters);
+  const dirty = JSON.stringify(staged) !== JSON.stringify(filters);
+
+  // Auto-scroll the page to the bottom the first time the user makes a
+  // selection, so the "Set filters" / "Clear all filters" buttons come into
+  // view without the user having to hunt for them. Fires only on the
+  // false -> true transition of `dirty` (the first change), not on every
+  // subsequent tap.
+  const scrollRef = useRef<ScrollView>(null);
+  const wasDirty = useRef(false);
+  useEffect(() => {
+    if (dirty && !wasDirty.current) {
+      requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+      // This same tap can also be what advances the tutorial onto
+      // setFiltersCTA (see the newest-set chip's onPress below), whose
+      // target re-measures itself via useTutorialTarget's own effect at
+      // roughly the same tick as the scrollToEnd call above -- a race that
+      // let the bubble measure the button's PRE-scroll on-screen position
+      // and render pinned to where the button used to be. Re-measuring once
+      // the scroll animation has had time to settle corrects that; this is
+      // a no-op via registerTarget's own step-id check whenever some other
+      // step is active.
+      setTimeout(() => setFiltersCTATarget.onLayout(), 400);
+    }
+    wasDirty.current = dirty;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty]);
+
   const decks = getAllDecks();
-  const selectedDeck = filters.deckId ? decks.find((d) => d.id === filters.deckId) ?? null : null;
+  const selectedDeck = staged.deckId ? decks.find((d) => d.id === staged.deckId) ?? null : null;
   const selectedDeckCardCount = selectedDeck
     ? getCardsForDeck(selectedDeck.id)?.cards.length ?? 0
     : 0;
@@ -53,21 +81,30 @@ export default function SettingsScreen(_: Props) {
   }
 
   function toggleSetGroup(groupIds: string[]) {
-    const allPresent = groupIds.every((id) => filters.sets.includes(id));
-    const withoutGroup = filters.sets.filter((id) => !groupIds.includes(id));
-    setFilters({
-      ...filters,
+    const allPresent = groupIds.every((id) => staged.sets.includes(id));
+    const withoutGroup = staged.sets.filter((id) => !groupIds.includes(id));
+    setStaged({
+      ...staged,
       sets: allPresent ? withoutGroup : [...withoutGroup, ...groupIds],
     });
   }
 
   function isGroupActive(groupIds: string[]): boolean {
-    return groupIds.every((id) => filters.sets.includes(id));
+    return groupIds.every((id) => staged.sets.includes(id));
+  }
+
+  function commitFilters() {
+    setFilters(staged);
+    navigation.goBack();
   }
 
   return (
     <>
-      <ScrollView style={styles.container} contentContainerStyle={{ padding: 20 }}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.container}
+        contentContainerStyle={{ padding: 20 }}
+      >
         <Text style={styles.sectionTitle}>Deck matchup</Text>
         <Text style={styles.helper}>
           Choose a specific "Best of Hartford RQ" deck instead of the full card pool.
@@ -75,7 +112,7 @@ export default function SettingsScreen(_: Props) {
         <Pressable
           style={[styles.selectorButton, !selectedDeck && styles.selectorButtonEmpty]}
           onPress={() => {
-            setStagedDeckId(filters.deckId);
+            setStagedDeckId(staged.deckId);
             setDeckPickerOpen(true);
           }}
         >
@@ -90,27 +127,46 @@ export default function SettingsScreen(_: Props) {
         {selectedDeck && (
           <Pressable
             style={styles.clearDeckLink}
-            onPress={() => setFilters({ ...filters, deckId: null })}
+            onPress={() => setStaged({ ...staged, deckId: null })}
           >
             <Text style={styles.clearDeckLinkText}>Clear deck filter</Text>
           </Pressable>
         )}
 
-        {!filters.deckId && (
+        {!staged.deckId && (
           <>
             <Text style={styles.sectionTitle}>Sets</Text>
             <Text style={styles.helper}>None selected = all sets included.</Text>
             <View style={styles.chipRow}>
-              <Chip
-                label={LATEST_SET_LABEL}
-                active={isGroupActive(LATEST_SET_IDS)}
-                onPress={() => toggleSetGroup(LATEST_SET_IDS)}
-              />
-              <Chip
-                label={OLD_SETS_LABEL}
-                active={isGroupActive(OLD_SET_IDS)}
-                onPress={() => toggleSetGroup(OLD_SET_IDS)}
-              />
+              {SET_GROUPS.map((group, i) => {
+                const isNewestSet = i === SET_GROUPS.length - 1;
+                const chip = (
+                  <Chip
+                    key={group.label}
+                    label={group.label}
+                    active={isGroupActive(group.ids)}
+                    onPress={() => {
+                      toggleSetGroup(group.ids);
+                      if (isNewestSet) completeStepIfActive("newestSetChip");
+                    }}
+                  />
+                );
+                // Only the newest set's chip needs to be measurable for the
+                // tutorial (see tutorialSteps.ts) — wrapping it in a plain
+                // View rather than changing Chip's own ref-forwarding, since
+                // Chip is shared by domains/types/speeds too.
+                if (!isNewestSet) return chip;
+                return (
+                  <View
+                    key={group.label}
+                    ref={newestSetChipTarget.ref}
+                    onLayout={newestSetChipTarget.onLayout}
+                    style={currentStep?.id === "newestSetChip" && styles.tutorialChipActive}
+                  >
+                    {chip}
+                  </View>
+                );
+              })}
             </View>
 
             <Text style={styles.sectionTitle}>Domains</Text>
@@ -119,19 +175,19 @@ export default function SettingsScreen(_: Props) {
                 <Chip
                   key={d}
                   label={d}
-                  active={filters.domains.includes(d)}
+                  active={staged.domains.includes(d)}
                   color={DOMAIN_COLORS[d]}
                   onPress={() =>
-                    setFilters({ ...filters, domains: toggle(filters.domains, d) })
+                    setStaged({ ...staged, domains: toggle(staged.domains, d) })
                   }
                 />
               ))}
             </View>
           </>
         )}
-        {filters.deckId && (
+        {staged.deckId && (
           <Text style={[styles.helper, { marginTop: 20 }]}>
-            Sets and domains are hidden while testing against a deck — clear the deck filter
+            Sets and domains are hidden while testing against a deck. Clear the deck filter
             above to use them again.
           </Text>
         )}
@@ -142,46 +198,50 @@ export default function SettingsScreen(_: Props) {
             <Chip
               key={t}
               label={t}
-              active={filters.types.includes(t)}
-              onPress={() => setFilters({ ...filters, types: toggle(filters.types, t) })}
+              active={staged.types.includes(t)}
+              onPress={() => setStaged({ ...staged, types: toggle(staged.types, t) })}
+            />
+          ))}
+        </View>
+
+        <Text style={styles.sectionTitle}>Speed</Text>
+        <View style={styles.chipRow}>
+          {speeds.map((s) => (
+            <Chip
+              key={s}
+              label={s}
+              active={staged.speeds.includes(s)}
+              onPress={() => setStaged({ ...staged, speeds: toggle(staged.speeds, s) })}
             />
           ))}
         </View>
 
         <Pressable
-          style={styles.clearButton}
-          onPress={() => setFilters({ sets: [], domains: [], types: [], deckId: null })}
+          ref={setFiltersCTATarget.ref}
+          onLayout={setFiltersCTATarget.onLayout}
+          style={[
+            styles.setFiltersButton,
+            !dirty && styles.setFiltersButtonInactive,
+            currentStep?.id === "setFiltersCTA" && styles.tutorialTargetActive,
+          ]}
+          onPress={() => {
+            completeStepIfActive("setFiltersCTA");
+            commitFilters();
+          }}
+          disabled={!dirty}
         >
-          <Text style={styles.clearButtonText}>Clear all filters</Text>
+          <Text
+            style={[styles.setFiltersButtonText, !dirty && styles.setFiltersButtonTextInactive]}
+          >
+            Set filters
+          </Text>
         </Pressable>
 
         <Pressable
-          style={[styles.clearButton, { borderColor: theme.incorrect, marginTop: 32 }]}
-          onPress={() => {
-            if (!confirming) {
-              setConfirming(true);
-              Alert.alert(
-                "Reset all progress?",
-                "This clears every card's Leitner box back to new. This can't be undone.",
-                [
-                  { text: "Cancel", style: "cancel", onPress: () => setConfirming(false) },
-                  {
-                    text: "Reset",
-                    style: "destructive",
-                    onPress: async () => {
-                      await resetAllProgress();
-                      setConfirming(false);
-                      Alert.alert("Done", "Progress reset.");
-                    },
-                  },
-                ]
-              );
-            }
-          }}
+          style={styles.clearButton}
+          onPress={() => setStaged({ sets: [], domains: [], types: [], speeds: [], deckId: null })}
         >
-          <Text style={[styles.clearButtonText, { color: theme.incorrect }]}>
-            Reset progress
-          </Text>
+          <Text style={styles.clearButtonText}>Clear all filters</Text>
         </Pressable>
       </ScrollView>
 
@@ -192,7 +252,7 @@ export default function SettingsScreen(_: Props) {
         ctaLabel="Choose"
         ctaDisabled={!stagedDeckId}
         onCta={() => {
-          setFilters({ ...filters, deckId: stagedDeckId });
+          setStaged({ ...staged, deckId: stagedDeckId });
           setDeckPickerOpen(false);
         }}
       >
@@ -265,7 +325,7 @@ const styles = StyleSheet.create({
   },
   chipText: { color: theme.text, fontSize: 13 },
   clearButton: {
-    marginTop: 24,
+    marginTop: 12,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
@@ -273,6 +333,36 @@ const styles = StyleSheet.create({
     borderColor: theme.border,
   },
   clearButtonText: { color: theme.text, fontWeight: "600" },
+  // Primary accept CTA, now placed ABOVE "Clear all filters". Always reads
+  // "Set filters"; it's the filled accent when there are pending changes and
+  // a muted/greyed disabled state before the user has changed anything.
+  // Not the reserved REQUIRED magenta — that stays for required-field use.
+  setFiltersButton: {
+    marginTop: 28,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    backgroundColor: theme.accent,
+  },
+  setFiltersButtonInactive: {
+    backgroundColor: theme.card,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  setFiltersButtonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  setFiltersButtonTextInactive: { color: theme.textDim },
+  // Tutorial highlight: applied directly to the target's own style, not a
+  // separately-measured overlay — can't mismatch the element's actual
+  // bounds. Matches setFiltersButton's own borderRadius (12). Uses
+  // theme.text (near-white), not theme.accent -- once dirty, this button is
+  // already filled with theme.accent, so an accent border on top would be
+  // invisible (same reasoning as HomeScreen's tutorialTargetActive).
+  tutorialTargetActive: { borderColor: theme.text, borderWidth: 2, borderRadius: 12 },
+  // Same idea, but matching Chip's pill borderRadius (20) since this wraps
+  // the newest-set chip rather than a rectangular button. The chip turns
+  // theme.accent-filled once selected (see the "Pick a set" step, which is
+  // exactly when this highlight needs to be visible), so same fix applies.
+  tutorialChipActive: { borderColor: theme.text, borderWidth: 2, borderRadius: 20 },
   selectorButton: {
     backgroundColor: theme.card,
     borderWidth: 1,

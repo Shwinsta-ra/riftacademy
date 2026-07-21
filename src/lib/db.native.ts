@@ -19,11 +19,84 @@ function getDb(): Promise<SQLite.SQLiteDatabase> {
           lastResult TEXT,
           updatedAt INTEGER NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS settings (
+          key TEXT PRIMARY KEY NOT NULL,
+          value TEXT NOT NULL
+        );
       `);
       return db;
     });
   }
   return dbPromise;
+}
+
+// Separate settings table (not the progress table) for the "when did the
+// last study batch finish" pacing gate — see BATCH_COOLDOWN_MIN in
+// leitner.ts. Independent of resetAllProgress on purpose: resetting Leitner
+// progress (forgetting what you know) shouldn't also reset the pacing gate.
+const BATCH_GATE_KEY = "lastBatchCompletedAt";
+// Whether the person has completed (or explicitly skipped) the first-launch
+// onboarding tutorial. Same settings table as the batch gate, deliberately
+// a separate key from both progress and the batch gate — none of these
+// three should reset each other as a side effect.
+const TUTORIAL_SEEN_KEY = "hasSeenTutorial";
+// Whether the person has dismissed the one-time first-launch welcome/alpha
+// screen -- separate from TUTORIAL_SEEN_KEY, see db.web.ts's copy of this
+// comment for why.
+const WELCOME_SEEN_KEY = "hasSeenWelcome";
+
+export async function getLastBatchCompletedAt(): Promise<number | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>(
+    "SELECT value FROM settings WHERE key = ?",
+    [BATCH_GATE_KEY]
+  );
+  return row ? parseInt(row.value, 10) : null;
+}
+
+export async function setLastBatchCompletedAt(timestamp: number): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value;`,
+    [BATCH_GATE_KEY, String(timestamp)]
+  );
+}
+
+export async function getHasSeenTutorial(): Promise<boolean> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>(
+    "SELECT value FROM settings WHERE key = ?",
+    [TUTORIAL_SEEN_KEY]
+  );
+  return row?.value === "true";
+}
+
+export async function setHasSeenTutorial(seen: boolean): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value;`,
+    [TUTORIAL_SEEN_KEY, seen ? "true" : "false"]
+  );
+}
+
+export async function getHasSeenWelcome(): Promise<boolean> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>(
+    "SELECT value FROM settings WHERE key = ?",
+    [WELCOME_SEEN_KEY]
+  );
+  return row?.value === "true";
+}
+
+export async function setHasSeenWelcome(seen: boolean): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value;`,
+    [WELCOME_SEEN_KEY, seen ? "true" : "false"]
+  );
 }
 
 export async function loadAllProgress(): Promise<Record<string, CardProgress>> {

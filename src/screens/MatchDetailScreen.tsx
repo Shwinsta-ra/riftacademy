@@ -216,8 +216,7 @@ export default function MatchDetailScreen({ route }: Props) {
         // turn, so they're excluded here even though they're still Spells.
         const isReactiveSpell = card.type === "Spell" && (card.speed === "Action" || card.speed === "Reaction");
         const isAmbushUnit = card.type === "Unit" && card.keywords.includes("Ambush");
-        const isQuickDrawGear =
-          (card.type === "Gear" || card.type === "Equipment") && card.keywords.includes("Quick-Draw");
+        const isQuickDrawGear = card.type === "Gear" && card.keywords.includes("Quick-Draw");
         if (!isReactiveSpell && !isAmbushUnit && !isQuickDrawGear) return null;
 
         const playedCount = entries.filter(
@@ -469,7 +468,7 @@ export default function MatchDetailScreen({ route }: Props) {
         const shared = await shareCsvViaWebShareApi(csv, filename);
         if (shared) return;
         await Clipboard.setStringAsync(csv);
-        Alert.alert("Copied", "CSV copied to clipboard — paste it into your spreadsheet.");
+        Alert.alert("Copied", "CSV copied to clipboard. Paste it into your spreadsheet.");
         return;
       }
 
@@ -493,7 +492,7 @@ export default function MatchDetailScreen({ route }: Props) {
         });
       } else {
         await Clipboard.setStringAsync(csv);
-        Alert.alert("Copied", "Sharing isn't available here — CSV copied to clipboard instead.");
+        Alert.alert("Copied", "Sharing isn't available here. CSV copied to clipboard instead.");
       }
     } catch (err) {
       // Previously only the native file-share branch was wrapped in a
@@ -509,10 +508,10 @@ export default function MatchDetailScreen({ route }: Props) {
       try {
         const fallbackCsv = csv ?? buildDetailedCsv(match, entries);
         await Clipboard.setStringAsync(fallbackCsv);
-        Alert.alert("Copied", "Something went wrong sharing the file — CSV copied to clipboard instead.");
+        Alert.alert("Copied", "Something went wrong sharing the file. CSV copied to clipboard instead.");
       } catch (fallbackErr) {
         console.error("CSV clipboard fallback also failed:", fallbackErr);
-        Alert.alert("Export failed", "Couldn't build or copy this match's CSV — check the console for details.");
+        Alert.alert("Export failed", "Couldn't build or copy this match's CSV. Check the console for details.");
       }
     }
   }
@@ -521,10 +520,10 @@ export default function MatchDetailScreen({ route }: Props) {
     if (!match) return;
     try {
       await Clipboard.setStringAsync(buildDetailedCsv(match, entries));
-      Alert.alert("Copied", "CSV copied to clipboard — paste it into your spreadsheet.");
+      Alert.alert("Copied", "CSV copied to clipboard. Paste it into your spreadsheet.");
     } catch (err) {
       console.error("CSV clipboard copy failed:", err);
-      Alert.alert("Copy failed", "Couldn't build this match's CSV — check the console for details.");
+      Alert.alert("Copy failed", "Couldn't build this match's CSV. Check the console for details.");
     }
   }
 
@@ -601,7 +600,7 @@ export default function MatchDetailScreen({ route }: Props) {
         {invariantCheck && (!invariantCheck.mine.ok || !invariantCheck.theirs.ok) && (
           <View style={styles.invariantWarning}>
             <Text style={styles.invariantWarningText}>
-              ⚠ Card count off —{" "}
+              ⚠ Card count off:{" "}
               {!invariantCheck.mine.ok &&
                 `You: ${invariantCheck.mine.total}/${invariantCheck.myExpected}`}
               {!invariantCheck.mine.ok && !invariantCheck.theirs.ok && " · "}
@@ -888,11 +887,20 @@ export default function MatchDetailScreen({ route }: Props) {
         scrollable={false}
       >
         {previewCard && (
-          <Image
-            source={{ uri: cardImageUri(previewCard.imageUrl) }}
-            style={styles.previewImage}
-            resizeMode="contain"
-          />
+          previewCard.imageUrl ? (
+            <Image
+              source={{ uri: cardImageUri(previewCard.imageUrl) }}
+              style={styles.previewImage}
+              resizeMode="contain"
+            />
+          ) : (
+            // Cards merged in ahead of their art (e.g. Vendetta before its
+            // July 31 release) are fully searchable/loggable here — they
+            // just can't show a preview image yet.
+            <View style={[styles.previewImage, styles.previewImagePlaceholder]}>
+              <Text style={styles.previewImagePlaceholderText}>Art not available yet</Text>
+            </View>
+          )
         )}
       </AppModal>
 
@@ -994,11 +1002,11 @@ export default function MatchDetailScreen({ route }: Props) {
             </Text>
             {(
               [
-                ["Discard (Deck)", "Discard — Deck", ["-1 deck", "+1 discard"]],
-                ["Discard (Hand)", "Discard — Hand", ["-1 hand", "+1 discard"]],
-                ["Recycle (Deck)", "Recycle — Deck", ["no change"]],
-                ["Recycle (Hand)", "Recycle — Hand", ["-1 hand", "+1 deck"]],
-                ["Recycle (Play)", "Recycle — Play", ["-1 play", "+1 deck"]],
+                ["Discard (Deck)", "Discard: Deck", ["-1 deck", "+1 discard"]],
+                ["Discard (Hand)", "Discard: Hand", ["-1 hand", "+1 discard"]],
+                ["Recycle (Deck)", "Recycle: Deck", ["no change"]],
+                ["Recycle (Hand)", "Recycle: Hand", ["-1 hand", "+1 deck"]],
+                ["Recycle (Play)", "Recycle: Play", ["-1 play", "+1 deck"]],
               ] as const
             ).map(([action, label, lines]) => {
               const staged =
@@ -1023,11 +1031,11 @@ export default function MatchDetailScreen({ route }: Props) {
             </Text>
             {(
               [
-                ["Discard (Deck)", "Discard — Deck", ["-1 deck", "+1 discard"]],
-                ["Discard (Hand)", "Discard — Hand", ["-1 hand", "+1 discard"]],
-                ["Recycle (Deck)", "Recycle — Deck", ["no change"]],
-                ["Recycle (Hand)", "Recycle — Hand", ["-1 hand", "+1 deck"]],
-                ["Recycle (Play)", "Recycle — Play", ["-1 play", "+1 deck"]],
+                ["Discard (Deck)", "Discard: Deck", ["-1 deck", "+1 discard"]],
+                ["Discard (Hand)", "Discard: Hand", ["-1 hand", "+1 discard"]],
+                ["Recycle (Deck)", "Recycle: Deck", ["no change"]],
+                ["Recycle (Hand)", "Recycle: Hand", ["-1 hand", "+1 deck"]],
+                ["Recycle (Play)", "Recycle: Play", ["-1 play", "+1 deck"]],
               ] as const
             ).map(([action, label, lines]) => {
               const staged =
@@ -1254,6 +1262,14 @@ const styles = StyleSheet.create({
   exportButtonSecondary: { alignItems: "center", paddingVertical: 8, marginBottom: 20 },
   exportButtonSecondaryText: { color: theme.textDim, fontSize: 12, textDecorationLine: "underline" },
   previewImage: { width: "100%", aspectRatio: 744 / 1039, borderRadius: 10 },
+  previewImagePlaceholder: {
+    backgroundColor: theme.card,
+    borderWidth: 1,
+    borderColor: theme.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  previewImagePlaceholderText: { color: theme.textDim, fontSize: 13, fontStyle: "italic" },
   discardMenuOption: {
     borderWidth: 1,
     borderColor: theme.border,

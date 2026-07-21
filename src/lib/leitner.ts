@@ -23,6 +23,36 @@ const MINUTE_MS = 60 * 1000;
 // ended and would otherwise be free to redraw a card seen moments ago.
 export const MIN_COOLDOWN_MIN = 10;
 
+// A "batch" is one bounded round of studying: at most BATCH_SIZE cards, then
+// a mandatory BATCH_COOLDOWN_MIN wait before the next one — independent of
+// (and on top of) the per-card MIN_COOLDOWN_MIN above. This is a pacing
+// limit for the session as a whole, not a per-card rule: even if MORE cards
+// are individually due, a person can't just keep pulling batch after batch
+// back to back.
+export const BATCH_SIZE = 20;
+export const BATCH_COOLDOWN_MIN = 10;
+
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+type CardCategory = "missed" | "new" | "review";
+
+function categorize(cardId: string, progressByCardId: Record<string, CardProgress>): CardCategory {
+  const p = progressByCardId[cardId];
+  if (!p) return "new";
+  // "Missed" = previously answered wrong and demoted to box 1 (seenCount>0
+  // distinguishes it from a card that's simply never been seen, which is
+  // also box MIN_BOX by convention but categorized as "new" instead).
+  if (p.box === MIN_BOX && p.seenCount > 0) return "missed";
+  return "review";
+}
+
 export function newProgress(cardId: string, now: number = Date.now()): CardProgress {
   return {
     cardId,
@@ -96,4 +126,66 @@ export function buildQueue(
   });
 
   return due;
+}
+
+/**
+ * Builds one bounded study batch (see BATCH_SIZE/BATCH_COOLDOWN_MIN above).
+ * Cards are split into three pools — missed (previously wrong), new (never
+ * seen), and review (previously correct, now due on its normal spaced-
+ * repetition interval) — sorted weakest/most-overdue-first within each pool,
+ * then round-robin interleaved across the three so no single category
+ * dominates a batch and review-due cards keep resurfacing on schedule
+ * instead of being crowded out by missed/new. If a pool runs dry, the
+ * round-robin simply keeps drawing from whichever pools still have cards.
+ */
+export function buildBatch(
+  allCardIds: string[],
+  progressByCardId: Record<string, CardProgress>,
+  now: number = Date.now(),
+  maxSize: number = BATCH_SIZE
+): string[] {
+  const uniqueIds = Array.from(new Set(allCardIds));
+  const due = uniqueIds.filter((id) => {
+    const p = progressByCardId[id];
+    return !p || isDue(p, now);
+  });
+
+  const sortFn = (a: string, b: string) => {
+    const boxA = progressByCardId[a]?.box ?? MIN_BOX;
+    const boxB = progressByCardId[b]?.box ?? MIN_BOX;
+    if (boxA !== boxB) return boxA - boxB;
+    const dueA = progressByCardId[a]?.dueAt ?? 0;
+    const dueB = progressByCardId[b]?.dueAt ?? 0;
+    return dueA - dueB;
+  };
+
+  const pools: Record<CardCategory, string[]> = { missed: [], new: [], review: [] };
+  for (const id of due) pools[categorize(id, progressByCardId)].push(id);
+  // Shuffle before sorting, not after: Array.sort is stable, so cards that
+  // tie on (box, dueAt) keep whatever order they were in going in. Without
+  // this, the "new" pool -- every never-seen card ties at box 1 / dueAt 0 --
+  // would always sort back into allCardIds' own order, which is why a fresh
+  // account was always handed the same cards in the same order every batch.
+  // The shuffle only affects ties; a genuine priority difference (lower box,
+  // earlier due time) still wins regardless of shuffle order.
+  pools.missed = shuffle(pools.missed).sort(sortFn);
+  pools.new = shuffle(pools.new).sort(sortFn);
+  pools.review = shuffle(pools.review).sort(sortFn);
+
+  const order: CardCategory[] = ["missed", "new", "review"];
+  const cursor: Record<CardCategory, number> = { missed: 0, new: 0, review: 0 };
+  const batch: string[] = [];
+  let madeProgress = true;
+  while (batch.length < maxSize && madeProgress) {
+    madeProgress = false;
+    for (const cat of order) {
+      if (batch.length >= maxSize) break;
+      if (cursor[cat] < pools[cat].length) {
+        batch.push(pools[cat][cursor[cat]]);
+        cursor[cat]++;
+        madeProgress = true;
+      }
+    }
+  }
+  return batch;
 }

@@ -31,6 +31,26 @@ const COARSE_POINTER =
   typeof window.matchMedia === "function" &&
   window.matchMedia("(pointer: coarse)").matches;
 
+// After a feedback form is filled out on mobile web, the user may have
+// pinch-zoomed (to read the screenshot, tap a small field, etc.) and iOS
+// Safari leaves the page zoomed in. This nudges the viewport back to 1x:
+// briefly clamping maximum-scale forces Safari to reset the zoom, then we
+// restore the original content string so the user can pinch-zoom again.
+// Web-only and best-effort — if the platform ignores it, it's a silent no-op.
+function resetViewportZoom() {
+  if (Platform.OS !== "web" || typeof document === "undefined") return;
+  const vp = document.querySelector('meta[name="viewport"]');
+  if (!vp) return;
+  const original =
+    vp.getAttribute("content") || "width=device-width, initial-scale=1";
+  vp.setAttribute(
+    "content",
+    "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  );
+  setTimeout(() => vp.setAttribute("content", original), 350);
+}
+
+
 // On a phone the image can't span the full sheet width. touchAction is "none"
 // over the drawable area (it has to be, or the browser eats the drawing
 // gesture), so an edge-to-edge image is a dead zone the user can't scroll past —
@@ -118,8 +138,10 @@ export default function FeedbackSheet({ visible, shot, onClose }: Props) {
   const cardDataSelected = selected.some((t) => t.cardData);
 
   // A tag (any tag — "Other" is one of them, for anything the list doesn't cover)
-  // plus what actually happened. Both required, nothing else is.
-  const canSend = tagIds.length > 0 && happened.trim().length > 2 && !sending;
+  // is the only hard requirement now; "What happened?" is a nice-to-have,
+  // not a gate, since the tag + screenshot + breadcrumbs are usually enough
+  // on their own to act on a report (per Ashwin's follow-up feedback).
+  const canSend = tagIds.length > 0 && !sending;
 
   const toggleTag = (id: string) =>
     setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
@@ -148,6 +170,7 @@ export default function FeedbackSheet({ visible, shot, onClose }: Props) {
     trace("feedback.sent", tagIds.join(","));
     setSending(false);
     setResult(outcome);
+    resetViewportZoom();
     setTimeout(close, 1700);
   };
 
@@ -284,22 +307,18 @@ export default function FeedbackSheet({ visible, shot, onClose }: Props) {
               </Text>
             ) : null}
 
-            <Text style={styles.label}>
-              What happened? <Text style={styles.req}>(required)</Text>
-            </Text>
+            <Text style={styles.label}>What happened?</Text>
             <TextInput
               style={styles.input}
-              multiline
               value={happened}
               onChangeText={setHappened}
-              placeholder="The mask covered the card name instead of the cost."
+              placeholder="Mask covered the wrong card element."
               placeholderTextColor={PLACEHOLDER}
             />
 
             <Text style={styles.label}>What did you expect?</Text>
             <TextInput
               style={styles.input}
-              multiline
               value={expected}
               onChangeText={setExpected}
               placeholder="The cost box should be hidden in cost mode."
@@ -314,7 +333,7 @@ export default function FeedbackSheet({ visible, shot, onClose }: Props) {
               {sending ? (
                 <ActivityIndicator color={theme.text} />
               ) : (
-                <Text style={styles.sendText}>Send report</Text>
+                <Text style={styles.sendText}>Submit feedback</Text>
               )}
             </Pressable>
             <View style={styles.tail} />
@@ -409,19 +428,21 @@ const styles = StyleSheet.create({
   note: { color: theme.accent, fontSize: 12, marginTop: 4 },
   // Magenta = required. Platform-wide convention — see REQUIRED in lib/theme.ts.
   req: { color: REQUIRED, fontSize: 12, fontWeight: "500" },
+  // Single line, not the old multiline minHeight:64 box -- both answer
+  // fields are optional context now (see canSend), so they read as quick
+  // one-liners rather than a full report form.
   input: {
-    minHeight: 64,
+    height: 44,
     backgroundColor: theme.bg,
     borderWidth: 1,
     borderColor: theme.border,
     borderRadius: 8,
     color: theme.text,
-    padding: 12,
+    paddingHorizontal: 12,
     fontSize: 14,
-    textAlignVertical: "top",
   },
   send: {
-    marginTop: 22,
+    marginTop: 32,
     backgroundColor: theme.accent,
     paddingVertical: 14,
     borderRadius: 8,

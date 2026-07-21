@@ -7,15 +7,21 @@ import {
   Image,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
-import { theme } from "../lib/theme";
+import { theme, GLOW } from "../lib/theme";
+import ScreenGlow from "../components/ScreenGlow";
+import GlowButton from "../components/GlowButton";
+import QuizCardArt from "../components/QuizCardArt";
+import Sparklet from "../components/Sparklet";
 import { getFilteredCards } from "../lib/quiz";
 import { buildAttributeQuestion, AttributeQuestion, getMaskRegions } from "../lib/attributeQuiz";
-import { humanizeCardText } from "../lib/textDisplay";
-import { loadAllProgress, saveProgress } from "../lib/db";
-import { buildQueue, applyResult, newProgress } from "../lib/leitner";
+import { humanizeCardText, preventOrphanWord } from "../lib/textDisplay";
+import { loadAllProgress, saveProgress, getLastBatchCompletedAt, setLastBatchCompletedAt } from "../lib/db";
+import { loadSessionSnapshot, saveSessionSnapshot, clearSessionSnapshot } from "../lib/sessionState";
+import { buildBatch, applyResult, newProgress, BATCH_SIZE, BATCH_COOLDOWN_MIN } from "../lib/leitner";
 import { Card, CardProgress } from "../lib/types";
 import { useFilters } from "../lib/filtersStore";
 import { useFeedbackSafe } from "../feedback/context";
@@ -23,11 +29,16 @@ import { cardImageUri } from "../lib/cardImage";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Quiz">;
 
-// Real card renders are 744x1039 — matching that ratio exactly means the
-// card fills its container edge to edge with no leftover letterboxing.
+// Real card renders are 744x1039 (portrait) -- matching that ratio exactly
+// means the card fills its container edge to edge with no leftover
+// letterboxing. Battlefield cards are the same physical template rotated
+// 90 degrees (measured: 1038x744, the same numbers swapped), so they need
+// the inverse ratio -- using the portrait ratio for every card type used to
+// force battlefields into a tall container via resizeMode="contain",
+// letterboxing them top/bottom. cardAspectRatio (below, per-render) picks
+// the right one so the container always matches the card's actual shape.
 const CARD_ASPECT_RATIO = 744 / 1039;
-
-const MAX_SESSION_SIZE = 50;
+const BATTLEFIELD_ASPECT_RATIO = 1039 / 744;
 
 export default function QuizScreen({ navigation }: Props) {
   const { filters } = useFilters();
@@ -45,7 +56,20 @@ export default function QuizScreen({ navigation }: Props) {
   const [selected, setSelected] = useState<number | null>(null);
   const [sessionCorrect, setSessionCorrect] = useState(0);
   const [sessionTotal, setSessionTotal] = useState(0);
+  // Bumped on every correct answer to (re)fire the Sparklet reaction. Starts at
+  // 0 (no reaction on mount); each increment plays a fresh, non-blocking
+  // celebration, so answering correctly in a streak re-triggers cleanly.
+  const [correctPlayKey, setCorrectPlayKey] = useState(0);
   const [nothingAvailable, setNothingAvailable] = useState(false);
+  // When set, a study batch was completed less than BATCH_COOLDOWN_MIN ago
+  // and a NEW batch can't start until this timestamp — see BATCH_SIZE /
+  // BATCH_COOLDOWN_MIN in leitner.ts. Does not apply to resuming an
+  // already-in-progress batch (see loadSession below) — only to starting a
+  // fresh one.
+  const [batchGateUntil, setBatchGateUntil] = useState<number | null>(null);
+  // Ticks once a second only while a gate is active, purely to drive the
+  // countdown display and to notice when the gate has expired.
+  const [nowTick, setNowTick] = useState(Date.now());
 
   const scrollRef = useRef<ScrollView>(null);
   // Explicit, unconditional guard: every card ID actually displayed this
@@ -55,29 +79,118 @@ export default function QuizScreen({ navigation }: Props) {
   // logic above; it exists specifically so "same card twice in one
   // session" is structurally impossible rather than just unlikely.
   const shownThisSessionRef = useRef<Set<string>>(new Set());
+  // Rolling list of the last several question modes shown (most-recent-last),
+  // fed to buildAttributeQuestion so it can bias toward attributes that
+  // haven't come up lately — this is what stops long streaks of the same
+  // question type (e.g. 8 name questions with no cost/might). Not persisted;
+  // a fresh session starting with an empty history is fine.
+  const recentModesRef = useRef<AttributeQuestion["mode"][]>([]);
 
-  useEffect(() => {
-    (async () => {
-      const cards = getFilteredCards(filters);
-      const progress = await loadAllProgress();
-      const ids = cards.map((c) => c.id);
-      // buildQueue's isDue() already bakes in the 10-minute cooldown, so
-      // anything it returns is genuinely safe to show. There is
-      // deliberately NO fallback that reshuffles the full pool when this
-      // comes back empty — that fallback used to ignore cooldowns entirely
-      // and was the actual cause of cards reappearing back-to-back. If
-      // nothing is available, the person sees a clear "come back later"
-      // message instead of being served a card they just saw.
-      const dueQueue = buildQueue(ids, progress).slice(0, MAX_SESSION_SIZE);
+  const loadSession = useCallback(async () => {
+    const cards = getFilteredCards(filters);
+    const progress = await loadAllProgress();
+    const ids = cards.map((c) => c.id);
+    const now = Date.now();
+
+    // Resuming an in-progress batch (refresh/back-nav within the same tab)
+    // takes priority over the pacing gate below — the gate only blocks
+    // STARTING a new batch, never finishing one already underway. A snapshot
+    // only counts as "in progress" if it actually has cards left; an empty
+    // one means the last batch was already fully completed.
+    const snapshot = loadSessionSnapshot(filters);
+    const freshBatch = buildBatch(ids, progress, now, BATCH_SIZE);
+
+    if (snapshot && snapshot.queue.length > 0) {
+      const restoredShown = new Set(snapshot.shownThisSession);
+      const restoredCorrect = snapshot.sessionCorrect;
+      const restoredTotal = snapshot.sessionTotal;
+
+      // Never let a stale resume hide a card that's become newly due since
+      // the last save — reconcile against a fresh batch rather than trusting
+      // the snapshot's queue blindly.
+      const freshSet = new Set(freshBatch);
+      const resumedQueue = snapshot.queue.filter((id) => freshSet.has(id));
+      const alreadyIncluded = new Set(resumedQueue);
+      const newlyDue = freshBatch.filter(
+        (id) => !alreadyIncluded.has(id) && !restoredShown.has(id)
+      );
+      const finalQueue = [...resumedQueue, ...newlyDue].slice(0, BATCH_SIZE);
 
       setPool(cards);
       setProgressMap(progress);
-      setQueue(dueQueue);
-      setNothingAvailable(cards.length > 0 && dueQueue.length === 0);
-      shownThisSessionRef.current = new Set();
+      setQueue(finalQueue);
+      setNothingAvailable(cards.length > 0 && finalQueue.length === 0);
+      setBatchGateUntil(null);
+      shownThisSessionRef.current = restoredShown;
+      setSessionCorrect(restoredCorrect);
+      setSessionTotal(restoredTotal);
+      saveSessionSnapshot({
+        filters,
+        queue: finalQueue,
+        shownThisSession: Array.from(restoredShown),
+        sessionCorrect: restoredCorrect,
+        sessionTotal: restoredTotal,
+      });
       setLoading(false);
-    })();
+      return;
+    }
+
+    // No batch to resume — check whether we're still within the pacing
+    // cooldown from the last COMPLETED batch before starting a fresh one.
+    const lastCompleted = await getLastBatchCompletedAt();
+    const gateUntil = lastCompleted ? lastCompleted + BATCH_COOLDOWN_MIN * 60_000 : null;
+    if (gateUntil && now < gateUntil) {
+      setPool(cards);
+      setProgressMap(progress);
+      setQueue([]);
+      setNothingAvailable(false);
+      setBatchGateUntil(gateUntil);
+      shownThisSessionRef.current = new Set();
+      setSessionCorrect(0);
+      setSessionTotal(0);
+      setLoading(false);
+      return;
+    }
+
+    // Clear to start a fresh batch.
+    setPool(cards);
+    setProgressMap(progress);
+    setQueue(freshBatch);
+    setNothingAvailable(cards.length > 0 && freshBatch.length === 0);
+    setBatchGateUntil(null);
+    shownThisSessionRef.current = new Set();
+    setSessionCorrect(0);
+    setSessionTotal(0);
+    saveSessionSnapshot({
+      filters,
+      queue: freshBatch,
+      shownThisSession: [],
+      sessionCorrect: 0,
+      sessionTotal: 0,
+    });
+    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
+
+  useEffect(() => {
+    loadSession();
+  }, [loadSession]);
+
+  // While gated, tick every second to drive the countdown and to notice the
+  // moment the gate expires — at which point we automatically build the
+  // next batch rather than making the person manually refresh.
+  useEffect(() => {
+    if (!batchGateUntil) return;
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [batchGateUntil]);
+
+  useEffect(() => {
+    if (batchGateUntil && nowTick >= batchGateUntil) {
+      setBatchGateUntil(null);
+      loadSession();
+    }
+  }, [nowTick, batchGateUntil, loadSession]);
 
   const nextQuestion = useCallback(
     (remainingQueue: string[], currentPool: Card[]) => {
@@ -102,17 +215,30 @@ export default function QuizScreen({ navigation }: Props) {
         nextQuestion(queueToUse.slice(1), currentPool);
         return;
       }
-      const q = buildAttributeQuestion(nextCard, currentPool);
+      const q = buildAttributeQuestion(
+        nextCard,
+        currentPool,
+        recentModesRef.current,
+        filters.speeds
+      );
       if (!q) {
         nextQuestion(queueToUse.slice(1), currentPool);
         return;
       }
+      // Record the mode we're about to show so the next pick can steer away
+      // from it. Keep only a short rolling window (the picker only looks at
+      // the last ~7 anyway).
+      recentModesRef.current = [...recentModesRef.current, q.mode].slice(-10);
       shownThisSessionRef.current.add(nextId);
       setCard(nextCard);
       setQuestion(q);
       setSelected(null);
     },
-    []
+    // filters.speeds is read inside (for speed-question suppression); include
+    // it so a filter change can't leave a stale closure here. The mount
+    // effect also rebuilds the pool on any filter change, so in practice this
+    // just keeps the two consistent.
+    [filters.speeds]
   );
 
   useEffect(() => {
@@ -166,14 +292,25 @@ export default function QuizScreen({ navigation }: Props) {
     setSelected(index);
     const correct = index === question.correctIndex;
     trace("answer", `${card.id} ${question.mode} idx=${index} correct=${correct}`);
-    setSessionTotal((t) => t + 1);
-    if (correct) setSessionCorrect((c) => c + 1);
+    const newTotal = sessionTotal + 1;
+    const newCorrect = correct ? sessionCorrect + 1 : sessionCorrect;
+    setSessionTotal(newTotal);
+    setSessionCorrect(newCorrect);
+    if (correct) setCorrectPlayKey((k) => k + 1);
 
     const existing = progressMap[card.id] ?? newProgress(card.id);
     const updated = applyResult(existing, correct);
     const newMap = { ...progressMap, [card.id]: updated };
     setProgressMap(newMap);
     await saveProgress(updated);
+
+    saveSessionSnapshot({
+      filters,
+      queue,
+      shownThisSession: Array.from(shownThisSessionRef.current),
+      sessionCorrect: newCorrect,
+      sessionTotal: newTotal,
+    });
 
     // Auto-scroll so the Next button is immediately visible without the
     // person having to hunt for it after answering.
@@ -186,6 +323,26 @@ export default function QuizScreen({ navigation }: Props) {
     const remaining = queue.slice(1);
     setQueue(remaining);
     nextQuestion(remaining, pool);
+
+    if (remaining.length === 0) {
+      // This batch is fully done — start the pacing cooldown for the next
+      // one (see BATCH_COOLDOWN_MIN) and clear the resumable snapshot, since
+      // there's nothing left in it to resume. loadSession's own gate check
+      // will pick this up the moment the countdown effect notices it expire.
+      const now = Date.now();
+      setLastBatchCompletedAt(now);
+      clearSessionSnapshot();
+      setBatchGateUntil(now + BATCH_COOLDOWN_MIN * 60_000);
+      return;
+    }
+
+    saveSessionSnapshot({
+      filters,
+      queue: remaining,
+      shownThisSession: Array.from(shownThisSessionRef.current),
+      sessionCorrect,
+      sessionTotal,
+    });
   }
 
   if (loading) {
@@ -206,18 +363,46 @@ export default function QuizScreen({ navigation }: Props) {
     );
   }
 
+  if (batchGateUntil && nowTick < batchGateUntil) {
+    const msLeft = batchGateUntil - nowTick;
+    const minutes = Math.floor(msLeft / 60_000);
+    const seconds = Math.floor((msLeft % 60_000) / 1000);
+    const mmss = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    // One vertically-centered column (per Ashwin's follow-up -- the earlier
+    // absolutely-positioned zones spread it too far down the screen). The
+    // headline/label/countdown read as one 3-line group, followed by the
+    // tip and button with a small gap before each.
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.doneHeadline}>Nice work on that set!</Text>
+        <Text style={styles.doneCountdownLabel}>Your next batch of cards unlocks in:</Text>
+        <Text style={styles.doneCountdownValue}>{mmss}</Text>
+        <Text style={styles.doneTip}>
+          Short breaks between sets improves your card recall
+        </Text>
+        <GlowButton
+          label="Back to home"
+          onPress={() => navigation.navigate("Home")}
+          radius={12}
+          contentStyle={styles.doneButtonBody}
+          style={styles.doneButtonWrap}
+        />
+      </View>
+    );
+  }
+
   if (nothingAvailable) {
     return (
       <View style={[styles.container, styles.centered]}>
         <Text style={styles.emptyText}>
-          These are all the cards for you right now — check back in 10 minutes for new ones.
+          These are all the cards for you right now. Check back in 10 minutes for new ones.
         </Text>
-        <Pressable
-          style={styles.doneButton}
+        <GlowButton
+          label="Back to home"
           onPress={() => navigation.navigate("Home")}
-        >
-          <Text style={styles.doneButtonText}>Back to home</Text>
-        </Pressable>
+          radius={12}
+          contentStyle={styles.doneButtonBody}
+        />
       </View>
     );
   }
@@ -228,36 +413,68 @@ export default function QuizScreen({ navigation }: Props) {
         <Text style={styles.emptyText}>
           Session complete: {sessionCorrect}/{sessionTotal} correct.
         </Text>
-        <Pressable
-          style={styles.doneButton}
+        <GlowButton
+          label="Back to home"
           onPress={() => navigation.navigate("Home")}
-        >
-          <Text style={styles.doneButtonText}>Back to home</Text>
-        </Pressable>
+          radius={12}
+          contentStyle={styles.doneButtonBody}
+        />
       </View>
     );
   }
 
   const maskRegions = getMaskRegions(question.mode, card);
   const revealed = selected !== null;
+  const cardAspectRatio =
+    card.type === "Battlefield" ? BATTLEFIELD_ASPECT_RATIO : CARD_ASPECT_RATIO;
+  // Cost pips are printed as circular badges on the real card art; the
+  // might badge is actually a rounded rectangle (or, on equipment, a "+N"
+  // flag icon), and power cost is a stack of 1-4 small pip icons, not a
+  // fixed circle at all (see getMaskRegions' powerCost branch). Per
+  // Ashwin's follow-up feedback, might's and power's masks still use this
+  // same circular styling rather than mirroring their real shapes --
+  // consistency of the mask style reads better than exactly tracing what's
+  // underneath it (and for power's tall, narrow pip-stack region, a full
+  // borderRadius renders it as a rounded capsule, which happens to match
+  // the real capsule shape anyway).
+  // quizPositions.json's "might.default" is now sized to exactly match
+  // "cost" (same width/height) per Ashwin's direct comparison -- it was
+  // previously a bit larger than cost, which read as inconsistent. It's
+  // still positioned to safely cover the printed digit(s) with a
+  // comfortable margin, verified against several cards including a
+  // Champion template's wider printed numerals. "might.Gear" is
+  // deliberately NOT shrunk to match: equipment's "+N" text measures
+  // noticeably wider on some cards (verified up to ~98px on a 744px-wide
+  // card image) than cost's circle can safely cover without risking a
+  // leak, so it stays at its own, slightly larger, safe size.
+  // quizPositions entries are calibrated to render as true circles (or,
+  // for power, a correctly-proportioned capsule) at this ratio's ~78%-width
+  // container, so a full borderRadius here is enough -- no per-render
+  // aspect-ratio math needed, since cost/might/power questions only ever
+  // occur on portrait-oriented cards.
+  const isCircularMask =
+    question.mode === "energyCost" || question.mode === "powerCost" || question.mode === "might";
 
   return (
     <View style={styles.container}>
+      <ScreenGlow />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}
       >
-        <Text style={styles.prompt}>{question.prompt}</Text>
-        {question.caption && (
-          <Text style={styles.caption}>{humanizeCardText(question.caption)}</Text>
-        )}
-
-        <View style={styles.cardImageWrap}>
+        <QuizCardArt
+          aspectRatio={cardAspectRatio}
+          decoration={<Sparklet playKey={correctPlayKey} />}
+        >
           <Image
-            source={{ uri: imageProxyFailed ? card.imageUrl : cardImageUri(card.imageUrl) }}
+            // Non-null assertion is safe here: getFilteredCards() (quiz.ts)
+            // excludes every card with imageUrl === null from the pool this
+            // screen ever receives, specifically so a card can never reach
+            // this render without real art.
+            source={{ uri: imageProxyFailed ? card.imageUrl! : cardImageUri(card.imageUrl!) }}
             style={styles.cardImage}
-            resizeMode={card.type === "Battlefield" ? "contain" : "cover"}
+            resizeMode="cover"
             onError={() => setImageProxyFailed(true)}
           />
           {!revealed &&
@@ -266,6 +483,7 @@ export default function QuizScreen({ navigation }: Props) {
                 key={i}
                 style={[
                   styles.maskOverlay,
+                  isCircularMask && styles.maskOverlayCircle,
                   {
                     top: region.top,
                     left: region.left,
@@ -277,36 +495,71 @@ export default function QuizScreen({ navigation }: Props) {
                 <Text style={styles.maskText}>?</Text>
               </View>
             ))}
-        </View>
+        </QuizCardArt>
 
-        <View style={styles.optionsList}>
-          {question.options.map((opt, i) => {
-            const isCorrect = i === question.correctIndex;
-            const isSelected = i === selected;
-            return (
-              <Pressable
-                key={`${opt}-${i}`}
-                disabled={revealed}
-                onPress={() => handleAnswer(i)}
-                style={[
-                  styles.option,
-                  revealed && isCorrect && { backgroundColor: theme.correct },
-                  revealed && isSelected && !isCorrect && { backgroundColor: theme.incorrect },
-                ]}
-              >
-                <Text style={styles.optionText} numberOfLines={3}>
-                  {humanizeCardText(opt)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <View style={styles.controlsGroup}>
+        <Text style={styles.prompt}>{preventOrphanWord(question.prompt)}</Text>
+        {question.caption && (
+          <Text style={styles.caption}>{humanizeCardText(question.caption)}</Text>
+        )}
+
+        {(() => {
+          // Layout rule (answer-count based, applies to ALL question types):
+          //   3 options -> 1x3 horizontal row
+          //   4 options -> 2x2 grid
+          // This is deliberately keyed off option COUNT, not question mode:
+          // speed questions happen to be the common 3-option case today, but
+          // custom fill-in-the-blank or text questions can also have exactly
+          // 3 answers (e.g. a card with only two sensible distractors), and
+          // they should compact to 1x3 the same way.
+          const optionCount = question.options.length;
+          const isRow3 = optionCount === 3;
+          const containerStyle = isRow3 ? styles.optionsRow3 : styles.optionsGrid;
+          const itemStyle = isRow3 ? styles.optionThird : styles.optionHalf;
+          // Long-answer text mode still needs more lines per cell until
+          // Group B shortens the answers; others stay tight.
+          const maxLines = question.mode === "text" ? 6 : 3;
+
+          return (
+            <View style={containerStyle}>
+              {question.options.map((opt, i) => {
+                const isCorrect = i === question.correctIndex;
+                const isSelected = i === selected;
+                return (
+                  <Pressable
+                    key={`${opt}-${i}`}
+                    disabled={revealed}
+                    onPress={() => handleAnswer(i)}
+                    style={({ pressed }) => [
+                      styles.option,
+                      itemStyle,
+                      revealed && isCorrect && { backgroundColor: theme.correct },
+                      revealed && isSelected && !isCorrect && { backgroundColor: theme.incorrect },
+                      // Motion-only press feedback (no hover on mobile).
+                      pressed && !revealed && styles.optionPressed,
+                    ]}
+                  >
+                    <Text style={styles.optionText} numberOfLines={maxLines}>
+                      {humanizeCardText(opt)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          );
+        })()}
 
         {revealed && (
-          <Pressable style={styles.nextButton} onPress={handleNext}>
-            <Text style={styles.nextButtonText}>Next card</Text>
-          </Pressable>
+          <GlowButton
+            label="Next card"
+            onPress={handleNext}
+            radius={12}
+            style={styles.nextButtonWrap}
+            contentStyle={styles.nextButtonBody}
+            textStyle={styles.nextButtonText}
+          />
         )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -314,70 +567,119 @@ export default function QuizScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.bg },
-  scrollContent: { padding: 16, paddingBottom: 48 },
+  // flexGrow lets the content fill the viewport even on a short card. No
+  // justifyContent here on purpose -- space-between used to stretch the gap
+  // between the card and the question text to fill any leftover viewport
+  // height; controlsGroup's own marginTop is what sets that gap now, so it
+  // stays a fixed, reasonable size regardless of screen height.
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 20,
+  },
+  controlsGroup: { width: "100%" },
   centered: { alignItems: "center", justifyContent: "center", flex: 1 },
   emptyText: { color: theme.text, fontSize: 16, textAlign: "center", marginBottom: 16 },
-  doneButton: {
-    backgroundColor: theme.accent,
-    paddingVertical: 14,
+  doneButtonBody: { paddingVertical: 14, paddingHorizontal: 24 },
+  doneButtonWrap: { marginTop: 24 },
+  // The batch-cooldown screen (see the batchGateUntil block above) is one
+  // vertically-centered column (styles.centered on the container) -- the
+  // headline/label/countdown read as a 3-line group with no gap between
+  // them, then a bigger gap before the tip and again before the button.
+  doneHeadline: {
+    textAlign: "center",
+    color: theme.text,
+    fontSize: 26,
+    fontWeight: "800",
     paddingHorizontal: 24,
-    borderRadius: 12,
+    marginBottom: 20,
   },
-  doneButtonText: { color: "#fff", fontWeight: "600" },
+  doneCountdownLabel: { color: theme.textDim, fontSize: 16, textAlign: "center" },
+  doneCountdownValue: { color: theme.text, fontSize: 34, fontWeight: "800", marginTop: 6 },
+  doneTip: {
+    color: theme.textDim,
+    fontSize: 15,
+    textAlign: "center",
+    marginTop: 24,
+    paddingHorizontal: 24,
+  },
   prompt: {
     color: theme.text,
-    fontSize: 16,
+    fontSize: 19,
     fontWeight: "600",
     textAlign: "center",
-    marginBottom: 8,
+    marginTop: 16,
+    marginBottom: 14,
+    // react-native-web's default Text styling sets overflow-wrap: break-word,
+    // which lets the browser break INSIDE a non-breaking-space-joined pair
+    // when the pair alone doesn't fit a line -- silently defeating
+    // preventOrphanWord's whole point. Native Text layout has no such
+    // default, so this override is web-only.
+    ...(Platform.OS === "web" ? ({ wordBreak: "keep-all" } as object) : null),
   },
   caption: {
     color: theme.textDim,
     fontSize: 13,
+    fontStyle: "italic",
     lineHeight: 18,
     textAlign: "center",
     marginBottom: 14,
   },
-  cardImageWrap: {
-    // 10% smaller across all dimensions than the previous full-bleed
-    // width, centered.
-    width: "90%",
-    alignSelf: "center",
-    aspectRatio: CARD_ASPECT_RATIO,
-    borderRadius: 16,
-    marginBottom: 16,
-    overflow: "visible",
-    position: "relative",
-  },
+  // Card sizing/foil now lives in <QuizCardArt/> (78% width + this aspect
+  // ratio). The image fills that container.
   cardImage: { width: "100%", height: "100%", borderRadius: 16 },
+  // Zones are now tightly fitted to the actual printed element they cover
+  // (verified by measuring several cards' real pixels) rather than the
+  // generous quadrant-sized boxes this used to be, so the fill/border can
+  // read as a deliberate badge instead of a slab pasted over the art.
   maskOverlay: {
     position: "absolute",
-    backgroundColor: "#0d0d12",
-    borderWidth: 1,
-    borderColor: theme.accent,
-    borderRadius: 6,
+    // Fully opaque -- this exists to hide an answer, so unlike the rest of
+    // the Rune Glow surfaces it can't afford to be a translucent wash.
+    backgroundColor: "#0f0f16",
+    borderWidth: 1.5,
+    borderColor: "rgba(88,101,242,0.55)",
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+    ...GLOW.feature,
   },
-  maskText: { color: theme.accent, fontSize: 22, fontWeight: "800" },
-  optionsList: { gap: 8, alignItems: "stretch" },
+  // Cost pips are round on the actual card art -- see isCircularMask above.
+  maskOverlayCircle: { borderRadius: 999 },
+  maskText: { color: theme.accent, fontSize: 17, fontWeight: "800" },
+  // Full-width single column — used only for long-answer text-mode questions.
+  optionsColumn: { gap: 8, alignItems: "stretch" },
+  // 2x2 grid — 4 short options (cost/might/name/keyword).
+  optionsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 8,
+  },
+  // 1x3 horizontal row — 3 options (speed questions).
+  optionsRow3: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    columnGap: 8,
+  },
   option: {
-    width: "100%",
-    alignSelf: "stretch",
     backgroundColor: theme.card,
     borderWidth: 1,
     borderColor: theme.border,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
+    justifyContent: "center",
   },
+  optionFull: { width: "100%", alignSelf: "stretch" },
+  // 48% (not 50%) leaves room for the space-between gutter between columns.
+  optionHalf: { width: "48%", minHeight: 52 },
+  // ~31.5% x3 + two gutters ≈ full width.
+  optionThird: { flex: 1, minHeight: 52 },
   optionText: { color: theme.text, fontSize: 13, lineHeight: 17, textAlign: "center" },
-  nextButton: {
-    backgroundColor: theme.accent,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 20,
-  },
+  optionPressed: { transform: [{ scale: 0.97 }] },
+  nextButtonWrap: { marginTop: 20 },
+  nextButtonBody: { paddingVertical: 14 },
   nextButtonText: { color: "#fff", fontWeight: "600", fontSize: 15 },
 });
