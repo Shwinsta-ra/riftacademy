@@ -2,7 +2,7 @@
 
 **Owner:** Ashwin Sathe (sole dev, Sathe Consulting LLC) · **Repo:** `github.com/shwinsta-ra/riftacademy` (private, GitHub Pro)
 **Hard deadline:** **July 31, 2026** (Vendetta set release) · **Launch posture:** web-only, free, LJJ-compliant
-**Last updated:** July 19, 2026 (evening) — final manual full reconciliation. Folds in: RiftRecall's overnight build-out (shipped in code via PRs #29/#32/#33, but never previously reflected in this doc — a real gap, not a stylistic gap), the three-copy sync model, the GitHub PAT security incident, the TickTick restructure, and PR #45 (Rune Glow)/#46 (onboarding) detail already present. **Starting tonight, this doc is no longer edited directly by feature/fix PRs — see Section 1a and `docs/updates/TEMPLATE.md`.**
+**Last updated:** July 20, 2026 (evening). Full reconciliation. Folds in: tutorial visual polish and the no-em-dash content rule (PR #52), three rounds of staging feedback (PRs #55/#58/#67), a tutorial timing fix plus first-launch welcome screen (PR #64), the ratified six-module architecture (PR #60), and the RiftCore package (PR #69), which shipped in code without a fragment, another real documentation gap caught here, not a stylistic one. Also resolves the Vendetta Prep vs. onboarding-tutorial tracking overlap. **This doc is no longer edited directly by feature/fix PRs — see Section 1a and `docs/updates/TEMPLATE.md`.**
 **Canonical file name:** `RiftAcademy_Project Management` — fixed name across GitHub, Project Knowledge, and Google Drive.
 **Status:** This is the single canonical project doc. If you're holding any other copy — a download from earlier today, a different thread's local merge — discard it.
 
@@ -14,24 +14,14 @@
 
 ## 0. Open this section first — what to do right now
 
-**Just shipped (today):**
-- Vendetta card-count reconciliation (161 → 141 of 166, with full reasoning) — PR #40.
-- Visual-direction "Rune Glow" pass (ambient glow, foil card art, Sparklet mascot) — PR #45, merged.
-- First-launch onboarding tutorial for RiftRecall — PR #46, open, clean, ready to merge pending an on-device native check (web fully verified).
+**Highest priority:** RiftIQ. Verify v1 puzzles, build the puzzle UI, add a homepage module for RiftIQ.
 
-**Active right now:**
-- RiftNotes rework — separate thread, in parallel.
-- Whichever new parallel threads get kicked off this evening to test the fragment-file process for the first time.
+**2nd priority:** RiftCoach. Begin the pre-rift plan.
 
-**Big features still open, priority order:**
-1. **Vendetta Prep highlight + 3-step guided tour** — distinct from the onboarding tutorial (#46); this is specifically the "filter to Vendetta → quiz" fast path for Discord-referred players ahead of Friday's pre-rifts. Still not started as its own piece — confirm with the RiftRecall thread whether #46's tutorial already covers this or whether it's still a separate task.
-2. **Puzzle content**: 3–5 strategy puzzles + 3–5 Vendetta-card puzzles, for app launch.
-3. **Opus strategy track** (parallel, doesn't block launch): the decision-tree task, the pen-and-paper game-state capture task, and the game-log/match-state schema (feeds both RiftIQ and RiftNotes) — these are one workstream, not three; see Section 10.
-
-**Waiting on Ashwin:**
-- Review `champion_epithet_review.csv` (94 champions, ~189 authored synthetic epithets).
-- Updated master card inventory upload (casing fixes, ban dates).
-- Confirm whether the onboarding tutorial (#46) needs on-device (iOS/Android) verification before merging, or whether web verification is sufficient to ship.
+**Unprioritized:**
+- Validate the 60 Vendetta distractor conversions plus 7 flagged cards (Ashwin).
+- Group B card-question follow-up (Ashwin + Claude).
+- Clean up the Master Card Inventory Function column for Vendetta cards (Ashwin).
 
 **Format note:** refresh this section every session; move completed items to Section 9's log rather than deleting them silently.
 
@@ -99,10 +89,10 @@
   - **Control-sheet pipeline:** `build_master_sheet.py`/`apply_master_sheet.py` — one XLSX matching Ashwin's exact format, blank = auto-generated question, filled = permanently pinned.
   - **UI:** 2×2 answer grid (1×3 for exactly 3 options), larger card, bottom-anchored controls.
   - **Home screen rebuild:** `RIFT_BRAND` gold wordmark convention across RiftAcademy/RiftRecall/RiftIQ; RiftIQ introduced as an umbrella (placeholder content); live review-count preview; "What's New" box; fixed LJJ footer.
-- **Visual-direction "Rune Glow" pass** (PR #45, merged): ambient screen glow, glowing primary buttons (`GlowButton`), holographic foil card-art frames (`QuizCardArt`), a `Sparklet` mascot that celebrates correct answers (respects reduce-motion). `RIFT_BRAND` gold widened to also cover the foil rim/trim + Sparklet cap only — nowhere else. No Reanimated/expo-blur in the project; glows use RN `shadow*`, foil/Sparklet use `react-native-svg`.
-- **First-launch onboarding tutorial** (PR #46, open): coach-mark style — highlighted ring + tip bubble walks through setting filters and starting a session using the real UI, advances on real taps. Content-agnostic engine (`tutorialContext.tsx`) separate from the swappable 4-step script (`tutorialSteps.ts`) — deliberately temporary per Ashwin, meant to be replaced by a broader tour later without an engine rewrite. Two real conflicts surfaced against the just-merged Rune Glow work and were resolved without touching `GlowButton` itself (wrapped in a `View` instead) — see Section 9 for full detail. Web fully verified; native (iOS/Android) unverified.
+- **Visual-direction "Rune Glow" pass** (PR #45, merged): ambient screen glow, glowing primary buttons (`GlowButton`), a `Sparklet` mascot that celebrates correct answers (respects reduce-motion). `RIFT_BRAND` gold widened to also cover the Sparklet cap only. No Reanimated/expo-blur in the project; glows use RN `shadow*`, Sparklet uses `react-native-svg`. The original holographic foil card-art frame (`QuizCardArt`) was dropped in favor of glow-behind only (PR #52); `FOIL` removed from `theme.ts`.
+- **First-launch onboarding tutorial** (PRs #46, #52, #55, #58, #64, #67, all merged): coach-mark style — highlighted ring + tip bubble walks through setting filters and starting a session using the real UI, advances on real taps, preceded by a one-time Welcome/alpha screen. Content-agnostic engine (`tutorialContext.tsx`) separate from the swappable 4-step script (`tutorialSteps.ts`) — deliberately temporary per Ashwin, meant to be replaced by a broader tour later without an engine rewrite. See Section 9 for the full run of staging-feedback fixes. Web fully verified; native (iOS/Android) still not explicitly confirmed.
 - **Match Tracker (core):** full live match dashboard.
-- **Feedback widget:** draggable bubble, screenshot/annotation, Discord webhook. (`REQUIRED` tag removal on the "What happened" field still pending — see Section 0/3.)
+- **Feedback widget:** draggable bubble, screenshot/annotation, Discord webhook. `REQUIRED` tag removed from the "What happened" field (PR #55).
 - **Opponent Deck Knowledge Filter**, **GitHub + Vercel pipeline**, **Claude Code + Cowork** (both authenticated and validated July 19).
 - Unified `AppModal` across 6 modals; platform-aware CSV export.
 
@@ -121,7 +111,7 @@
 |---|---|---|---|---|---|
 | **SHIPPED** |
 | Match Tracker (core) | Completed | Full live match dashboard | Shipped | — | — |
-| Feedback widget | Completed | In-app feedback form | Shipped | — | `REQUIRED` tag removal still pending |
+| Feedback widget | Completed | In-app feedback form | Shipped | — | `REQUIRED` tag removed from "What happened" (PR #55); both fields now single-line |
 | Opponent Deck Knowledge Filter | Completed | "Deck" filter for quiz drilling | Shipped Jul 16 | — | — |
 | GitHub integration | Completed | Repo + Vercel pipeline | Shipped Jul 16 | — | — |
 | Master Card Inventory + Vendetta prep | Completed | Full DB refresh, dedup/ban cleanup | Shipped | — | — |
@@ -131,21 +121,25 @@
 | RiftRecall — question-quality overhaul | Completed | Split cost modes, sane distractors, epithet-restricted name quiz | Shipped | Epithet CSV review pending | PR #29/#32/#33 — **previously undocumented here** |
 | RiftRecall — control-sheet pipeline | Completed | `build_master_sheet.py`/`apply_master_sheet.py` | Shipped | — | PR #29 — **previously undocumented here** |
 | Home screen rebuild | Completed | `RIFT_BRAND` convention, RiftIQ umbrella, What's New | Shipped | — | PR #33 — **previously undocumented here** |
-| Visual-direction "Rune Glow" pass | Completed | Ambient glow, foil art, Sparklet mascot | Shipped Jul 19 | — | PR #45 |
+| Visual-direction "Rune Glow" pass | Completed | Ambient glow, Sparklet mascot (foil-rim art later dropped, see notes) | Shipped Jul 19 | — | PR #45; foil-rim card treatment dropped for glow-behind only (PR #52), `FOIL` removed from `theme.ts` |
 | Claude Code + Cowork setup | Completed | Both authenticated and validated | Done Jul 19 | — | PAT found + revoked same day, non-load-bearing |
-| **IN REVIEW** |
-| First-launch onboarding tutorial | In review | 4-step coach-mark tour, real-tap advancement | PR #46 open, clean | Native on-device check | Deliberately temporary script; engine is reusable |
+| First-launch onboarding tutorial | Completed | 4-step coach-mark tour, real-tap advancement, plus a first-launch Welcome/alpha screen ahead of it | Shipped (PRs #46, #52, #55, #58, #64, #67) | None | Multiple staging-feedback rounds polished mask sizing, timing, and copy; native on-device check still not explicitly confirmed |
+| RiftCore package (M0) | Completed | Schema, forward rules kernel, effects, cards adapter (`src/lib/core/`); the shared kernel RiftEngine/RiftLab/RiftCoach/RiftIQ will import | Shipped Jul 20 | None | PR #69; shipped without a fragment, a real documentation gap caught at this reconciliation, not a stylistic one; added vitest as the project's first test runner; see docs/design/riftbound-module-architecture.md |
 | **ACTIVE THIS WEEK** |
-| Vendetta Prep highlight + guided tour | Not started | Distinct from #46 — confirm scope isn't already covered | This week, launch-blocking | Depends on #46's scope | See Section 0 |
-| Puzzle content (initial + Vendetta) | Not started | 3–5 strategy + 3–5 Vendetta puzzles | For app launch | None | — |
-| RiftNotes rework | In progress | Simpler, fast-game-usable coaching flow | This week | Shares schema w/ RiftIQ | Separate thread |
+| Puzzle content (initial + Vendetta) | Not started | 3–5 strategy + 3–5 Vendetta puzzles; verify v1 puzzles, build puzzle UI, add RiftIQ homepage module | For app launch | None | Highest priority per Section 0; see docs/design/riftbound-module-architecture.md |
 | Vendetta full-set repull | In progress | Bring VEN from 141 to full 166 | Ahead of next week's pre-rift | Riftcodex indexing pace | — |
 | New User Ingestion Flow | Not started | Onboarding survey, user segmentation | Before next invite push | Survey design | — |
 | **THIS MONTH (BEFORE JULY 31)** |
 | Deckbuilder v1 | Not started | Template deck, save personal version | Before Jul 31 | None | — |
-| Game-log / match-state schema | Not started | Shared snapshot schema, RiftIQ + RiftNotes | Needs Opus iteration | Dedicated RiftIQ thread | See Section 10 |
-| RiftIQ real module design | Not started | What goes in the umbrella beyond placeholders | This month | None | — |
+| Game-log / match-state schema | Not started | Shared snapshot schema, RiftIQ + RiftNotes | Needs further iteration | Dedicated RiftIQ/RiftEngine thread | See Section 10; see docs/design/riftbound-module-architecture.md |
+| RiftIQ real module design | Not started | What goes in the umbrella beyond placeholders | This month | None | See docs/design/riftbound-module-architecture.md |
 | **DEFERRED / UNSCHEDULED** |
+| RiftNotes (M1) | Deferred | Capture/transcription module; field-first, no near-term at-the-table capture build | Design-only until post-Vendetta | None | Formerly "RiftNotes rework"; must not pull from July-31 items (RiftRecall, RiftIQ Daily Puzzle); see docs/design/riftbound-module-architecture.md |
+| RiftEngine (M2) | Not started | Reconstruction/abduction (`inferEvents`), RiftCore kernel's inverse; stateless per-capture; owns the player/field fork | TBD, depends on RiftCore | Depends on RiftCore (M0, shipped) | Player data reaches RiftCoach only, never RiftLab, by construction; see docs/design/riftbound-module-architecture.md |
+| Non-Vendetta long-text-distractor conversion | Deferred | 228 cards identified (OGN 73, SFD 66, UNL 87, OGS 2), not yet converted | Whenever ready to expand | None | Same detector/generator as the 60 Vendetta conversions |
+| Discord integration via Cowork/TickTick | Deferred | — | Next week | None | — |
+| Cowork-scheduled recurring TickTick cleanup | Deferred | — | Next week | None | — |
+| Riftbound ROI thread task follow-up | Deferred | — | Next week | None | — |
 | Sync-down automation + Jest suite | Deferred | Both written, unmerged | Paused | None | — |
 | Price-history storage | Deferred | Own store, non-destructive ROI import | Wait for Supabase | — | — |
 | Keyword badge styling | Unresolved | — | — | Contingent on Riot API | — |
@@ -243,6 +237,9 @@ git archive --format=zip -o ~/Downloads/riftacademy-upload.zip HEAD
 - `RIFT_BRAND` gold `#E8B44A` = the word "Rift" in every product name, plus (as of Rune Glow) the foil rim/trim + Sparklet cap only. No other new use without explicit sign-off.
 - Visual direction reflects Riftbound card-art aesthetic (cartoony, colorful, intense) — the Rune Glow treatment is the first delivery of this.
 
+**Content style**
+- No em dashes in app-facing text (prompts, labels, tutorial copy, alerts, changelog entries) or in any project document (specs, this doc, fragments, commit messages), effective July 19, 2026.
+
 **Culture**
 - Explicit correction culture: apply corrections immediately, carry forward.
 - Feature deferral is explicit and intentional.
@@ -286,6 +283,34 @@ git archive --format=zip -o ~/Downloads/riftacademy-upload.zip HEAD
 
 *Customer-facing lines are copyable into changelogs. Team-facing lines are internal context.*
 
+**July 20 (late evening, RiftCore package)**
+- Customer-facing: No visible change.
+- Team-facing: Shipped `src/lib/core/` (PR #69), a pure dependency-free package with the shared schema, forward rules kernel, effects, and a cards adapter, the kernel every other Riftbound module (RiftEngine/RiftLab/RiftCoach/RiftIQ) will import per `RiftCore_Spec.md` v1. Added vitest as the repo's first test runner. Shipped without a fragment, a real documentation gap caught at this reconciliation (same failure mode as RiftRecall's build-out on July 19), not a stylistic one.
+
+**July 20 (evening, staging feedback round 4, PR #67)**
+- Customer-facing: Fixed a real answer-leak bug: "What's this card's Power cost?" questions were covering the wrong part of the card, leaving the actual pips visible. The might mask now matches the cost mask's size. Two tutorial lines tightened.
+- Team-facing: `powerCost` now gets its own dynamically-sized mask region (`getMaskRegions` computes the capsule's height per card's own `power` value) instead of sharing the `energyCost` region. `might.default` resized to match `cost.default` exactly; `might.Gear` deliberately left larger (equipment "+N" text runs too wide to safely shrink).
+
+**July 20 (afternoon, tutorial timing + welcome screen, PR #64)**
+- Customer-facing: The onboarding tutorial's guide box no longer flashes in the wrong spot before snapping into place. First-time users now see a one-time welcome screen before Home, introducing RiftAcademy, flagging the alpha build, and previewing the tutorial.
+- Team-facing: `TutorialCallout` now holds the bubble hidden for 500ms after every step change so it only ever renders already correctly positioned. New `WelcomeScreen.tsx` gated by its own `hasSeenWelcome` flag, independent of `hasSeenTutorial`. `RiftWord` extracted out of `HomeScreen.tsx` into `src/components/RiftWord.tsx` for reuse.
+
+**July 20 (midday, six-module architecture ratified, PR #60)**
+- Customer-facing: No app change.
+- Team-facing: Final six-module topology locked (RiftCore M0, RiftNotes M1, RiftEngine M2, RiftLab M3, RiftCoach M4, RiftIQ M5, plus RiftRecall M6). Canonical doc `docs/design/riftbound-module-architecture.md`, resolved decision record `docs/design/riftbound-reconciliation-resolved.md`, diagram `docs/design/riftbound-module-architecture.svg`. "RiftPlay" retired in favor of RiftLab (no prior reference to it existed in this doc). Player data reaches RiftCoach only, never RiftLab, by construction (RiftEngine's stateless per-capture reconstruction).
+
+**July 20 (midday, staging feedback round 3, PR #58)**
+- Customer-facing: The might/power badge mask is smaller and tighter, the correct-answer mascot celebration lasts about a second longer, the end-of-session screen is back to one centered block, and study batches now shuffle instead of repeating the same order.
+- Team-facing: Might/power circle re-measured against multiple card templates (a basic Unit's digit renders much smaller than a Champion's) and resized to the worst-case digit plus margin. Session-complete screen reverted to a single centered column. `buildBatch()` in `leitner.ts` now shuffles each pool before its stable sort, fixing a bug where every never-seen card tied and always resolved back to array order.
+
+**July 20 (morning, staging feedback round 2, PR #55)**
+- Customer-facing: The tutorial bubble no longer covers the "Set Filters" button, the quiz question sits closer to the card, question titles no longer strand a single word on their own line, the might/power badge mask is now circular, fill-in-the-blank questions read in normal style, the feedback form is quicker to fill out, and the end-of-session screen has a cleaner layout.
+- Team-facing: Fixed a tutorial tooltip race between `SettingsScreen`'s auto-scroll and the tutorial's re-measure effect. Added `preventOrphanWord()` in `textDisplay.ts`. Extended `isCircularMask` to cover `might`. Split all 66 hand-authored `fillBlank` entries in `quizQuestions.json` into separate `prompt`/`caption` fields. `FeedbackSheet.tsx`'s "What happened?" field is no longer required; both text inputs are now single-line.
+
+**July 19 (late evening, tutorial visual polish, PR #52)**
+- Customer-facing: The correct-answer mascot no longer overlaps quiz cards, the card art dropped its gold foil trim for a softer ambient glow, the legal footer scrolls normally again, and the boxes hiding quiz answers are now shaped to the actual card element they cover.
+- Team-facing: `TutorialCallout` no longer draws a separately-measured ring; each screen now applies a conditional border directly to its own target element. Dropped the foil-rim card treatment in favor of glow-behind only; `FOIL` removed from `theme.ts`. Fixed a portrait-only aspect-ratio assumption in `QuizScreen` that was letterboxing Battlefield cards. Quiz answer-mask zones re-measured against real card pixels per card type; fixed a real answer-leak bug where a semi-transparent might mask let the value show through. New standing rule adopted: no em dashes in app-facing text or project documents, see Section 6.
+
 **July 19 (evening — fragment system adopted, full reconciliation)**
 - Customer-facing: —
 - Team-facing: This is the last manual full reconciliation of this doc under normal conditions. Adopted a fragment-file system (`docs/updates/pending/`, template at `docs/updates/TEMPLATE.md`) to replace direct doc edits in feature/fix PRs — root-caused to two failure modes today: a shared-file conflict (PR #44) and a silent no-update (RiftRecall's build-out shipping in code across PRs #29/#32/#33 without ever reaching this doc). Folded that entire build-out into Sections 2/3 tonight since it was real, already-shipped work that had simply never been documented here. Fixed a stale cross-reference (Section 5 pointed to "Section 7" for the log; corrected to Section 9). Full PR history reviewed #1–46: only #44 (doc reconcile, now superseded/closeable) and #46 (onboarding, clean and ready) were open; everything else merged cleanly with a healthy linear `integration` history.
@@ -321,10 +346,9 @@ git archive --format=zip -o ~/Downloads/riftacademy-upload.zip HEAD
 
 ## 10. Open decisions / questions
 
-1. Game-log / match-state snapshot schema — needs Opus iteration in a dedicated RiftIQ thread, bundled with the decision-tree and pen-and-paper capture-format tasks (one workstream, see Section 0).
+1. Game-log / match-state snapshot schema — needs further iteration in a dedicated RiftIQ/RiftEngine thread, bundled with the decision-tree and pen-and-paper capture-format tasks (one workstream, see Section 0). Architecture resolved: RiftCore (M0, shipped) owns the schema envelope and forward rules kernel; RiftEngine (M2, not started) will own reconstruction/abduction from raw captures. See docs/design/riftbound-module-architecture.md and docs/design/riftbound-reconciliation-resolved.md.
 2. New-user ingestion survey: exact questions/segments not yet decided.
 3. Donate link platform + Riot LJJ policy check — unresolved, not urgent.
 4. Keyword badge styling — undecided, low priority.
 5. RiftIQ real module design — what goes in it beyond placeholders.
-6. Whether the onboarding tutorial (#46) already covers the "Vendetta Prep guided tour" scope from Section 0, or whether that's still a distinct piece of work — needs a decision before more effort goes into either.
-7. Stale GitHub branch cleanup — process documented, not yet executed.
+6. Stale GitHub branch cleanup — process documented, not yet executed.
