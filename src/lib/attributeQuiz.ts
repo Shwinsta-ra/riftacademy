@@ -27,15 +27,33 @@ export type MaskRegion = {
 
 type RawRegion = { top: number; height: number; left: number; width: number };
 
+// Power cost is printed as a stack of 1-4 small pip icons (in a rounded
+// capsule) below the energy badge, not a single fixed-size box like every
+// other mode; its height has to grow with the card's own power value.
+// left/width/top are fixed (measured off the capsule's real position);
+// heightIntercept/heightPerPip fit a line to the capsule's real height at
+// several pip counts (measured directly off real card art: 1 pip and 3
+// pips for the default/circular-energy-badge layout, 1 pip and 2 pips for
+// Gear's diamond-energy-badge layout, which sits at a different left
+// offset and has a different vertical pip spacing). Both intercepts
+// already include a few extra px of safety margin below the true measured
+// edge, not a tight fit, so a stray extra pixel of art can't peek out.
+type PowerRegion = {
+  top: number;
+  left: number;
+  width: number;
+  heightIntercept: number;
+  heightPerPip: number;
+};
+
 // Positions live in src/data/quizPositions.json rather than hardcoded here —
 // see that file's comments, or the README, for the editable table format.
 // "keyword"/"speed"/"trigger" all share the "text" mode's positions unless
 // the config file defines them separately (they're visually the same box).
-// energyCost/powerCost both mask the same on-card region (the single cost
-// box in the top-left) — they're two testable stats, not two visual spots.
-const POSITION_MODE_KEY: Record<AttributeMode, string> = {
+// powerCost is handled separately below (see PowerRegion above) since its
+// region isn't a fixed rect like every other mode's.
+const POSITION_MODE_KEY: Record<Exclude<AttributeMode, "powerCost">, string> = {
   energyCost: "cost",
-  powerCost: "cost",
   might: "might",
   name: "name",
   keyword: "text",
@@ -54,18 +72,41 @@ function toMaskRegions(raw: RawRegion[]): MaskRegion[] {
   }));
 }
 
+// Tokens (colorless portrait cards) are their own visual layout even though
+// their canonical `type` is Unit or Gear, so check for a Token-specific
+// config first, since that's a more specific match than the base type
+// whenever one's defined. Driven by the sheet's own isToken flag
+// (authoritative), not the original API's supertype.
+function lookupKeyFor<T>(config: Record<string, T>, card: Card): T | undefined {
+  const tokenKey = card.isToken ? config["Token"] : undefined;
+  return tokenKey ?? config[card.type] ?? config["default"];
+}
+
+// quizPositions.json holds two different shapes: every other mode is a flat
+// table of fixed rects (RawRegion[] per card type), while "power" is a
+// per-type formula (PowerRegion) since its height depends on the card's own
+// power value (see PowerRegion above). Typed together here so both casts of
+// the same imported JSON module agree with each other.
+type PositionsConfig = Record<string, Record<string, RawRegion[]>> & {
+  power?: Record<string, PowerRegion>;
+};
+const POSITIONS = positionsConfig as unknown as PositionsConfig;
+
 export function getMaskRegions(mode: AttributeMode, card: Card): MaskRegion[] {
+  if (mode === "powerCost") {
+    const config = POSITIONS.power;
+    const region = config && lookupKeyFor(config, card);
+    if (!region || card.power === null) return [];
+    const height = region.heightIntercept + region.heightPerPip * card.power;
+    return toMaskRegions([
+      { top: region.top, left: region.left, width: region.width, height },
+    ]);
+  }
+
   const modeKey = POSITION_MODE_KEY[mode];
-  const modeConfig = (positionsConfig as Record<string, Record<string, RawRegion[]>>)[modeKey];
+  const modeConfig = POSITIONS[modeKey];
   if (!modeConfig) return [];
-  const positionType = card.type;
-  // Tokens (colorless portrait cards) are their own visual layout even
-  // though their canonical `type` is Unit or Gear — check for a
-  // Token-specific config first, since that's a more specific match than
-  // the base type whenever one's defined. Driven by the sheet's own
-  // isToken flag (authoritative), not the original API's supertype.
-  const lookupKey = card.isToken && modeConfig["Token"] ? "Token" : positionType;
-  const raw = modeConfig[lookupKey] ?? modeConfig["default"] ?? [];
+  const raw = lookupKeyFor(modeConfig, card) ?? [];
   return toMaskRegions(raw);
 }
 
