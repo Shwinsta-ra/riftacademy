@@ -1365,7 +1365,7 @@
     "isSignature": false,
     "isToken": false,
     "abilityTrigger": null,
-    "subtype": null
+    "subtype": "Combat Trick"
   },
   {
     "id": "ogn-044-298",
@@ -2921,7 +2921,7 @@
     "isSignature": false,
     "isToken": false,
     "abilityTrigger": null,
-    "subtype": "Combat Trick"
+    "subtype": "Reaction spell"
   },
   {
     "id": "ogn-094-298",
@@ -3644,7 +3644,7 @@
     "isSignature": false,
     "isToken": false,
     "abilityTrigger": "When",
-    "subtype": null
+    "subtype": "Unit"
   },
   {
     "id": "ogn-117-298",
@@ -7541,7 +7541,7 @@
     "domain": [
       "Order"
     ],
-    "text": "[Legion] - When you play me, ready me.\nOther friendly units have +1 Might here.",
+    "text": "(1)(Y), [Tap]: Kill a friendly unit. Look at the top 5 cards of your Main Deck. You may banish a unit from among them that has Might up to 1 more than the killed unit and play it, ignoring its cost. Then recycle the rest.",
     "flavour": "They will regret opposing me.",
     "setId": "OGN",
     "setLabel": "Origins",
@@ -7561,7 +7561,7 @@
     "shorthand": "Dar, Ex",
     "isSignature": false,
     "isToken": false,
-    "abilityTrigger": "Here",
+    "abilityTrigger": "May",
     "subtype": "Champion"
   },
   {
@@ -7734,8 +7734,7 @@
     "supertype": null,
     "rarity": "Rare",
     "domain": [
-      "Fury",
-      "Body"
+      "Fury/Body"
     ],
     "text": "When you play a [Mighty] unit, you may exhaust me to channel 1 rune exhausted.",
     "flavour": null,
@@ -8064,8 +8063,7 @@
     "supertype": null,
     "rarity": "Rare",
     "domain": [
-      "Calm",
-      "Chaos"
+      "Calm/Chaos"
     ],
     "text": "(2), [Tap]: Move a friendly unit to or from its base.",
     "flavour": null,
@@ -8129,8 +8127,7 @@
     "supertype": null,
     "rarity": "Rare",
     "domain": [
-      "Calm",
-      "Order"
+      "Calm/Order"
     ],
     "text": "When you stun one or more enemy units, buff a friendly unit.",
     "flavour": null,
@@ -12394,7 +12391,7 @@
     "isSignature": false,
     "isToken": false,
     "abilityTrigger": null,
-    "subtype": "Removal"
+    "subtype": "Action spell"
   },
   {
     "id": "sfd-081-221",
@@ -16388,8 +16385,7 @@
     "supertype": null,
     "rarity": "Rare",
     "domain": [
-      "Body",
-      "Order"
+      "Body/Order"
     ],
     "text": "When one of your units becomes [Mighty], you may exhaust me to channel 1 rune exhausted.",
     "flavour": null,
@@ -22804,8 +22800,7 @@
     "supertype": null,
     "rarity": "Rare",
     "domain": [
-      "Fury",
-      "Chaos"
+      "Fury/Chaos"
     ],
     "text": "(1), [Tap]: Return a friendly unit at a battlefield to its owner's hand. Play a Gold gear token exhausted.",
     "flavour": null,
@@ -22835,8 +22830,7 @@
     "supertype": "Signature",
     "rarity": "Epic",
     "domain": [
-      "Fury",
-      "Chaos"
+      "Fury/Chaos"
     ],
     "text": "Kill a unit at a battlefield. Then, if it had 3 Might or less, you may play this from your trash for (Any).",
     "flavour": "Keep a man down long enough, and the gutter becomes his kingdom.\"\r\n \r\n- Pyke",
@@ -22856,7 +22850,7 @@
     "isSignature": true,
     "isToken": false,
     "abilityTrigger": "May",
-    "subtype": null
+    "subtype": "Action spell"
   },
   {
     "id": "unl-187-219",
@@ -22869,8 +22863,7 @@
     "supertype": null,
     "rarity": "Rare",
     "domain": [
-      "Fury",
-      "Order"
+      "Fury/Order"
     ],
     "text": "When you conquer, if you assigned 3 or more excess damage, you may exhaust me to ready a unit.",
     "flavour": null,
@@ -23001,8 +22994,7 @@
     "supertype": null,
     "rarity": "Rare",
     "domain": [
-      "Calm",
-      "Body"
+      "Calm/Body"
     ],
     "text": "[Level 6] Your units have +1 Might.\n[Level 11] Your units enter ready.",
     "flavour": null,
@@ -23266,8 +23258,7 @@
     "supertype": null,
     "rarity": "Rare",
     "domain": [
-      "Mind",
-      "Order"
+      "Mind/Order"
     ],
     "text": "When you conquer or hold, you may discard 1 and exhaust me to play a ready Reflection unit token there. It becomes a copy of another unit there. Give it [Temporary].",
     "flavour": null,
@@ -23335,8 +23326,7 @@
     "supertype": null,
     "rarity": "Rare",
     "domain": [
-      "Body",
-      "Chaos"
+      "Body/Chaos"
     ],
     "text": "When you win a combat, gain 1 XP.\nSpend 1 XP, [Tap]: [Buff] a unit.\nSpend 2 XP, [Tap]: Move an exhausted friendly unit from a battlefield to its base.",
     "flavour": null,
@@ -23402,8 +23392,7 @@
     "supertype": null,
     "rarity": "Rare",
     "domain": [
-      "Body",
-      "Order"
+      "Body/Order"
     ],
     "text": "When you hold, gain 1 XP.\nSpend 3 XP, [Tap]: Draw 1.",
     "flavour": null,
@@ -25846,7 +25835,9 @@
       "Equipment"
     ],
     "recycleCost": [],
-    "keywords": [],
+    "keywords": [
+      "Equip"
+    ],
     "speed": "Normal",
     "shorthand": "JC",
     "isSignature": false,
@@ -26813,7 +26804,7 @@
     "domain": [
       "Chaos"
     ],
-    "text": "When I conquer, play a 0 Might Shadow Clone unit token to your base. [Action] (1)(P): Move me and a Shadow Clone you control to each other's locations.",
+    "text": "When I conquer, play a 0 Might Shadow Clone unit token to your base. [Action (1)(P)]: Move me and a Shadow Clone you control to each other's locations.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -27638,7 +27629,7 @@
       "Fury",
       "Body"
     ],
-    "text": "[Reaction] (Any)(Any), [Tap]: [Add (2)]. Spend this Energy only to play units or activated abilities of units.",
+    "text": "[Reaction (Any)(Any)], [Tap]: [Add (2)]. Spend this Energy only to play units or activated abilities of units.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -27779,7 +27770,7 @@
     ],
     "recycleCost": [],
     "keywords": [],
-    "speed": null,
+    "speed": "Normal",
     "shorthand": "Nasu, COT",
     "isSignature": false,
     "isToken": false,
@@ -27912,7 +27903,7 @@
     "keywords": [
       "Empower"
     ],
-    "speed": null,
+    "speed": "Normal",
     "shorthand": "Jayc, DOT",
     "isSignature": false,
     "isToken": false,
@@ -27977,7 +27968,7 @@
     ],
     "recycleCost": [],
     "keywords": [],
-    "speed": null,
+    "speed": "Normal",
     "shorthand": "Mel, SR",
     "isSignature": false,
     "isToken": false,
@@ -28042,7 +28033,7 @@
     ],
     "recycleCost": [],
     "keywords": [],
-    "speed": null,
+    "speed": "Normal",
     "shorthand": "Ambe, MOW",
     "isSignature": false,
     "isToken": false,
@@ -28162,7 +28153,9 @@
     "type": "Battlefield",
     "supertype": "Basic",
     "rarity": "Uncommon",
-    "domain": [],
+    "domain": [
+      "Colorless"
+    ],
     "text": "Any player may pay AnyAny as an additional cost to play a Dragon. If they do, they play it to this battlefield.",
     "flavour": null,
     "setId": "VEN",
@@ -28188,7 +28181,9 @@
     "type": "Battlefield",
     "supertype": "Basic",
     "rarity": "Uncommon",
-    "domain": [],
+    "domain": [
+      "Colorless"
+    ],
     "text": "Players ignore [Deflect] while paying for spells and abilities choosing something here.",
     "flavour": null,
     "setId": "VEN",
@@ -28216,7 +28211,9 @@
     "type": "Battlefield",
     "supertype": "Basic",
     "rarity": "Uncommon",
-    "domain": [],
+    "domain": [
+      "Colorless"
+    ],
     "text": "Units here with [Tank] have +1 Might.",
     "flavour": null,
     "setId": "VEN",
@@ -28244,7 +28241,9 @@
     "type": "Battlefield",
     "supertype": "Basic",
     "rarity": "Uncommon",
-    "domain": [],
+    "domain": [
+      "Colorless"
+    ],
     "text": "During showdowns here, cards with [Reaction] cost (Any) more to play.",
     "flavour": null,
     "setId": "VEN",
@@ -28270,7 +28269,9 @@
     "type": "Battlefield",
     "supertype": "Basic",
     "rarity": "Uncommon",
-    "domain": [],
+    "domain": [
+      "Colorless"
+    ],
     "text": "While you control this battlefield, the first friendly gear activated ability played each turn costs (1) less.",
     "flavour": null,
     "setId": "VEN",
@@ -28296,7 +28297,9 @@
     "type": "Battlefield",
     "supertype": "Basic",
     "rarity": "Uncommon",
-    "domain": [],
+    "domain": [
+      "Colorless"
+    ],
     "text": "When you conquer here, if you control 4 or fewer runes, you may pay 1 Energy to draw 1.",
     "flavour": null,
     "setId": "VEN",
@@ -28322,7 +28325,9 @@
     "type": "Battlefield",
     "supertype": "Basic",
     "rarity": "Uncommon",
-    "domain": [],
+    "domain": [
+      "Colorless"
+    ],
     "text": "[Empower] costs of your units here cost (1) or (Any) less.",
     "flavour": null,
     "setId": "VEN",
@@ -28350,7 +28355,9 @@
     "type": "Battlefield",
     "supertype": "Basic",
     "rarity": "Uncommon",
-    "domain": [],
+    "domain": [
+      "Colorless"
+    ],
     "text": "Each spell that chooses one or more units here that are friendly to it costs Any less.",
     "flavour": null,
     "setId": "VEN",
@@ -28361,6 +28368,791 @@
     "keywords": [],
     "speed": null,
     "shorthand": "ST",
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "Here",
+    "subtype": null
+  },
+  {
+    "id": "ven-001-166",
+    "name": "Baccai Sandspinner",
+    "collectorNumber": 1,
+    "energy": 6,
+    "might": 6,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Common",
+    "domain": [
+      "Fury"
+    ],
+    "text": "[Empower (5)]. This ability costs (3) less if you control 4 or fewer runes. (Pay the cost: Empower me. Use only if not Empowered.)[Empowered][>] I have [Deflect] and [Assault 2]. (Opponents must pay (Any) to choose me with a spell or ability. +2 Might while I'm an attacker.)",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Shurima"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Empower",
+      "Deflect",
+      "Assault"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "While",
+    "subtype": null
+  },
+  {
+    "id": "ven-005-166",
+    "name": "Forsaken Baccai",
+    "collectorNumber": 5,
+    "energy": 2,
+    "might": 2,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Common",
+    "domain": [
+      "Fury"
+    ],
+    "text": "If you control fewer runes than an opponent at the start of your Beginning Phase, give me +1 Might this turn.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Shurima"
+    ],
+    "recycleCost": [],
+    "keywords": [],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": null,
+    "subtype": null
+  },
+  {
+    "id": "ven-014-166",
+    "name": "Shadow Fiend",
+    "collectorNumber": 14,
+    "energy": 2,
+    "might": 2,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Uncommon",
+    "domain": [
+      "Fury"
+    ],
+    "text": "[Empower (2)(R)] ((2)(R): Empower me. Use only if not Empowered.)[Empowered][>] I have [Assault 3]. (+3 Might while I'm an attacker.)",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Ionia"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Empower",
+      "Assault"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "While",
+    "subtype": null
+  },
+  {
+    "id": "ven-020-166",
+    "name": "Twilight Reveler",
+    "collectorNumber": 20,
+    "energy": 3,
+    "might": 3,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Rare",
+    "domain": [
+      "Fury"
+    ],
+    "text": "When I attack, ready another friendly unit.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Ionia"
+    ],
+    "recycleCost": [],
+    "keywords": [],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "When",
+    "subtype": null
+  },
+  {
+    "id": "ven-030-166",
+    "name": "Serene Ascetic",
+    "collectorNumber": 30,
+    "energy": 3,
+    "might": 3,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Common",
+    "domain": [
+      "Calm"
+    ],
+    "text": "[Empower (3)] ((3): Empower me. Use only if not Empowered.)[Empowered][>] I have [Deflect] and [Shield 3]. (Opponents must pay (Any) to choose me with a spell or ability.+3 Might while I'm a defender.)",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Ionia"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Empower",
+      "Deflect",
+      "Shield"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "While",
+    "subtype": null
+  },
+  {
+    "id": "ven-032-166",
+    "name": "Frostcoat Mother",
+    "collectorNumber": 32,
+    "energy": 3,
+    "might": 3,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Uncommon",
+    "domain": [
+      "Calm"
+    ],
+    "text": "[Empower (12)]. This ability costs (1) less for each rune you control. (Pay the cost: Empower me. Use only if not Empowered.)[Empowered][>] I have +3 Might.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Dog;Freljord"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Empower"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": null,
+    "subtype": null
+  },
+  {
+    "id": "ven-050-166",
+    "name": "Grumpy Rockbear",
+    "collectorNumber": 50,
+    "energy": 4,
+    "might": 4,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Common",
+    "domain": [
+      "Mind"
+    ],
+    "text": "[Empower (12)]. This ability costs (1) less for each rune you control. (Pay the cost: Empower me. Use only if not Empowered.)[Empowered][>] I have [Deflect] and [Shield 3]. (Opponents must pay (Any) to choose me with a spell or ability.+3 Might while I'm a defender.)",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Shurima"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Empower",
+      "Deflect",
+      "Shield"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "While",
+    "subtype": null
+  },
+  {
+    "id": "ven-057-166",
+    "name": "Covert Informant",
+    "collectorNumber": 57,
+    "energy": 3,
+    "might": 4,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Uncommon",
+    "domain": [
+      "Mind"
+    ],
+    "text": "[Empower (3)] ((3): Empower me. Use only if not Empowered.)[Empowered][>] When I move, draw 1.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Noxus"
+    ],
+    "recycleCost": [
+      "1"
+    ],
+    "keywords": [
+      "Empower"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "When",
+    "subtype": null
+  },
+  {
+    "id": "ven-059-166",
+    "name": "Shock Blast",
+    "collectorNumber": 59,
+    "energy": 3,
+    "might": null,
+    "power": null,
+    "type": "Spell",
+    "supertype": "Basic",
+    "rarity": "Uncommon",
+    "domain": [
+      "Mind"
+    ],
+    "text": "[Action] (Play on your turn or in showdowns.)This costs (2) less if you control something that's [Empowered].Deal 4 to a unit at a battlefield.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [],
+    "recycleCost": [
+      "1"
+    ],
+    "keywords": [],
+    "speed": "Action",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": null,
+    "subtype": null
+  },
+  {
+    "id": "ven-065-166",
+    "name": "Swain, Visionary",
+    "collectorNumber": 65,
+    "energy": 6,
+    "might": 6,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Rare",
+    "domain": [
+      "Mind"
+    ],
+    "text": "[Vision] (When you play me, look at the top card of your Main Deck. You may recycle it.)When I conquer, if you've played a non-token unit, a non-token gear, and a spell this turn, you score 1 point.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Noxus;Swain;Demon"
+    ],
+    "recycleCost": [
+      "1"
+    ],
+    "keywords": [
+      "Vision"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "May",
+    "subtype": null
+  },
+  {
+    "id": "ven-072-166",
+    "name": "Guttural Roar",
+    "collectorNumber": 72,
+    "energy": 2,
+    "might": null,
+    "power": null,
+    "type": "Spell",
+    "supertype": "Basic",
+    "rarity": "Common",
+    "domain": [
+      "Body"
+    ],
+    "text": "[Action] (Play on your turn or in showdowns.)Give a unit +2 Might this turn. If it's [Empowered], give it +4 Might this turn instead.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [],
+    "recycleCost": [],
+    "keywords": [],
+    "speed": "Action",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": null,
+    "subtype": null
+  },
+  {
+    "id": "ven-074-166",
+    "name": "Legion Marauder",
+    "collectorNumber": 74,
+    "energy": 2,
+    "might": 2,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Common",
+    "domain": [
+      "Body"
+    ],
+    "text": "[Empower] \u2014 (1) or (O) (Pay either cost: Empower me. Use only if not Empowered.)[Empowered][>] I have +1 Might.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Trifarian;Noxus"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Empower"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": null,
+    "subtype": null
+  },
+  {
+    "id": "ven-075-166",
+    "name": "Platewyrm Egg",
+    "collectorNumber": 75,
+    "energy": 3,
+    "might": null,
+    "power": null,
+    "type": "Gear",
+    "supertype": "Basic",
+    "rarity": "Common",
+    "domain": [
+      "Body"
+    ],
+    "text": "This enters exhausted.[Empower] \u2014 (1), [Tap] (Pay the cost: Empower this. Use only if not Empowered.)[Reaction][>] [Tap]: [Add (1)]. If this is [Empowered], [Add (2)] instead.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [],
+    "recycleCost": [],
+    "keywords": [
+      "Empower"
+    ],
+    "speed": "Reaction",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": null,
+    "subtype": null
+  },
+  {
+    "id": "ven-076-166",
+    "name": "Repair Specialist",
+    "collectorNumber": 76,
+    "energy": 3,
+    "might": 3,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Common",
+    "domain": [
+      "Body"
+    ],
+    "text": "I have [Assault] equal to the number of gear you control. (+1 Might while I'm an attacker for each instance of Assault.)",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Zaun"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Assault"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "While",
+    "subtype": null
+  },
+  {
+    "id": "ven-078-166",
+    "name": "Baccai Witherclaw",
+    "collectorNumber": 78,
+    "energy": 4,
+    "might": 4,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Uncommon",
+    "domain": [
+      "Body"
+    ],
+    "text": "[Empower (1)(Any)(Any)] ((1)(Any)(Any): Empower me. Use only if not Empowered.)[Empowered][>] I have +2 Might.[Empowered][>][>>][Deathknell][>] Channel 2 runes exhausted. (When I die while Empowered, get the effect.)",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Shurima"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Empower",
+      "Deathknell"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "When",
+    "subtype": null
+  },
+  {
+    "id": "ven-085-166",
+    "name": "Decree of Strength",
+    "collectorNumber": 85,
+    "energy": 1,
+    "might": null,
+    "power": null,
+    "type": "Spell",
+    "supertype": "Basic",
+    "rarity": "Rare",
+    "domain": [
+      "Body"
+    ],
+    "text": "Choose an opponent. They reveal their hand and you choose a Mind ((B)) card from it. They recycle that card.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [],
+    "recycleCost": [],
+    "keywords": [],
+    "speed": null,
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": null,
+    "subtype": null
+  },
+  {
+    "id": "ven-094-166",
+    "name": "Mask Mother",
+    "collectorNumber": 94,
+    "energy": 3,
+    "might": 3,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Uncommon",
+    "domain": [
+      "Chaos"
+    ],
+    "text": "When you discard me, you may pay (1) to give a friendly unit +2 Might this turn.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Spirit;Shadow Isles"
+    ],
+    "recycleCost": [],
+    "keywords": [],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "May",
+    "subtype": null
+  },
+  {
+    "id": "ven-099-166",
+    "name": "Tornado Warrior",
+    "collectorNumber": 99,
+    "energy": 3,
+    "might": 3,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Common",
+    "domain": [
+      "Chaos"
+    ],
+    "text": "[Hidden] (Hide now for (Any) to react with later for (0).)When you play me from face down, you may empower something here. Disempower it at end of turn.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Yordle;Bandle City"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Hidden"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "Turn End",
+    "subtype": null
+  },
+  {
+    "id": "ven-111-166",
+    "name": "Minah Swiftfoot",
+    "collectorNumber": 111,
+    "energy": 6,
+    "might": 6,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Rare",
+    "domain": [
+      "Chaos"
+    ],
+    "text": "When I move to a battlefield, choose one \u2014Each player discards 1.Each player draws 1.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Ionia"
+    ],
+    "recycleCost": [
+      "1"
+    ],
+    "keywords": [],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "When",
+    "subtype": null
+  },
+  {
+    "id": "ven-122-166",
+    "name": "Solari Sunhawk",
+    "collectorNumber": 122,
+    "energy": 3,
+    "might": 3,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Common",
+    "domain": [
+      "Order"
+    ],
+    "text": "[Empower (2)] ((2): Empower me. Use only if not Empowered.)[Empowered][>] I have +1 Might and [Deflect 2]. (Opponents must pay (Any)(Any) to choose me with a spell or ability.)",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Bird;Mount Targon"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Empower",
+      "Deflect"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": null,
+    "subtype": null
+  },
+  {
+    "id": "ven-123-166",
+    "name": "Soulspinner",
+    "collectorNumber": 123,
+    "energy": 3,
+    "might": 3,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Common",
+    "domain": [
+      "Order"
+    ],
+    "text": "[Ambush] (You may play me as a [Reaction] to a battlefield where you have units.)",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Shadow Isles;Spider"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Ambush"
+    ],
+    "speed": "Reaction",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "May",
+    "subtype": null
+  },
+  {
+    "id": "ven-130-166",
+    "name": "Aurok General",
+    "collectorNumber": 130,
+    "energy": 5,
+    "might": 5,
+    "power": null,
+    "type": "Unit",
+    "supertype": "Basic",
+    "rarity": "Rare",
+    "domain": [
+      "Order"
+    ],
+    "text": "[Empower (3)(Y)] ((3)(Y): Empower me. Use only if not Empowered.)[Empowered][>] Your units that are [Empowered] have +2 Might (including me).",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [
+      "Trifarian;Noxus"
+    ],
+    "recycleCost": [],
+    "keywords": [
+      "Empower"
+    ],
+    "speed": "Normal",
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": null,
+    "subtype": null
+  },
+  {
+    "id": "ven-131-166",
+    "name": "Decree of Unity",
+    "collectorNumber": 131,
+    "energy": 2,
+    "might": null,
+    "power": null,
+    "type": "Spell",
+    "supertype": "Basic",
+    "rarity": "Rare",
+    "domain": [
+      "Order"
+    ],
+    "text": "Kill an enemy Chaos ((P)) unit or gear.",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [],
+    "recycleCost": [
+      "1"
+    ],
+    "keywords": [],
+    "speed": null,
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": null,
+    "subtype": null
+  },
+  {
+    "id": "ven-165-166",
+    "name": "Shadow Temple",
+    "collectorNumber": 165,
+    "energy": null,
+    "might": null,
+    "power": null,
+    "type": "Battlefield",
+    "supertype": "Basic",
+    "rarity": "Uncommon",
+    "domain": [
+      "Colorless"
+    ],
+    "text": "When you hold here, [Burn 3]. (Put the top 3 cards of your Main Deck into your trash.)",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [],
+    "recycleCost": [],
+    "keywords": [],
+    "speed": null,
+    "shorthand": null,
+    "isSignature": false,
+    "isToken": false,
+    "abilityTrigger": "Hold",
+    "subtype": null
+  },
+  {
+    "id": "ven-166-166",
+    "name": "Threshold of the Gray",
+    "collectorNumber": 166,
+    "energy": null,
+    "might": null,
+    "power": null,
+    "type": "Battlefield",
+    "supertype": "Basic",
+    "rarity": "Uncommon",
+    "domain": [
+      "Colorless"
+    ],
+    "text": "When combat starts here, the attacker and defender each [Add (1)].",
+    "flavour": null,
+    "setId": "VEN",
+    "setLabel": "Vendetta",
+    "imageUrl": null,
+    "tags": [],
+    "recycleCost": [],
+    "keywords": [],
+    "speed": null,
+    "shorthand": null,
     "isSignature": false,
     "isToken": false,
     "abilityTrigger": "Here",
