@@ -516,9 +516,9 @@ export default function QuizScreen({ navigation }: Props) {
           const isRow3 = optionCount === 3;
           const containerStyle = isRow3 ? styles.optionsRow3 : styles.optionsGrid;
           const itemStyle = isRow3 ? styles.optionThird : styles.optionHalf;
-          // Long-answer text mode still needs more lines per cell until
-          // Group B shortens the answers; others stay tight.
-          const maxLines = question.mode === "text" ? 6 : 3;
+          // Long-answer text/bracketSwap modes still need more lines per
+          // cell until Group B shortens the answers; others stay tight.
+          const maxLines = question.mode === "text" || question.mode === "bracketSwap" ? 6 : 3;
 
           return (
             <View style={containerStyle}>
