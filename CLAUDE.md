@@ -32,6 +32,9 @@ All four branches require a PR + passing status checks (`typecheck`, `check-sour
 - **When you flag your own command as security-sensitive** (e.g. a shell-injection-shaped pattern warning), stop and explain the exact command and why the pattern appears before running it — don't just proceed once approved without having actually explained it. Prefer writing a scratchpad script file over a complex inline one-liner, especially for anything Ashwin might be approving from his phone.
 - **Before starting a large or ambiguous task, check `docs/updates/pending/` for today's fragments from other threads** — this is your cheapest source of "what else changed today that might affect me."
 
+## File placement — always Code's job, never Ashwin's
+Whenever a file needs to land somewhere in this repo (new CSVs, generated data, config, source exports, etc.), Claude Code places it. Locate/verify the correct destination yourself (check existing pipeline scripts, existing file locations, naming conventions) and move/place the file there as part of the task. Never ask Ashwin to run mv/cp/placement commands in his terminal — if a file needs to get from his Downloads folder into the repo, that's your job to do directly, not an instruction to hand back to him. Ashwin's goal is zero terminal use.
+
 ## Git identity
 Global git email must be `ashwin.sathe86@gmail.com` (matches GitHub `shwinsta-ra`) or Vercel blocks the deploy with "commit author email is not valid."
 
