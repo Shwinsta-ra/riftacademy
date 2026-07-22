@@ -56,7 +56,7 @@
     ],
     "Battlefield": [
       {
-        "top": 54.0,
+        "top": 64.0,
         "height": 10.0,
         "left": 2.5,
         "width": 95.0
@@ -90,14 +90,14 @@
     ],
     "Battlefield": [
       {
-        "top": 30.0,
-        "height": 7.5,
+        "top": 10.0,
+        "height": 11.0,
         "left": 2.5,
         "width": 95.0
       },
       {
-        "top": 64.0,
-        "height": 7.5,
+        "top": 79.0,
+        "height": 11.0,
         "left": 2.5,
         "width": 95.0
       }
