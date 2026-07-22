@@ -45,6 +45,15 @@ Net effect: pure instructions are one file; anything involving data or permanent
 ## Git identity
 Global git email must be `ashwin.sathe86@gmail.com` (matches GitHub `shwinsta-ra`) or Vercel blocks the deploy with "commit author email is not valid."
 
+## Git identity conflict with platform Stop-hook (known, resolved)
+This environment's platform-level hooks (SessionStart: session-start-git-identity.sh, Stop: stop-hook-git-check.sh, both root-owned at /root/.claude/launcher-settings.json, outside this repo) reset git identity to noreply@anthropic.com and nag if commits don't match it, so commits show GitHub's "Verified" badge via CCR's registered signing key.
+
+This repo's own rule overrides that: commit identity must be ashwin.sathe86@gmail.com, because Vercel rejects noreply@anthropic.com as an invalid deploy author ("commit author email is not valid"). This is deliberate - every real commit in this repo's history already shows "Unverified" for this exact reason. That's expected, not a bug.
+
+When the Stop hook nags about this: it's a known false positive for this repo specifically. Do not edit the root-owned hook/config files to silence it - they're outside this repo, may not persist across container reprovisioning, and affect every other repo/session, not just this one. Just push using ashwin.sathe86@gmail.com as already configured. Do not ask for confirmation again once this specific nag appears - proceed.
+
+Untested, worth investigating later, do not rely on without verifying: git allows author and committer email to differ. If Vercel's check is specifically on the author field, setting committer=noreply@anthropic.com (satisfies CCR's signing/Verified-badge check) while author=ashwin.sathe86@gmail.com (satisfies Vercel) might get both a Verified badge and a working deploy. Test on a throwaway branch with an actual Vercel deploy before relying on this for real work.
+
 ## GitHub CLI auth
 `gh auth login` uses OAuth device flow (token prefix `gho_`), not a Personal Access Token (`ghp_`). This is what all push/PR/branch operations use. No PAT is needed for anything Claude Code does — if one exists for another purpose, it's a separate, revocable credential, not a dependency.
 
