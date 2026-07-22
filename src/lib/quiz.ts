@@ -1,6 +1,7 @@
 import { Card, QuizFilters } from "./types";
 import cardsData from "../data/cards.json";
 import { getCardsForDeck } from "./deckPool";
+import { DOMAIN_COLORS } from "./theme";
 
 const ALL_CARDS = cardsData as Card[];
 
@@ -31,6 +32,17 @@ const TYPE_FILTER_ORDER = ["Unit", "Champion", "Gear", "Equipment", "Spell", "Ba
 function matchesTypeFilter(card: Card, selected: string[]): boolean {
   if (!selected.length) return true;
   return selected.some((id) => TYPE_FILTER_PREDICATES[id]?.(card) ?? false);
+}
+
+// A card's `domain` array holds each PRINTED domain string as its own
+// element, but a dual-domain card's element is the combined form (e.g.
+// "Fury/Chaos"), not two separate single-domain entries -- so a selected
+// base domain has to match as a COMPONENT of that string, not the whole
+// string. Splitting on "/" turns ["Fury/Chaos"] into ["Fury", "Chaos"] for
+// comparison purposes only; the card's own data is left untouched.
+function cardMatchesDomainFilter(card: Card, selectedDomains: string[]): boolean {
+  const components = card.domain.flatMap((d) => d.split("/"));
+  return components.some((d) => selectedDomains.includes(d));
 }
 
 export function getAllCards(): Card[] {
@@ -72,11 +84,7 @@ export function getFilteredCards(filters: QuizFilters): Card[] {
     if (c.isToken) return false;
     if (filters.sets.length && !filters.sets.includes(c.setId)) return false;
     if (!matchesTypeFilter(c, filters.types)) return false;
-    if (
-      filters.domains.length &&
-      !c.domain.some((d) => filters.domains.includes(d))
-    )
-      return false;
+    if (filters.domains.length && !cardMatchesDomainFilter(c, filters.domains)) return false;
     if (filters.speeds.length && !(c.speed && filters.speeds.includes(c.speed)))
       return false;
     return true;
@@ -89,10 +97,15 @@ export function getAvailableSets(): { id: string; label: string }[] {
   return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
 }
 
+// A fixed, curated list rather than derived from card.domain directly --
+// same reasoning as getAvailableTypes() below. A dual-domain card's domain
+// array holds the combined printed string (e.g. "Fury/Chaos") as its own
+// value, so scanning ALL_CARDS for distinct domain values would surface
+// every combo (15+) instead of the 6 base domains plus Colorless the filter
+// UI is meant to offer. Sourced from DOMAIN_COLORS (theme.ts) rather than a
+// second hardcoded list, so the two can't drift out of sync.
 export function getAvailableDomains(): string[] {
-  const set = new Set<string>();
-  for (const c of ALL_CARDS) c.domain.forEach((d) => set.add(d));
-  return Array.from(set).sort();
+  return Object.keys(DOMAIN_COLORS);
 }
 
 // A fixed, curated list rather than derived from card.type directly —

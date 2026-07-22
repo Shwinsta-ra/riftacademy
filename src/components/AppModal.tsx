@@ -16,6 +16,11 @@ type Props = {
   ctaDisabled?: boolean;
   onCta?: () => void;
   scrollable?: boolean; // default true
+  // Swaps the CTA to a solid destructive red (theme.incorrect) instead of
+  // the default accent fill — for confirmations that actually destroy data
+  // (e.g. resetting progress), where the accent's normal "go ahead, this is
+  // routine" blurple would undersell what tapping it does.
+  ctaDestructive?: boolean;
 };
 
 /**
@@ -36,6 +41,7 @@ export default function AppModal({
   ctaDisabled,
   onCta,
   scrollable = true,
+  ctaDestructive,
 }: Props) {
   const Body = scrollable ? ScrollView : View;
   return (
@@ -62,7 +68,7 @@ export default function AppModal({
             <Pressable
               onPress={onCta}
               disabled={ctaDisabled}
-              style={[styles.cta, ctaDisabled && styles.ctaOff]}
+              style={[styles.cta, ctaDestructive && styles.ctaDestructive, ctaDisabled && styles.ctaOff]}
             >
               <Text style={styles.ctaText}>{ctaLabel}</Text>
             </Pressable>
@@ -125,5 +131,6 @@ const styles = StyleSheet.create({
   // same button" whether it's active or waiting on a selection, exactly
   // like FeedbackSheet's sendOff.
   ctaOff: { opacity: 0.35 },
+  ctaDestructive: { backgroundColor: theme.incorrect },
   ctaText: { color: "#ffffff", fontWeight: "700", fontSize: 15 },
 });
