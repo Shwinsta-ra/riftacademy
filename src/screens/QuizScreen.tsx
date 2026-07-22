@@ -145,6 +145,14 @@ export default function QuizScreen({ navigation }: Props) {
       setQueue([]);
       setNothingAvailable(false);
       setBatchGateUntil(gateUntil);
+      // nowTick's initial value is captured once at mount, before this
+      // await chain resolves -- without this, the first countdown render
+      // uses that stale mount-time value instead of the actual current
+      // time, showing a briefly-too-large mm:ss that only self-corrects
+      // once the countdown's own 1s interval fires. Stamping it to the
+      // same `now` used to compute the gate keeps the very first render
+      // accurate.
+      setNowTick(now);
       shownThisSessionRef.current = new Set();
       setSessionCorrect(0);
       setSessionTotal(0);
@@ -430,9 +438,11 @@ export default function QuizScreen({ navigation }: Props) {
   // Cost pips are printed as circular badges on the real card art; the
   // might badge is actually a rounded rectangle (or, on equipment, a "+N"
   // flag icon), and power cost is a stack of 1-4 small pip icons, not a
-  // fixed circle at all (see getMaskRegions' powerCost branch). Per
-  // Ashwin's follow-up feedback, might's and power's masks still use this
-  // same circular styling rather than mirroring their real shapes --
+  // fixed circle at all -- its quizPositions.json region is a fixed rect
+  // sized to the worst case (4 pips) plus the energy-cost circle above it,
+  // rather than scaling per-card, so the box itself can't leak the real
+  // value. Per Ashwin's follow-up feedback, might's and power's masks still
+  // use this same circular styling rather than mirroring their real shapes --
   // consistency of the mask style reads better than exactly tracing what's
   // underneath it (and for power's tall, narrow pip-stack region, a full
   // borderRadius renders it as a rounded capsule, which happens to match
