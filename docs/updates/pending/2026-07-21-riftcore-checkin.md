@@ -1,5 +1,7 @@
 ## Thread/topic: riftcore-checkin
 
+> **Correction added 2026-07-22 (winning-line-taxonomy-audit thread):** the "Schema-reconciliation status" line below is **false**. Checked directly against `src/lib/core/schema.ts`/`rulesKernel.ts` on `integration` (and every other branch) on 2026-07-22: the older 3-value `WinningLine = "conquer" | "hold" | "direct"` reconstruction was still live — the canonical taxonomy had never actually merged anywhere. Left the original claim below unedited (don't delete the record of the error); the actual reconciliation was built from scratch on `claude/audit-winning-point-values-45ra7y`, off `integration`, per Ashwin's go-ahead in that thread.
+
 **Sections likely affected:** 2 (Shipped features), 3 (tracker), 9 (log)
 
 **Team-facing:**

@@ -157,6 +157,11 @@ export type PlayerState = {
   base: UnitState[];
   runes: RuneState[];
   points: number;
+  // Snapshot of `points` taken at this player's most recent Beginning Phase
+  // (see applyEvent's "phaseChange" case). The battlefield-based WinningLines
+  // key off this, not live `points` — a mid-turn conquer must not retroactively
+  // satisfy a threshold that was only reached after the turn started.
+  pointsAtTurnStart: number;
 };
 
 export type Battlefield = {
@@ -183,16 +188,27 @@ export type GameState = {
   turn: number;
   activePlayer: PlayerId;
   pendingDirectPoints: Record<PlayerId, number>;
+  // Points required to win. Format-dependent (1v1 vs 2v2) — callers set this
+  // per match; never assume a fixed value here.
+  pointsToWin: number;
 };
 
 // ---------------------------------------------------------------------------
 // Winning lines / scoring
 // ---------------------------------------------------------------------------
 
-// The winning lines that end a match (RiftCore_Spec §5): the two
-// point-threshold lines (a hold that scores at 7, or a conquer-based line
-// that scores at 6 — either by taking both battlefields or by holding one
-// and conquering the other), plus three non-battlefield win paths.
+// The winning lines that end a match (RiftCore_Spec §5). Names reflect the
+// standard 8-point (1v1) match — "AtSeven"/"AtSix" name the points a player
+// holds at the *start* of the winning turn (state.players[p].pointsAtTurnStart),
+// not the winning total itself, and scale with pointsToWin (e.g. a 2v2 match
+// at pointsToWin=11 checks pointsAtTurnStart against 10/9, not 7/6):
+//   - holdAtSeven: pointsAtTurnStart === pointsToWin - 1, holding >=1 BF
+//   - conquerBothAtSix: pointsAtTurnStart === pointsToWin - 2, conquering
+//     both BFs this turn (the two conquer points need not land simultaneously
+//     — see canScoreWinningPoint's comment on what this check can and can't see)
+//   - holdOneConquerOneAtSix: pointsAtTurnStart === pointsToWin - 2, holding
+//     one BF and conquering the other
+// plus three non-battlefield win paths that bypass the point race entirely.
 export type WinningLine =
   | "holdAtSeven"
   | "conquerBothAtSix"
@@ -204,15 +220,17 @@ export type WinningLine =
 // The source of a single scored point (distinct from WinningLine — a
 // WinningLine is the match-ending pattern; a PointSource is what caused one
 // point along the way).
-export type PointSource = {
-  line: "conquer" | "holdIntoBeginning" | "cardEffect" | "deckDepletion" | "altWin";
-  battlefieldId?: string;
-  amount: number;
-};
+export type PointSource = "conquer" | "holdIntoBeginning" | "cardEffect" | "deckDepletion" | "altWin";
 
 export type ScoreEvent = {
   player: PlayerId;
+  amount: number;
   source: PointSource;
+  isWinningPoint: boolean;
+  // Which battlefield this point came from. Present iff source is "conquer"
+  // or "holdIntoBeginning" — cardEffect/deckDepletion/altWin points aren't
+  // tied to a battlefield.
+  battlefieldId?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -221,6 +239,11 @@ export type ScoreEvent = {
 // ---------------------------------------------------------------------------
 
 export type ZoneRef = { zone: ZoneKind; battlefieldId?: string; player: PlayerId };
+
+// Only "beginning" currently drives kernel logic (applyEvent snapshots
+// pointsAtTurnStart on it) — the rest are named for a conventional turn
+// structure but aren't modeled/consumed anywhere yet.
+export type TurnPhase = "beginning" | "main" | "combat" | "end";
 
 export type GameEvent =
   | { type: "cardPlayed"; player: PlayerId; cardInstanceId: string }
@@ -237,7 +260,8 @@ export type GameEvent =
   | { type: "runeExhausted"; instanceId: string }
   | { type: "runeRecycled"; instanceId: string }
   | { type: "spellCountered"; chainItemId: string }
-  | { type: "pointScored"; player: PlayerId; source: PointSource };
+  | ({ type: "pointScored" } & ScoreEvent)
+  | { type: "phaseChange"; player: PlayerId; phase: TurnPhase };
 
 // ---------------------------------------------------------------------------
 // E1 envelope (deferred, optional, unpopulated) — §2 deltas

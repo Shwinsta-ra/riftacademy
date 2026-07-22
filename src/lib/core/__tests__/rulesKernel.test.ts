@@ -120,22 +120,34 @@ describe("canAfford", () => {
 });
 
 describe("canScoreWinningPoint", () => {
-  it("holdAtSeven: uncontested presence at a battlefield when the resulting point reaches 7", () => {
+  it("holdAtSeven: uncontested presence at a battlefield when pointsAtTurnStart === pointsToWin - 1 (7 at the default 8)", () => {
     const bf = makeBattlefield({ units: [makeUnit({ might: 2, controller: "A" })] });
     const state = makeState({
       battlefields: [bf],
-      players: { A: emptyPlayerState("A", { points: 6 }), B: emptyPlayerState("B") },
+      players: { A: emptyPlayerState("A", { pointsAtTurnStart: 7 }), B: emptyPlayerState("B") },
     });
     expect(canScoreWinningPoint(state, "A")).toEqual(["holdAtSeven"]);
   });
 
-  it("no line yet when an eligible hold wouldn't reach the 7-point threshold", () => {
+  it("no line yet when an eligible hold's pointsAtTurnStart is below the threshold", () => {
     const bf = makeBattlefield({ units: [makeUnit({ might: 2, controller: "A" })] });
-    const state = makeState({ battlefields: [bf] }); // points default to 0
+    const state = makeState({ battlefields: [bf] }); // pointsAtTurnStart defaults to 0
     expect(canScoreWinningPoint(state, "A")).toEqual([]);
   });
 
-  it("conquerBothAtSix: both battlefields Might-won when the resulting points reach 6", () => {
+  it("does not fire holdAtSeven off live points — only a mid-turn conquer already taken this turn doesn't count", () => {
+    // pointsAtTurnStart is still 6 (the Beginning Phase snapshot); points has
+    // since risen to 7 via a conquer taken mid-turn. holdAtSeven must key off
+    // the snapshot, not live points, or this would incorrectly fire.
+    const bf = makeBattlefield({ units: [makeUnit({ might: 2, controller: "A" })] });
+    const state = makeState({
+      battlefields: [bf],
+      players: { A: emptyPlayerState("A", { points: 7, pointsAtTurnStart: 6 }), B: emptyPlayerState("B") },
+    });
+    expect(canScoreWinningPoint(state, "A")).toEqual([]);
+  });
+
+  it("conquerBothAtSix: both battlefields Might-won when pointsAtTurnStart === pointsToWin - 2 (6 at the default 8)", () => {
     const bfA = makeBattlefield({
       units: [makeUnit({ might: 5, controller: "A" }), makeUnit({ might: 2, controller: "B" })],
     });
@@ -144,7 +156,7 @@ describe("canScoreWinningPoint", () => {
     });
     const state = makeState({
       battlefields: [bfA, bfB],
-      players: { A: emptyPlayerState("A", { points: 4 }), B: emptyPlayerState("B") },
+      players: { A: emptyPlayerState("A", { pointsAtTurnStart: 6 }), B: emptyPlayerState("B") },
     });
     expect(canScoreWinningPoint(state, "A")).toEqual(["conquerBothAtSix"]);
     expect(canScoreWinningPoint(state, "B")).toEqual([]);
@@ -157,14 +169,51 @@ describe("canScoreWinningPoint", () => {
     });
     const state = makeState({
       battlefields: [held, conquered],
-      players: { A: emptyPlayerState("A", { points: 4 }), B: emptyPlayerState("B") },
+      players: { A: emptyPlayerState("A", { pointsAtTurnStart: 6 }), B: emptyPlayerState("B") },
     });
     expect(canScoreWinningPoint(state, "A")).toEqual(["holdOneConquerOneAtSix"]);
+  });
+
+  it("scales with a non-default pointsToWin (2v2, 11) instead of a hardcoded 7/6", () => {
+    const bf = makeBattlefield({ units: [makeUnit({ might: 2, controller: "A" })] });
+    const state = makeState({
+      battlefields: [bf],
+      pointsToWin: 11,
+      players: { A: emptyPlayerState("A", { pointsAtTurnStart: 10 }), B: emptyPlayerState("B") },
+    });
+    expect(canScoreWinningPoint(state, "A")).toEqual(["holdAtSeven"]);
+
+    // The same pointsAtTurnStart that would win at the default pointsToWin=8
+    // must NOT win at pointsToWin=11 — proves the check isn't hardcoded to 7.
+    const notYetState = makeState({
+      battlefields: [bf],
+      pointsToWin: 11,
+      players: { A: emptyPlayerState("A", { pointsAtTurnStart: 7 }), B: emptyPlayerState("B") },
+    });
+    expect(canScoreWinningPoint(notYetState, "A")).toEqual([]);
   });
 
   it("cardEffect: a pending direct point award bypasses battlefields entirely", () => {
     const state = makeState({ pendingDirectPoints: { A: 1, B: 0 } });
     expect(canScoreWinningPoint(state, "A")).toEqual(["cardEffect"]);
+  });
+});
+
+describe("applyEvent: phaseChange", () => {
+  it("snapshots points into pointsAtTurnStart on entering the Beginning Phase", () => {
+    const state = makeState({
+      players: { A: emptyPlayerState("A", { points: 5, pointsAtTurnStart: 2 }), B: emptyPlayerState("B") },
+    });
+    const next = applyEvent(state, { type: "phaseChange", player: "A", phase: "beginning" });
+    expect(next.players.A.pointsAtTurnStart).toBe(5);
+  });
+
+  it("leaves pointsAtTurnStart untouched on other phases", () => {
+    const state = makeState({
+      players: { A: emptyPlayerState("A", { points: 5, pointsAtTurnStart: 2 }), B: emptyPlayerState("B") },
+    });
+    const next = applyEvent(state, { type: "phaseChange", player: "A", phase: "main" });
+    expect(next.players.A.pointsAtTurnStart).toBe(2);
   });
 });
 
@@ -182,7 +231,7 @@ describe("applyEvent fold round-trip", () => {
       { type: "cardDrawn", player: "A", count: 1 },
       { type: "damageDealt", targetInstanceId: "unitX", amount: 5 },
       { type: "unitKilled", targetInstanceId: "unitX" },
-      { type: "pointScored", player: "A", source: { line: "cardEffect", amount: 1 } },
+      { type: "pointScored", player: "A", amount: 1, source: "cardEffect", isWinningPoint: false },
     ];
 
     const final = events.reduce(applyEvent, initial);
