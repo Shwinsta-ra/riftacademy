@@ -1,0 +1,4250 @@
+{
+  "artifact": "abilities",
+  "generatedBy": "scripts/compile_abilities.py",
+  "confidenceThreshold": 0.75,
+  "cardCount": 134,
+  "cards": [
+    {
+      "cardCode": "ogn-001-298",
+      "cardName": "Blazing Scorcher",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-001-298",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Accelerate"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-004-298",
+      "cardName": "Cleave",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-004-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 3,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-005-298",
+      "cardName": "Disintegrate",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-005-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 3,
+              "condition": "at-battlefield",
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": "if-previous-step-killed",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-009-298",
+      "cardName": "Hextech Ray",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-009-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 3,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-010-298",
+      "cardName": "Legion Rearguard",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-010-298",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Accelerate"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-013-298",
+      "cardName": "Pouty Poro",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-013-298",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Deflect"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-014-298",
+      "cardName": "Sky Splitter",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ogn-014-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 5,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-022-298",
+      "cardName": "Thermo Beam",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-022-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillGear",
+              "target": "any-gear",
+              "targetScope": "all",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-024-298",
+      "cardName": "Void Seeker",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-024-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 4,
+              "condition": "at-battlefield",
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-029-298",
+      "cardName": "Falling Star",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-029-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 3,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 3,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-043-298",
+      "cardName": "Charm",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-043-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Move",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-045-298",
+      "cardName": "Defy",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-045-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Counter",
+              "target": "spell",
+              "targetScope": "single",
+              "value": {
+                "maxCost": 4
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-046-298",
+      "cardName": "En Garde",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-046-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "thisTurn"
+              },
+              "condition": "if-solo-at-location",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-047-298",
+      "cardName": "Find Your Center",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ogn-047-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Channel",
+              "target": "own-runes",
+              "targetScope": "single",
+              "value": {
+                "count": 1,
+                "exhausted": true
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-050-298",
+      "cardName": "Rune Prison",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-050-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Stun",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-052-298",
+      "cardName": "Stalwart Poro",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-052-298",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Shield",
+                "value": 1
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-053-298",
+      "cardName": "Stand United",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-053-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "permanent"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "BuffAmplify",
+              "target": "own-unit",
+              "targetScope": "all",
+              "value": {
+                "amount": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-054-298",
+      "cardName": "Sunlit Guardian",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-054-298",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Shield",
+                "value": 1
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Tank"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-057-298",
+      "cardName": "Block",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-057-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Shield",
+                "value": 3,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Tank",
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-058-298",
+      "cardName": "Discipline",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-058-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 2,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-064-298",
+      "cardName": "Wind Wall",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-064-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Counter",
+              "target": "spell",
+              "targetScope": "single",
+              "value": {
+                "maxCost": null
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-083-298",
+      "cardName": "Consult the Past",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-083-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-085-298",
+      "cardName": "Falling Comet",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-085-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 6,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-086-298",
+      "cardName": "Jeweled Colossus",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-086-298",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Vision"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Shield",
+                "value": 1
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-093-298",
+      "cardName": "Smoke Screen",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-093-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "DebuffMight",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": -4,
+                "floor": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-095-298",
+      "cardName": "Stupefy",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-095-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "DebuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": -1,
+                "floor": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-096-298",
+      "cardName": "Watchful Sentry",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ogn-096-298",
+          "abilityIdx": 1,
+          "trigger": "Deathknell",
+          "timing": "None",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-104-298",
+      "cardName": "Retreat",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-104-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "ReturnToHand",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Channel",
+              "target": "own-runes",
+              "targetScope": "single",
+              "value": {
+                "count": 1,
+                "exhausted": true
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-108-298",
+      "cardName": "Convergent Mutation",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-108-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "SetMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "toSourceUnit": true,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-114-298",
+      "cardName": "Progress Day",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-114-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 4,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-128-298",
+      "cardName": "Challenge",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-128-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Fight",
+              "target": "own-unit+opponent-unit",
+              "targetScope": "pair",
+              "value": {
+                "mode": "exchange-might-as-damage"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-129-298",
+      "cardName": "Confront",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ogn-129-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-136-298",
+      "cardName": "Pit Rookie",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-136-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "permanent"
+              },
+              "condition": "another-friendly",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-144-298",
+      "cardName": "Spoils of War",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ogn-144-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-146-298",
+      "cardName": "Wallop",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-146-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": {
+            "alternative": {
+              "spendBuff": true,
+              "effect": "ignore-cost"
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Ready",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-154-298",
+      "cardName": "Primal Strength",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-154-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 7,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-156-298",
+      "cardName": "Sabotage",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-156-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Reveal",
+              "target": "opponent-hand",
+              "targetScope": "all",
+              "value": null,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "RecycleFromHand",
+              "target": "opponent-hand",
+              "targetScope": "single",
+              "value": {
+                "restriction": "non-unit"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-169-298",
+      "cardName": "Gust",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-169-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "ReturnToHand",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "maxMight": 3
+              },
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-171-298",
+      "cardName": "Mystic Poro",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-171-298",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Vision"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-172-298",
+      "cardName": "Rebuke",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-172-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "ReturnToHand",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-173-298",
+      "cardName": "Ride The Wind",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-173-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Move",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Ready",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-179-298",
+      "cardName": "Acceptable Losses",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-179-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillGear",
+              "target": "each-player-gear",
+              "targetScope": "one-each",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-187-298",
+      "cardName": "Whirlwind",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-187-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "ReturnToHand",
+              "target": "each-player-unit",
+              "targetScope": "one-each",
+              "value": null,
+              "condition": "starting-with-next-player",
+              "optional": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-206-298",
+      "cardName": "Back to Back",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-206-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "multi",
+              "value": {
+                "amount": 2,
+                "count": 2,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-207-298",
+      "cardName": "Call to Glory",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-207-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": {
+            "alternative": {
+              "spendBuff": true,
+              "effect": "ignore-cost"
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 3,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-209-298",
+      "cardName": "Cull the Weak",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-209-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillUnit",
+              "target": "each-player-unit",
+              "targetScope": "one-each",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-210-298",
+      "cardName": "Daring Poro",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-210-298",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 1
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-213-298",
+      "cardName": "Hidden Blade",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-213-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillUnit",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "at-battlefield",
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Draw",
+              "target": "killed-unit-controller",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-215-298",
+      "cardName": "Petty Officer",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-215-298",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 1
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-220-298",
+      "cardName": "Facebreaker",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-220-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Stun",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "same-battlefield",
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Stun",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "same-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-224-298",
+      "cardName": "Salvage",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ogn-224-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-229-298",
+      "cardName": "Vengeance",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-229-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillUnit",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-241-298",
+      "cardName": "Shen, Kinkou",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-241-298",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Shield",
+                "value": 2
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Tank"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-248-298",
+      "cardName": "Icathian Rain",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-248-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 3,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 4,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 5,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 6,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-252-298",
+      "cardName": "Super Mega Death Rocket!",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ogn-252-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 5,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-254-298",
+      "cardName": "Noxian Guillotine",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-254-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "RegisterDelayedKill",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "firesOn": "nextDamageTakenThisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "KillUnit",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "if-Legion-active",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-256-298",
+      "cardName": "Fox-Fire",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-256-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillUnit",
+              "target": "any-unit",
+              "targetScope": "multi",
+              "value": {
+                "maxTotalMight": 4
+              },
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-264-298",
+      "cardName": "Guerilla Warfare",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-264-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "ReturnFromTrash",
+              "target": "own-trash",
+              "targetScope": "multi",
+              "value": {
+                "maxCount": 2,
+                "restriction": "has-Hidden"
+              },
+              "condition": null,
+              "optional": true
+            },
+            {
+              "stepIdx": 2,
+              "function": "GrantCostIgnore",
+              "target": "own-hand",
+              "targetScope": "all",
+              "value": {
+                "restriction": "hide-actions",
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-266-298",
+      "cardName": "Siphon Power",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-266-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "all-at-battlefield",
+              "value": {
+                "amount": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "DebuffMight",
+              "target": "opponent-unit",
+              "targetScope": "all-at-battlefield",
+              "value": {
+                "amount": -1,
+                "floor": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-270-298",
+      "cardName": "Showstopper",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-270-298",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "permanent"
+              },
+              "condition": "in-own-base",
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "MoveToBattlefield",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-274-298",
+      "cardName": "Sprite (274) // Buff",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogn-274-298",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Temporary"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogs-003-024",
+      "cardName": "Incinerate",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogs-003-024",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogs-005-024",
+      "cardName": "Zephyr Sage",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogs-005-024",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Shield",
+                "value": 1
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogs-008-024",
+      "cardName": "Gentlemen's Duel",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogs-008-024",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 3,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Fight",
+              "target": "own-unit+opponent-unit",
+              "targetScope": "pair",
+              "value": {
+                "mode": "exchange-might-as-damage"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogs-011-024",
+      "cardName": "Flash",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogs-011-024",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Move",
+              "target": "own-unit",
+              "targetScope": "multi",
+              "value": {
+                "maxCount": 2,
+                "to": "base"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogs-022-024",
+      "cardName": "Final Spark",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ogs-022-024",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 8,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-002-221",
+      "cardName": "Armed Assailant",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-002-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Accelerate"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Weaponmaster"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-003-221",
+      "cardName": "Blood Rush",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-003-221",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": {
+            "repeat": {
+              "cost": "1",
+              "maxTimes": 1
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 2,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-008-221",
+      "cardName": "Sentinel Adept",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-008-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Weaponmaster"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-009-221",
+      "cardName": "Serrated Dirk",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-009-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 2
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-017-221",
+      "cardName": "Sudden Storm",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "sfd-017-221",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-022-221",
+      "cardName": "Long Sword",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-022-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Quick-Draw"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-033-221",
+      "cardName": "Doran's Shield",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-033-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Tank"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-034-221",
+      "cardName": "Feral Strength",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-034-221",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": {
+            "repeat": {
+              "cost": "2",
+              "maxTimes": 1
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 2,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-037-221",
+      "cardName": "Navori Scout",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-037-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Deflect"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-045-221",
+      "cardName": "Not So Fast",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-045-221",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Counter",
+              "target": "spell-or-ability",
+              "targetScope": "single",
+              "value": {
+                "restriction": "chooses-friendly-unit-or-gear"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-056-221",
+      "cardName": "Sterak's Gage",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-056-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Quick-Draw"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-064-221",
+      "cardName": "Cloth Armor",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-064-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Quick-Draw"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Shield",
+                "value": 2
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-066-221",
+      "cardName": "Frigid Touch",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-066-221",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": {
+            "repeat": {
+              "cost": "2",
+              "maxTimes": 1
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "DebuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": -2,
+                "floor": null,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-070-221",
+      "cardName": "Wages of Pain",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "sfd-070-221",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 3,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-087-221",
+      "cardName": "Premonition",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-087-221",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 3,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-092-221",
+      "cardName": "Combat Chef",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-092-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Weaponmaster"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-095-221",
+      "cardName": "Doran's Blade",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-095-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-097-221",
+      "cardName": "Punch First",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-097-221",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 5,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-099-221",
+      "cardName": "Veteran Poro",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-099-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Weaponmaster"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-102-221",
+      "cardName": "Hexdrinker",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-102-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Deflect"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-127-221",
+      "cardName": "Master Bingwen",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-127-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Weaponmaster"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-133-221",
+      "cardName": "Boots of Swiftness",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-133-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Ganking"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-139-221",
+      "cardName": "Edge of Night",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-139-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-151-221",
+      "cardName": "Bonds of Strength",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-151-221",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": {
+            "repeat": {
+              "cost": "2",
+              "maxTimes": 1
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "multi",
+              "value": {
+                "amount": 1,
+                "count": 2,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-156-221",
+      "cardName": "Laurent Duelist",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "sfd-156-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 2
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-161-221",
+      "cardName": "B.F. Sword",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-161-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-166-221",
+      "cardName": "Rally the Troops",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "sfd-166-221",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-186-221",
+      "cardName": "Spinning Axe",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-186-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Quick-Draw"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Temporary"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-190-221",
+      "cardName": "Forgefire Cape",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-190-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Unique"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-191-221",
+      "cardName": "Rabadon's Deathcrown",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "sfd-191-221",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Unique"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-002-219",
+      "cardName": "Inferna",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-002-219",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Ambush"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 2
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-006-219",
+      "cardName": "Sharkling",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-006-219",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Accelerate"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 4
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-007-219",
+      "cardName": "Smite",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "unl-007-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 3,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-009-219",
+      "cardName": "Upstage Comedy",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-009-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": {
+            "repeat": {
+              "cost": "2",
+              "maxTimes": 1
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Ready",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-010-219",
+      "cardName": "Vault Breaker",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-010-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 2,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Ganking",
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-014-219",
+      "cardName": "Monster Harpoon",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "unl-014-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-017-219",
+      "cardName": "Square Up",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "unl-017-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 4,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-020-219",
+      "cardName": "Dancing Grenade",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-020-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "ReplayFromChain",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "cost": "Any",
+                "bonusDamage": {
+                  "expr": "1 * timesThisSpellDealtDamageThisTurn"
+                }
+              },
+              "condition": "controller-may",
+              "optional": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-024-219",
+      "cardName": "Rengar, Unseen",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-024-219",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Accelerate"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 2
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Deflect"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 3
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Ganking"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-031-219",
+      "cardName": "Combat Experience",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "unl-031-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-036-219",
+      "cardName": "Mutated Mouser",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-036-219",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Shield",
+                "value": 2
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Tank"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-038-219",
+      "cardName": "Skyward Strike",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "unl-038-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Move",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-044-219",
+      "cardName": "Flurry of Feathers",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "unl-044-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Counter",
+              "target": "spell",
+              "targetScope": "single",
+              "value": {
+                "maxCost": null
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-061-219",
+      "cardName": "Downstage Dramatics",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-061-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": {
+            "repeat": {
+              "cost": "2",
+              "maxTimes": 1
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-063-219",
+      "cardName": "Eclipse",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-063-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "DebuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": -4,
+                "floor": null,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Predict",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-066-219",
+      "cardName": "Moonlight Affliction",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-066-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "DebuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": -10,
+                "floor": null,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-095-219",
+      "cardName": "Grim Resolve",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "unl-095-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 3,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-096-219",
+      "cardName": "Hunter's Machete",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "unl-096-219",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Hunt",
+                "value": 1
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-099-219",
+      "cardName": "Towering Combatant",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-099-219",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Shield",
+                "value": 2
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            },
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Tank"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-100-219",
+      "cardName": "Voracious Gromp",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-100-219",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Hunt",
+                "value": 3
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-131-219",
+      "cardName": "Abandon",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "unl-131-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Counter",
+              "target": "spell",
+              "targetScope": "single",
+              "value": {
+                "maxCost": null
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Predict",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-134-219",
+      "cardName": "Existential Dread",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-134-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": {
+            "repeat": {
+              "cost": "2",
+              "maxTimes": 1
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Stun",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "is-attacking",
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "ReturnToHand",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "if-already-stunned",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-139-219",
+      "cardName": "Bone Skewer",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-139-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Reveal",
+              "target": "opponent-hand",
+              "targetScope": "all",
+              "value": null,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "ForcePlay",
+              "target": "opponent-hand",
+              "targetScope": "single",
+              "value": {
+                "restriction": "unit",
+                "to": "chosen-battlefield",
+                "ignoreCosts": true
+              },
+              "condition": "you-may-choose",
+              "optional": true
+            },
+            {
+              "stepIdx": 3,
+              "function": "Stun",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "on-forced-play",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-173-219",
+      "cardName": "Sacrifice",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-173-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": {
+            "additional": {
+              "function": "KillUnit",
+              "target": "own-unit",
+              "restriction": "has-Mighty"
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Channel",
+              "target": "own-runes",
+              "targetScope": "single",
+              "value": {
+                "count": 1,
+                "exhausted": true
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-190-219",
+      "cardName": "Lilting Lullaby",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "unl-190-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Counter",
+              "target": "spell",
+              "targetScope": "single",
+              "value": {
+                "maxCost": null
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-198-219",
+      "cardName": "Moonfall",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "unl-198-219",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Move",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": {
+                "to": "chosen-battlefield",
+                "maxCount": 1
+              },
+              "condition": "battlefield-where-you-have-units",
+              "optional": true
+            },
+            {
+              "stepIdx": 2,
+              "function": "DebuffMight",
+              "target": "opponent-unit",
+              "targetScope": "all-at-battlefield",
+              "value": {
+                "amount": -2,
+                "floor": null,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-010-166",
+      "cardName": "Consuming Curse",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ven-010-166",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-011-166",
+      "cardName": "Pendulum Blade",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "ven-011-166",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-027-166",
+      "cardName": "Hand Hammer",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "ven-027-166",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-031-166",
+      "cardName": "Twilight Shroud",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ven-031-166",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-049-166",
+      "cardName": "Dredge Up",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ven-049-166",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-052-166",
+      "cardName": "Mesmerize",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ven-052-166",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "DebuffMight",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": -2,
+                "floor": null,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-056-166",
+      "cardName": "Clairvoyance",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ven-056-166",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-073-166",
+      "cardName": "Jagged Cutlass",
+      "confidence": 0.85,
+      "abilities": [
+        {
+          "cardCode": "ven-073-166",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Equip"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-081-166",
+      "cardName": "Onslaught",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ven-081-166",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 6,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-118-166",
+      "cardName": "Horns of the Dragon",
+      "confidence": 1.0,
+      "abilities": [
+        {
+          "cardCode": "ven-118-166",
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Tank"
+              },
+              "condition": null,
+              "optional": false,
+              "stepIdx": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-059-166",
+      "cardName": "Shock Blast",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ven-059-166",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 4,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ven-072-166",
+      "cardName": "Guttural Roar",
+      "confidence": 0.8,
+      "abilities": [
+        {
+          "cardCode": "ven-072-166",
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 2,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
