@@ -32,6 +32,16 @@ All four branches require a PR + passing status checks (`typecheck`, `check-sour
 - **When you flag your own command as security-sensitive** (e.g. a shell-injection-shaped pattern warning), stop and explain the exact command and why the pattern appears before running it — don't just proceed once approved without having actually explained it. Prefer writing a scratchpad script file over a complex inline one-liner, especially for anything Ashwin might be approving from his phone.
 - **Before starting a large or ambiguous task, check `docs/updates/pending/` for today's fragments from other threads** — this is your cheapest source of "what else changed today that might affect me."
 
+## File placement — always Code's job, never Ashwin's
+Whenever a file needs to land somewhere in this repo (new CSVs, generated data, config, source exports, etc.), Claude Code places it. Locate/verify the correct destination yourself (check existing pipeline scripts, existing file locations, naming conventions) and move/place the file there as part of the task. Never ask Ashwin to run mv/cp/placement commands in his terminal — if a file needs to get from his Downloads folder into the repo, that's your job to do directly, not an instruction to hand back to him. Ashwin's goal is zero terminal use.
+
+## Handoff file convention
+When Ashwin hands off a task from a chat thread to a Code session, the default is a single markdown instruction file - if there's nothing else to preserve, that one file IS the instruction, drop-in ready, no separate blurb needed.
+Two cases keep instructions and content in separate files, never merged:
+- Raw data files (CSV, JSON) that Code parses or consumes programmatically. Embedding prose instructions inside these breaks the format (a CSV can't have an instructional header row; JSON can't have prepended prose). When this applies, the instruction file always names the exact filename of the data file to attach alongside it, so nothing is ambiguous about what goes together.
+- Permanent content meant to be committed as-is (design docs, specs, fragments, playbooks). Baking transient handoff instructions into a file that's supposed to be the clean final artifact either requires remembering to strip it before it's truly final, or leaves throwaway text sitting permanently in the repo. These also stay separate, with the instruction file naming the content file to attach alongside it.
+Net effect: pure instructions are one file; anything involving data or permanent content is two files handed over together in the same message, never one file trying to be both.
+
 ## Git identity
 Global git email must be `ashwin.sathe86@gmail.com` (matches GitHub `shwinsta-ra`) or Vercel blocks the deploy with "commit author email is not valid."
 
