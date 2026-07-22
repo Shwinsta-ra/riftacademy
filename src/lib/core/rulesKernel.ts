@@ -212,23 +212,56 @@ function totalDefensiveMight(units: UnitState[]): number {
   return units.reduce((sum, u) => sum + Math.max(0, trueMight(u, "defender")), 0);
 }
 
+// PROVISIONAL: the point thresholds below (7 for a hold-sourced win, 6 for a
+// conquer-sourced win) and the "exactly 2 battlefields" gate on the mixed
+// lines are a best-effort reading of the WinningLine names, not a ruling
+// Ashwin has confirmed — see docs/riftiq/RiftIQ_Data_Asks_for_Inventory_and_
+// QuestionSheet.md B1 items 3-4 ("holdAtSeven timing", "point race"), still
+// open [CHECK]s. GameState also has no phase field yet, so this can't gate
+// holdAtSeven on "only at YOUR Beginning Phase" per item 3 — it just checks
+// whether an uncontested hold is available. Revisit once those are ruled on.
+const HOLD_WIN_THRESHOLD = 7;
+const CONQUER_WIN_THRESHOLD = 6;
+
+// deckDepletion and altWin have no corresponding GameState field yet (no
+// opponent-deck-empty flag, no alt-win-condition flag), so this function can
+// never emit them today — they exist on WinningLine for completeness only.
 export function canScoreWinningPoint(state: GameState, player: PlayerId): WinningLine[] {
   const lines = new Set<WinningLine>();
   const opponent = opponentOf(player);
+  const points = state.players[player].points;
 
+  const holdEligible: Battlefield[] = [];
+  const conquerEligible: Battlefield[] = [];
   for (const bf of state.battlefields) {
     const mine = unitsPresent(bf, player);
     const theirs = unitsPresent(bf, opponent);
     if (mine.length === 0) continue;
     if (theirs.length === 0) {
-      lines.add("hold");
+      holdEligible.push(bf);
     } else if (totalDefensiveMight(mine) > totalDefensiveMight(theirs)) {
-      lines.add("conquer");
+      conquerEligible.push(bf);
+    }
+  }
+
+  if (holdEligible.length > 0 && points + 1 >= HOLD_WIN_THRESHOLD) {
+    lines.add("holdAtSeven");
+  }
+
+  if (state.battlefields.length === 2) {
+    if (conquerEligible.length === 2 && points + 2 >= CONQUER_WIN_THRESHOLD) {
+      lines.add("conquerBothAtSix");
+    } else if (
+      holdEligible.length === 1 &&
+      conquerEligible.length === 1 &&
+      points + 2 >= CONQUER_WIN_THRESHOLD
+    ) {
+      lines.add("holdOneConquerOneAtSix");
     }
   }
 
   if ((state.pendingDirectPoints[player] ?? 0) > 0) {
-    lines.add("direct");
+    lines.add("cardEffect");
   }
 
   return Array.from(lines);

@@ -120,24 +120,51 @@ describe("canAfford", () => {
 });
 
 describe("canScoreWinningPoint", () => {
-  it("hold: uncontested presence at a battlefield", () => {
+  it("holdAtSeven: uncontested presence at a battlefield when the resulting point reaches 7", () => {
     const bf = makeBattlefield({ units: [makeUnit({ might: 2, controller: "A" })] });
-    const state = makeState({ battlefields: [bf] });
-    expect(canScoreWinningPoint(state, "A")).toEqual(["hold"]);
+    const state = makeState({
+      battlefields: [bf],
+      players: { A: emptyPlayerState("A", { points: 6 }), B: emptyPlayerState("B") },
+    });
+    expect(canScoreWinningPoint(state, "A")).toEqual(["holdAtSeven"]);
   });
 
-  it("conquer: contested battlefield where the player's Might total is higher", () => {
-    const bf = makeBattlefield({
+  it("no line yet when an eligible hold wouldn't reach the 7-point threshold", () => {
+    const bf = makeBattlefield({ units: [makeUnit({ might: 2, controller: "A" })] });
+    const state = makeState({ battlefields: [bf] }); // points default to 0
+    expect(canScoreWinningPoint(state, "A")).toEqual([]);
+  });
+
+  it("conquerBothAtSix: both battlefields Might-won when the resulting points reach 6", () => {
+    const bfA = makeBattlefield({
       units: [makeUnit({ might: 5, controller: "A" }), makeUnit({ might: 2, controller: "B" })],
     });
-    const state = makeState({ battlefields: [bf] });
-    expect(canScoreWinningPoint(state, "A")).toEqual(["conquer"]);
+    const bfB = makeBattlefield({
+      units: [makeUnit({ might: 4, controller: "A" }), makeUnit({ might: 1, controller: "B" })],
+    });
+    const state = makeState({
+      battlefields: [bfA, bfB],
+      players: { A: emptyPlayerState("A", { points: 4 }), B: emptyPlayerState("B") },
+    });
+    expect(canScoreWinningPoint(state, "A")).toEqual(["conquerBothAtSix"]);
     expect(canScoreWinningPoint(state, "B")).toEqual([]);
   });
 
-  it("direct: a pending direct point award bypasses battlefields entirely", () => {
+  it("holdOneConquerOneAtSix: one battlefield held uncontested, the other Might-won", () => {
+    const held = makeBattlefield({ units: [makeUnit({ might: 2, controller: "A" })] });
+    const conquered = makeBattlefield({
+      units: [makeUnit({ might: 5, controller: "A" }), makeUnit({ might: 2, controller: "B" })],
+    });
+    const state = makeState({
+      battlefields: [held, conquered],
+      players: { A: emptyPlayerState("A", { points: 4 }), B: emptyPlayerState("B") },
+    });
+    expect(canScoreWinningPoint(state, "A")).toEqual(["holdOneConquerOneAtSix"]);
+  });
+
+  it("cardEffect: a pending direct point award bypasses battlefields entirely", () => {
     const state = makeState({ pendingDirectPoints: { A: 1, B: 0 } });
-    expect(canScoreWinningPoint(state, "A")).toEqual(["direct"]);
+    expect(canScoreWinningPoint(state, "A")).toEqual(["cardEffect"]);
   });
 });
 
@@ -155,7 +182,7 @@ describe("applyEvent fold round-trip", () => {
       { type: "cardDrawn", player: "A", count: 1 },
       { type: "damageDealt", targetInstanceId: "unitX", amount: 5 },
       { type: "unitKilled", targetInstanceId: "unitX" },
-      { type: "pointScored", player: "A", source: { line: "direct", amount: 1 } },
+      { type: "pointScored", player: "A", source: { line: "cardEffect", amount: 1 } },
     ];
 
     const final = events.reduce(applyEvent, initial);

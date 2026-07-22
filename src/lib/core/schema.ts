@@ -189,12 +189,23 @@ export type GameState = {
 // Winning lines / scoring
 // ---------------------------------------------------------------------------
 
-// The three ways a player can score a point (mirrors this app's existing
-// MatchNoteActionType taxonomy: Conquer BF / Hold BF / +1 Point).
-export type WinningLine = "conquer" | "hold" | "direct";
+// The winning lines that end a match (RiftCore_Spec §5): the two
+// point-threshold lines (a hold that scores at 7, or a conquer-based line
+// that scores at 6 — either by taking both battlefields or by holding one
+// and conquering the other), plus three non-battlefield win paths.
+export type WinningLine =
+  | "holdAtSeven"
+  | "conquerBothAtSix"
+  | "holdOneConquerOneAtSix"
+  | "cardEffect"
+  | "deckDepletion"
+  | "altWin";
 
+// The source of a single scored point (distinct from WinningLine — a
+// WinningLine is the match-ending pattern; a PointSource is what caused one
+// point along the way).
 export type PointSource = {
-  line: WinningLine;
+  line: "conquer" | "holdIntoBeginning" | "cardEffect" | "deckDepletion" | "altWin";
   battlefieldId?: string;
   amount: number;
 };
