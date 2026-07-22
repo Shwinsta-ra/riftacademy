@@ -251,7 +251,10 @@ export function eligibleModes(card: Card, activeSpeedFilter: string[] = []): Att
   // trigger categorization needs a cleaner pass before it's quizzed again.
   // buildTriggerQuestion/locateTrigger/etc. are left intact below so this is
   // a one-line flip to re-enable later, not a rebuild.
-  modes.push("name");
+  //
+  // Legend cards no longer get "name" (what-champion-is-this) questions —
+  // ability and speed modes still apply to them below.
+  if (card.type !== "Legend") modes.push("name");
   const trimmedText = (card.text || "").trim();
   if (trimmedText.length >= 15) {
     // Equipment whose only text is the boilerplate "[Equip (X)]" tag has no
@@ -300,6 +303,9 @@ export function eligibleModes(card: Card, activeSpeedFilter: string[] = []): Att
   // Trigger stays excluded even if some override file entry tries to force
   // it back on — the pause is a blanket product decision, not per-card.
   withOverrides.delete("trigger");
+  // Same for "name" on Legend cards — a card-type-wide product decision,
+  // not something a per-card override entry should be able to reinstate.
+  if (card.type === "Legend") withOverrides.delete("name");
   return ALL_MODES.filter((m) => withOverrides.has(m));
 }
 
