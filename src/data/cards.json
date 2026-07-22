@@ -20500,7 +20500,7 @@
       "Body"
     ],
     "text": "[Ambush] When I win a combat, draw 1.",
-    "flavour": "Meow! Ahem...Anyway.",
+    "flavour": "Meow! Ahem... Anyway.",
     "setId": "UNL",
     "setLabel": "Unleashed",
     "imageUrl": "https://cmsassets.rgpub.io/sanity/images/dsfx7636/game_data_live/0e51e39dfe4f922b2c8c9bff785d170350e9b803-744x1039.png",
@@ -23922,7 +23922,7 @@
     "domain": [
       "Fury"
     ],
-    "text": "Kill a gear.[Flow (4)(R)]",
+    "text": "Kill a gear. [Flow (4)(R)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -24236,7 +24236,7 @@
     "domain": [
       "Fury"
     ],
-    "text": "[Action] This can't be countered.Deal 4 to an enemy Calm unit.",
+    "text": "[Action] This can't be countered. Deal 4 to an enemy Calm unit.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -24399,7 +24399,7 @@
     "domain": [
       "Fury"
     ],
-    "text": "[Empower (2)(R)] When I move, you may deal 1 to a unit at a battlefield I moved to or from. If I'm [Empowered], deal 2 instead.[Empowered] I have +1 Might.",
+    "text": "[Empower (2)(R)] When I move, you may deal 1 to a unit at a battlefield I moved to or from. If I'm [Empowered], deal 2 instead. [Empowered] I have +1 Might.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -24432,7 +24432,7 @@
     "domain": [
       "Fury"
     ],
-    "text": "When you play this, banish your hand and trash, then [Burn 7].Skip your Draw Phase.You may play cards from your trash.If a card would go to your trash from anywhere other than your Main Deck, banish it instead.",
+    "text": "When you play this, banish your hand and trash, then [Burn 7]. Skip your Draw Phase. You may play cards from your trash. If a card would go to your trash from anywhere other than your Main Deck, banish it instead.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -24464,7 +24464,7 @@
     "domain": [
       "Fury"
     ],
-    "text": "You may discard 1 as an additional cost to play me.When you play me, if you paid the additional cost, play a 0 Might Shadow Clone unit token.",
+    "text": "You may discard 1 as an additional cost to play me. When you play me, if you paid the additional cost, play a 0 Might Shadow Clone unit token.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -24684,7 +24684,7 @@
     "domain": [
       "Calm"
     ],
-    "text": "Give a friendly unit +1 Might this turn. It can't be chosen by enemy spells and abilities this turn.[Flow (2)]",
+    "text": "Give a friendly unit +1 Might this turn. It can't be chosen by enemy spells and abilities this turn. [Flow (2)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -24870,7 +24870,7 @@
     "domain": [
       "Calm"
     ],
-    "text": "I can't be chosen by enemy spells and abilities unless I'm in combat.When I move to a battlefield, give me +2 Might this turn.",
+    "text": "I can't be chosen by enemy spells and abilities unless I'm in combat. When I move to a battlefield, give me +2 Might this turn.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -25228,7 +25228,7 @@
     "domain": [
       "Mind"
     ],
-    "text": "Draw 1.[Flow (2)]",
+    "text": "Draw 1. [Flow (2)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -25258,7 +25258,7 @@
     "domain": [
       "Mind"
     ],
-    "text": "Play a 3 Might Mech unit token.[Flow (2)(B)]",
+    "text": "Play a 3 Might Mech unit token. [Flow (2)(B)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -25288,7 +25288,7 @@
     "domain": [
       "Mind"
     ],
-    "text": "[Reaction] Choose one -Return a friendly unit to its owner's hand.Give an enemy unit -2 Might this turn.",
+    "text": "[Reaction] Choose one -Return a friendly unit to its owner's hand. Give an enemy unit -2 Might this turn.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -25534,7 +25534,7 @@
     "domain": [
       "Mind"
     ],
-    "text": "This enters exhausted.[Tap]: Empower another gear.",
+    "text": "This enters exhausted. [Tap]: Empower another gear.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -25596,7 +25596,7 @@
     "domain": [
       "Mind"
     ],
-    "text": "I cost (1) less for each gear you control.[Deflect]",
+    "text": "I cost (1) less for each gear you control. [Deflect]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -25725,7 +25725,7 @@
     "domain": [
       "Mind"
     ],
-    "text": "When you play me, draw 1.[Empower (3)] [Empowered] Your spells and abilities can't be countered. If a spell or ability you control would give -Might to a unit it chooses, it gives an additional -1 Might.",
+    "text": "When you play me, draw 1. [Empower (3)] [Empowered] Your spells and abilities can't be countered. If a spell or ability you control would give -Might to a unit it chooses, it gives an additional -1 Might.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -25950,7 +25950,7 @@
     "domain": [
       "Body"
     ],
-    "text": "Give a unit +6 Might this turn.[Flow (4)]",
+    "text": "Give a unit +6 Might this turn. [Flow (4)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -26010,7 +26010,7 @@
     "domain": [
       "Body"
     ],
-    "text": "As you play this, you may pay (O) as an additional cost.Choose a friendly unit and an enemy unit. If you paid the additional cost, give the friendly unit +2 Might this turn. They deal damage equal to their Mights to each other.",
+    "text": "As you play this, you may pay (O) as an additional cost. Choose a friendly unit and an enemy unit. If you paid the additional cost, give the friendly unit +2 Might this turn. They deal damage equal to their Mights to each other.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -26235,7 +26235,7 @@
     "domain": [
       "Body"
     ],
-    "text": "If your score is not within 3 points of the Victory Score, I enter ready.When I attack, you may move any number of enemy units here each with 5 Might or less to their base.",
+    "text": "If your score is not within 3 points of the Victory Score, I enter ready. When I attack, you may move any number of enemy units here each with 5 Might or less to their base.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -26269,7 +26269,7 @@
     "domain": [
       "Body"
     ],
-    "text": "(1): Give me +1 Might this turn.When my Might becomes 10 or more, empower me. [Empowered] I have [Deflect] and [Ganking].",
+    "text": "(1): Give me +1 Might this turn. When my Might becomes 10 or more, empower me. [Empowered] I have [Deflect] and [Ganking].",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -26398,7 +26398,7 @@
     "domain": [
       "Chaos"
     ],
-    "text": "[Hidden] I have +1 Might for each other unit you control here with my name.Your deck can have any number of cards named Spiderling.",
+    "text": "[Hidden] I have +1 Might for each other unit you control here with my name. Your deck can have any number of cards named Spiderling.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -26463,7 +26463,7 @@
     "domain": [
       "Chaos"
     ],
-    "text": "Play two 1 Might Tentacle unit tokens from Bilgewater.[Flow (3)]",
+    "text": "Play two 1 Might Tentacle unit tokens from Bilgewater. [Flow (3)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -26493,7 +26493,7 @@
     "domain": [
       "Chaos"
     ],
-    "text": "You may pay 1 Energy as an additional cost to play me.When you play me, if you paid the additional cost, banish a card from any trash to give a unit [Assault 2] this turn.",
+    "text": "You may pay 1 Energy as an additional cost to play me. When you play me, if you paid the additional cost, banish a card from any trash to give a unit [Assault 2] this turn.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -26618,7 +26618,7 @@
     "domain": [
       "Chaos"
     ],
-    "text": "Move a unit with 3 Might or less.[Flow (4)(P)]",
+    "text": "Move a unit with 3 Might or less. [Flow (4)(P)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -26740,7 +26740,7 @@
     "domain": [
       "Chaos"
     ],
-    "text": "When you play me or when I score, play a 1 Energy Might Tentacle unit token from Bilgewater.I have +1 Might for each token unit you control.",
+    "text": "When you play me or when I score, play a 1 Energy Might Tentacle unit token from Bilgewater. I have +1 Might for each token unit you control.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -26907,7 +26907,7 @@
     "domain": [
       "Chaos"
     ],
-    "text": "You may play me to an open battlefield.When you play me, you may return a non-Dragon unit to its owner's hand.",
+    "text": "You may play me to an open battlefield. When you play me, you may return a non-Dragon unit to its owner's hand.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -26941,7 +26941,7 @@
     "domain": [
       "Order"
     ],
-    "text": "Choose a unit. Its base Might becomes 5 this turn.[Flow (3)]",
+    "text": "Choose a unit. Its base Might becomes 5 this turn. [Flow (3)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -27068,7 +27068,7 @@
     "domain": [
       "Order"
     ],
-    "text": "You may pay (Y) as an additional cost to play me.When you play me, if you paid the additional cost, [Stun] an enemy unit at a battlefield.",
+    "text": "You may pay (Y) as an additional cost to play me. When you play me, if you paid the additional cost, [Stun] an enemy unit at a battlefield.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -27226,7 +27226,7 @@
     "domain": [
       "Order"
     ],
-    "text": "Choose a unit. If it's [Empowered], disempower it. Then kill it if it has 3 Might or less.[Flow (4)(Y)(Y)]",
+    "text": "Choose a unit. If it's [Empowered], disempower it. Then kill it if it has 3 Might or less. [Flow (4)(Y)(Y)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -27324,7 +27324,7 @@
     "domain": [
       "Order"
     ],
-    "text": "When you play me, name a spell.While I'm at a battlefield, opponents can't play spells with that name.",
+    "text": "When you play me, name a spell. While I'm at a battlefield, opponents can't play spells with that name.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -27387,7 +27387,7 @@
     "domain": [
       "Order"
     ],
-    "text": "[Empower (3)] I can be [Empowered] up to three times.I have +2 Might for each time I'm [Empowered].While I'm [Empowered] three times, I have [Deflect 3] and [Ganking].",
+    "text": "[Empower (3)] I can be [Empowered] up to three times. I have +2 Might for each time I'm [Empowered]. While I'm [Empowered] three times, I have [Deflect 3] and [Ganking].",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -27593,7 +27593,7 @@
       "Fury",
       "Calm"
     ],
-    "text": "Deal 2 to up to one enemy unit at a battlefield, then move a friendly unit.[Flow (3)(Any)]",
+    "text": "Deal 2 to up to one enemy unit at a battlefield, then move a friendly unit. [Flow (3)(Any)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -27855,7 +27855,7 @@
       "Calm",
       "Order"
     ],
-    "text": "Move an enemy unit to a battlefield where you have units. If you have exactly two units there, they each get +1 Might this turn.[Flow (5)(Any)(Any)]",
+    "text": "Move an enemy unit to a battlefield where you have units. If you have exactly two units there, they each get +1 Might this turn. [Flow (5)(Any)(Any)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -27891,7 +27891,7 @@
       "Mind",
       "Body"
     ],
-    "text": "[Empower (2)(Any)(Any)] (1), [Tap]: Ready a gear.[Empowered] (1), [Tap]: Ready 2 gear.",
+    "text": "[Empower (2)(Any)(Any)] (1), [Tap]: Ready a gear. [Empowered] (1), [Tap]: Ready 2 gear.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -28054,7 +28054,7 @@
       "Body",
       "Order"
     ],
-    "text": "Choose a friendly unit. Kill an enemy unit with less Might than it.[Flow (5)(Any)(Any)]",
+    "text": "Choose a friendly unit. Kill an enemy unit with less Might than it. [Flow (5)(Any)(Any)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -28090,7 +28090,7 @@
       "Order",
       "Chaos"
     ],
-    "text": "When you play a card from anywhere other than your hand, empower me.[Action] Disempower me, [Tap]: Give a unit [Assault 2] this turn.",
+    "text": "When you play a card from anywhere other than your hand, empower me. [Action] Disempower me, [Tap]: Give a unit [Assault 2] this turn.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -28124,7 +28124,7 @@
       "Order",
       "Chaos"
     ],
-    "text": "Look at the top 3 cards of your Main Deck. You may choose a card from among them and draw it. Put the rest into your trash.[Flow (2)(Any)]",
+    "text": "Look at the top 3 cards of your Main Deck. You may choose a card from among them and draw it. Put the rest into your trash. [Flow (2)(Any)]",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -28647,7 +28647,7 @@
     "domain": [
       "Mind"
     ],
-    "text": "[Action] (Play on your turn or in showdowns.)This costs (2) less if you control something that's [Empowered].Deal 4 to a unit at a battlefield.",
+    "text": "[Action] (Play on your turn or in showdowns.)This costs (2) less if you control something that's [Empowered]. Deal 4 to a unit at a battlefield.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -28771,7 +28771,7 @@
     "domain": [
       "Body"
     ],
-    "text": "This enters exhausted.[Empower] \u2014 (1), [Tap] (Pay the cost: Empower this. Use only if not Empowered.)[Reaction][>] [Tap]: [Add (1)]. If this is [Empowered], [Add (2)] instead.",
+    "text": "This enters exhausted. [Empower] \u2014 (1), [Tap] (Pay the cost: Empower this. Use only if not Empowered.)[Reaction][>] [Tap]: [Add (1)]. If this is [Empowered], [Add (2)] instead.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -28833,7 +28833,7 @@
     "domain": [
       "Body"
     ],
-    "text": "[Empower (1)(Any)(Any)] ((1)(Any)(Any): Empower me. Use only if not Empowered.)[Empowered][>] I have +2 Might.[Empowered][>][>>][Deathknell][>] Channel 2 runes exhausted. (When I die while Empowered, get the effect.)",
+    "text": "[Empower (1)(Any)(Any)] ((1)(Any)(Any): Empower me. Use only if not Empowered.)[Empowered][>] I have +2 Might. [Empowered][>][>>][Deathknell][>] Channel 2 runes exhausted. (When I die while Empowered, get the effect.)",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -28956,7 +28956,7 @@
     "domain": [
       "Chaos"
     ],
-    "text": "When I move to a battlefield, choose one \u2014Each player discards 1.Each player draws 1.",
+    "text": "When I move to a battlefield, choose one \u2014Each player discards 1. Each player draws 1.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",

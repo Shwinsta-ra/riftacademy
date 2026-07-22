@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
@@ -10,6 +10,7 @@ import { clearSessionSnapshot } from "../lib/sessionState";
 import { MAX_BOX } from "../lib/leitner";
 import { BOX_LABELS, BOX_INTERVAL_LABELS, BOX_COLORS, NEW_LABEL, NEW_COLOR } from "../lib/boxMeta";
 import { useTutorial } from "../lib/tutorialContext";
+import AppModal from "../components/AppModal";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Stats">;
 
@@ -17,7 +18,7 @@ export default function StatsScreen({ navigation }: Props) {
   const [counts, setCounts] = useState<Record<number, number>>({});
   const [unseen, setUnseen] = useState(0);
   const [total, setTotal] = useState(0);
-  const [confirming, setConfirming] = useState(false);
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   // Bumped after a reset to force the focus effect's loader to re-run so the
   // bars visibly drop to zero without needing to leave and return.
   const [refreshTick, setRefreshTick] = useState(0);
@@ -76,31 +77,7 @@ export default function StatsScreen({ navigation }: Props) {
         you actually don't know yet.
       </Text>
 
-      <Pressable
-        style={styles.resetButton}
-        onPress={() => {
-          if (confirming) return;
-          setConfirming(true);
-          Alert.alert(
-            "Reset all progress?",
-            "This clears every card's Leitner box back to new. This can't be undone.",
-            [
-              { text: "Cancel", style: "cancel", onPress: () => setConfirming(false) },
-              {
-                text: "Reset",
-                style: "destructive",
-                onPress: async () => {
-                  await resetAllProgress();
-                  clearSessionSnapshot();
-                  setConfirming(false);
-                  setRefreshTick((t) => t + 1);
-                  Alert.alert("Done", "Progress reset.");
-                },
-              },
-            ]
-          );
-        }}
-      >
+      <Pressable style={styles.resetButton} onPress={() => setConfirmResetOpen(true)}>
         <Text style={styles.resetButtonText}>Reset progress</Text>
       </Pressable>
 
@@ -113,6 +90,25 @@ export default function StatsScreen({ navigation }: Props) {
       >
         <Text style={styles.replayTutorialButtonText}>Replay tutorial</Text>
       </Pressable>
+
+      <AppModal
+        visible={confirmResetOpen}
+        title="Reset all progress?"
+        onClose={() => setConfirmResetOpen(false)}
+        ctaLabel="Reset progress"
+        ctaDestructive
+        scrollable={false}
+        onCta={async () => {
+          await resetAllProgress();
+          clearSessionSnapshot();
+          setConfirmResetOpen(false);
+          setRefreshTick((t) => t + 1);
+        }}
+      >
+        <Text style={styles.confirmBody}>
+          This clears every card's Leitner box back to new. This can't be undone.
+        </Text>
+      </AppModal>
     </ScrollView>
   );
 }
@@ -162,15 +158,18 @@ const styles = StyleSheet.create({
   barFill: { height: "100%", borderRadius: 7 },
   barCount: { color: theme.textDim, fontSize: 11, marginTop: 2 },
   note: { color: theme.textDim, fontSize: 12, lineHeight: 17, marginTop: 20 },
+  // Solid destructive red, not the previous outline -- this clears
+  // long-term study progress irreversibly, so it should read at a glance as
+  // a clear "cancel"-style action, not a subtle secondary option.
   resetButton: {
     marginTop: 32,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: theme.incorrect,
+    backgroundColor: theme.incorrect,
   },
-  resetButtonText: { color: theme.incorrect, fontWeight: "600" },
+  resetButtonText: { color: "#ffffff", fontWeight: "700" },
+  confirmBody: { color: theme.text, fontSize: 14, lineHeight: 20 },
   replayTutorialButton: {
     marginTop: 12,
     paddingVertical: 14,

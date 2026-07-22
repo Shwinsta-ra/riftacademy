@@ -28,33 +28,22 @@ export type MaskRegion = {
 
 type RawRegion = { top: number; height: number; left: number; width: number };
 
-// Power cost is printed as a stack of 1-4 small pip icons (in a rounded
-// capsule) below the energy badge, not a single fixed-size box like every
-// other mode; its height has to grow with the card's own power value.
-// left/width/top are fixed (measured off the capsule's real position);
-// heightIntercept/heightPerPip fit a line to the capsule's real height at
-// several pip counts (measured directly off real card art: 1 pip and 3
-// pips for the default/circular-energy-badge layout, 1 pip and 2 pips for
-// Gear's diamond-energy-badge layout, which sits at a different left
-// offset and has a different vertical pip spacing). Both intercepts
-// already include a few extra px of safety margin below the true measured
-// edge, not a tight fit, so a stray extra pixel of art can't peek out.
-type PowerRegion = {
-  top: number;
-  left: number;
-  width: number;
-  heightIntercept: number;
-  heightPerPip: number;
-};
-
 // Positions live in src/data/quizPositions.json rather than hardcoded here —
 // see that file's comments, or the README, for the editable table format.
 // "keyword"/"speed"/"trigger" all share the "text" mode's positions unless
 // the config file defines them separately (they're visually the same box).
-// powerCost is handled separately below (see PowerRegion above) since its
-// region isn't a fixed rect like every other mode's.
-const POSITION_MODE_KEY: Record<Exclude<AttributeMode, "powerCost">, string> = {
+//
+// powerCost used to compute its mask height per-card (a formula scaling with
+// the card's own printed power value) so it could hug the real 1-4 pip
+// stack tightly. That itself leaked the answer -- a taller mask visibly
+// meant a higher power before the player even looked at the options, the
+// same category of bug as the mismatched-region leak this replaced. "power"
+// is now a fixed rect like every other mode: sized to the WORST case (a full
+// 4-pip stack) and extended up to also cover the energy-cost circle above
+// it, so the box never changes shape card-to-card.
+const POSITION_MODE_KEY: Record<AttributeMode, string> = {
   energyCost: "cost",
+  powerCost: "power",
   might: "might",
   name: "name",
   keyword: "text",
@@ -84,27 +73,10 @@ function lookupKeyFor<T>(config: Record<string, T>, card: Card): T | undefined {
   return tokenKey ?? config[card.type] ?? config["default"];
 }
 
-// quizPositions.json holds two different shapes: every other mode is a flat
-// table of fixed rects (RawRegion[] per card type), while "power" is a
-// per-type formula (PowerRegion) since its height depends on the card's own
-// power value (see PowerRegion above). Typed together here so both casts of
-// the same imported JSON module agree with each other.
-type PositionsConfig = Record<string, Record<string, RawRegion[]>> & {
-  power?: Record<string, PowerRegion>;
-};
+type PositionsConfig = Record<string, Record<string, RawRegion[]>>;
 const POSITIONS = positionsConfig as unknown as PositionsConfig;
 
 export function getMaskRegions(mode: AttributeMode, card: Card): MaskRegion[] {
-  if (mode === "powerCost") {
-    const config = POSITIONS.power;
-    const region = config && lookupKeyFor(config, card);
-    if (!region || card.power === null) return [];
-    const height = region.heightIntercept + region.heightPerPip * card.power;
-    return toMaskRegions([
-      { top: region.top, left: region.left, width: region.width, height },
-    ]);
-  }
-
   const modeKey = POSITION_MODE_KEY[mode];
   const modeConfig = POSITIONS[modeKey];
   if (!modeConfig) return [];
@@ -1128,7 +1100,13 @@ export function buildBracketSwapQuestion(card: Card, pool: Card[]): AttributeQue
   }
 
   const uniqueDistractors = Array.from(new Set(distractors)).filter((d) => d !== correctText);
-  const options = shuffle([correctText, ...uniqueDistractors]);
+  // The pool above can hold up to 5 distinct distractors (1 target-false +
+  // 2 comparisons x 2), but every question type in this file shows exactly
+  // 4 options (1 correct + 3) to match the platform-wide 2x2 answer-grid
+  // convention — sample down the same way buildQuestionFromVariant does for
+  // hand-authored pools, rather than displaying the whole generated set.
+  const sampledDistractors = shuffle(uniqueDistractors).slice(0, 3);
+  const options = shuffle([correctText, ...sampledDistractors]);
   const correctIndex = options.indexOf(correctText);
   return {
     mode: "bracketSwap",
