@@ -30,7 +30,18 @@ export function makeObject(overrides: Partial<ObjectInstance> = {}): ObjectInsta
 }
 
 export function emptyPlayerState(id: PlayerId, overrides: Partial<PlayerState> = {}): PlayerState {
-  return { id, hand: [], deck: [], discard: [], banished: [], base: [], runes: [], points: 0, ...overrides };
+  return {
+    id,
+    hand: [],
+    deck: [],
+    discard: [],
+    banished: [],
+    base: [],
+    runes: [],
+    points: 0,
+    pointsAtTurnStart: 0,
+    ...overrides,
+  };
 }
 
 export function makeState(overrides: Partial<GameState> = {}): GameState {
@@ -41,6 +52,7 @@ export function makeState(overrides: Partial<GameState> = {}): GameState {
     turn: 1,
     activePlayer: "A",
     pendingDirectPoints: { A: 0, B: 0 },
+    pointsToWin: 8,
     ...overrides,
   };
 }
