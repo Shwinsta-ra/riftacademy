@@ -10,20 +10,22 @@
     ]
   },
   "power": {
-    "default": {
-      "top": 14.44,
-      "left": 4.7,
-      "width": 10.75,
-      "heightIntercept": 3.37,
-      "heightPerPip": 3.85
-    },
-    "Gear": {
-      "top": 14.44,
-      "left": 2.02,
-      "width": 10.75,
-      "heightIntercept": 4.81,
-      "heightPerPip": 2.41
-    }
+    "default": [
+      {
+        "top": 4.2,
+        "height": 29.0,
+        "left": 4.7,
+        "width": 12.9
+      }
+    ],
+    "Gear": [
+      {
+        "top": 4.2,
+        "height": 24.7,
+        "left": 2.02,
+        "width": 15.58
+      }
+    ]
   },
   "might": {
     "default": [

@@ -1,5 +1,5 @@
 import * as SQLite from "expo-sqlite";
-import { CardProgress } from "./types";
+import { CardProgress, QuizFilters } from "./types";
 
 const DB_NAME = "riftbound_trainer.db";
 
@@ -44,6 +44,15 @@ const TUTORIAL_SEEN_KEY = "hasSeenTutorial";
 // screen -- separate from TUTORIAL_SEEN_KEY, see db.web.ts's copy of this
 // comment for why.
 const WELCOME_SEEN_KEY = "hasSeenWelcome";
+// The active QuizFilters selection -- unlike sessionState's queue/score
+// bookkeeping (allowed to clear whenever the app process restarts), the
+// filters someone deliberately set in Settings need to survive a restart
+// the same way progress and the batch gate do. Without this, an app
+// remount during an active BATCH_COOLDOWN_MIN wait snaps filters back to
+// default while the persisted batch-gate timestamp survives untouched, so
+// the fresh batch that builds once the cooldown clears uses the wrong
+// filters.
+const FILTERS_KEY = "quizFilters";
 
 export async function getLastBatchCompletedAt(): Promise<number | null> {
   const db = await getDb();
@@ -96,6 +105,29 @@ export async function setHasSeenWelcome(seen: boolean): Promise<void> {
     `INSERT INTO settings (key, value) VALUES (?, ?)
      ON CONFLICT(key) DO UPDATE SET value = excluded.value;`,
     [WELCOME_SEEN_KEY, seen ? "true" : "false"]
+  );
+}
+
+export async function getSavedFilters(): Promise<QuizFilters | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>(
+    "SELECT value FROM settings WHERE key = ?",
+    [FILTERS_KEY]
+  );
+  if (!row) return null;
+  try {
+    return JSON.parse(row.value) as QuizFilters;
+  } catch {
+    return null;
+  }
+}
+
+export async function setSavedFilters(filters: QuizFilters): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value;`,
+    [FILTERS_KEY, JSON.stringify(filters)]
   );
 }
 
