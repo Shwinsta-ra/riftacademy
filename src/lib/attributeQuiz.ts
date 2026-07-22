@@ -14,7 +14,8 @@ export type AttributeMode =
   | "trigger"
   | "name"
   | "text"
-  | "fillBlank";
+  | "fillBlank"
+  | "bracketSwap";
 
 export type Percent = `${number}%`;
 
@@ -61,6 +62,7 @@ const POSITION_MODE_KEY: Record<Exclude<AttributeMode, "powerCost">, string> = {
   trigger: "text",
   text: "text",
   fillBlank: "text",
+  bracketSwap: "text",
 };
 
 function toMaskRegions(raw: RawRegion[]): MaskRegion[] {
@@ -188,6 +190,71 @@ function blankableNumbers(text: string): { value: number; start: number; end: nu
   return results;
 }
 
+/** The verb/notation context a blankable number sits in — used by Group B's
+ *  1-number and 3+-number fill-in-the-blank buckets to (a) decide whether 0
+ *  is a sane wrong-answer distractor for that number, and (b) rank which of
+ *  several numbers on a 3+-number card is the most worth blanking. `null`
+ *  means no recognizable context was found (mixed prose, flavor numbers,
+ *  etc.) — treated as "unknown," not as any specific kind. */
+export type NumberKind = "damage" | "draw" | "discard" | "recycle" | "might" | "cost" | null;
+
+// Verb keywords that typically PRECEDE the number they govern ("deal 3",
+// "draw 1", "pay (2)"). Matched against the ~40 characters immediately
+// before the number.
+const BACKWARD_KIND_PATTERNS: [Exclude<NumberKind, null>, RegExp][] = [
+  ["damage", /\bdeals?\b/gi],
+  ["draw", /\bdraws?\b/gi],
+  ["discard", /\bdiscards?\b/gi],
+  ["recycle", /\brecycles?\b/gi],
+  ["might", /\bmight\b/gi],
+  ["cost", /\b(?:costs?|pay)\b/gi],
+];
+
+const BACKWARD_CONTEXT_CHARS = 40;
+const FORWARD_CONTEXT_CHARS = 20;
+
+/** Categorizes the number at `[start, end)` in `text` by scanning its
+ *  surrounding prose for verb/notation context — the same idea as the lost
+ *  Group A baseline-generation script's `classifyKind` (deal→damage,
+ *  draw→draw, discard→discard, recycle→recycle, might→might, cost→cost),
+ *  rebuilt here since that script was never committed.
+ *
+ *  Mostly a backward scan (the governing verb usually comes first: "deal 3",
+ *  "discard 2"), with two forward-looking exceptions confirmed against real
+ *  card text: Might is often phrased number-first ("+2 Might", "0 Might
+ *  Recruit"), and activation-cost notation ("(1), [Tap]:", "(1)(R)") has no
+ *  governing verb at all, just another cost/tap marker immediately after. */
+export function classifyKind(text: string, start: number, end: number): NumberKind {
+  const back = text.slice(Math.max(0, start - BACKWARD_CONTEXT_CHARS), start);
+  let best: { kind: Exclude<NumberKind, null>; index: number } | null = null;
+  for (const [kind, pattern] of BACKWARD_KIND_PATTERNS) {
+    const re = new RegExp(pattern.source, pattern.flags);
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(back)) !== null) {
+      // If another digit sits between this keyword and our number, the
+      // keyword almost certainly governs THAT earlier number instead (e.g.
+      // "Recycle 3 from your trash, (1), [Tap]:" — "Recycle" governs the 3,
+      // not the activation cost that follows it) — skip it.
+      const between = back.slice(m.index + m[0].length);
+      if (/\d/.test(between)) continue;
+      if (!best || m.index > best.index) best = { kind, index: m.index };
+    }
+  }
+  if (best) return best.kind;
+
+  const forward = text.slice(end, Math.min(text.length, end + FORWARD_CONTEXT_CHARS));
+  if (/\bmight\b/i.test(forward)) return "might";
+  if (/^\s*,?\s*(\[Tap\]|\()/i.test(forward)) return "cost";
+  return null;
+}
+
+// Number kinds where 0 reads as a nonsensical, logically-empty wrong answer
+// ("deal 0 damage," "draw 0 cards," "adjust Might by 0") rather than a
+// plausible near-miss — excluded as a DISTRACTOR only. 0 stays valid as the
+// real, correct answer whenever that's genuinely the printed value (a
+// 0-cost card, a 0-Might gear bonus).
+const NO_OP_ZERO_KINDS = new Set<NumberKind>(["damage", "draw", "discard", "recycle", "might", "cost"]);
+
 /** Finds the first bracketed tag in `text` that matches one of `allowedKeywords`
  *  (the card's own curated keyword list), case/hyphen/space-insensitive.
  *  Returns the matched substring's position + length so callers can mask
@@ -208,6 +275,77 @@ function extractFirstKeyword(
     if (found) return { keyword: found.raw, index: match.index, matchLength: match[0].length };
   }
   return null;
+}
+
+// Group B Bucket 1 (0 numbers, has brackets) — a card's text can have more
+// than one bracketed tag (e.g. "[Deflect (Any)] (2)(R): Double my Might this
+// turn." has both a keyword bracket and incidental cost notation). Only the
+// SPEED tag or a real curated KEYWORD is the semantically meaningful one
+// worth permuting into a false variant; anything else (cost/param brackets)
+// is incidental and left alone.
+type PermutableTag =
+  | { kind: "speed"; value: "Action" | "Reaction"; index: number; length: number }
+  | { kind: "keyword"; value: string; index: number; length: number };
+
+/** Finds the one bracket in `text` worth swapping for a false variant.
+ *  Speed takes priority when the card actually has a real Action/Reaction
+ *  tag (found via `card.speed`, the authoritative field, not a blind regex
+ *  guess) — otherwise falls back to the same curated-keyword match the
+ *  shipped "keyword" quiz mode uses, so "which bracket is THE keyword" stays
+ *  answered in exactly one place. */
+function findPermutableBracket(
+  text: string,
+  speed: string | null,
+  keywords: string[]
+): PermutableTag | null {
+  if (speed === "Action" || speed === "Reaction") {
+    const re = new RegExp(`\\[${speed}\\]`);
+    const m = re.exec(text);
+    if (m) return { kind: "speed", value: speed, index: m.index, length: m[0].length };
+  }
+  const kw = extractFirstKeyword(text, keywords);
+  if (kw) return { kind: "keyword", value: kw.keyword, index: kw.index, length: kw.matchLength };
+  return null;
+}
+
+/** Swaps `tag` for a plausible-but-wrong replacement: Action<->Reaction for
+ *  a speed tag, or a different domain-appropriate keyword for a keyword tag.
+ *  Returns null only when there's genuinely no alternative keyword to swap
+ *  in (an emptied-out vocabulary), so the caller can skip this distractor
+ *  rather than emit a broken string. */
+function permuteBracketTag(text: string, tag: PermutableTag, keywordPool: string[]): string | null {
+  if (tag.kind === "speed") {
+    const swapped = tag.value === "Action" ? "Reaction" : "Action";
+    return text.slice(0, tag.index) + `[${swapped}]` + text.slice(tag.index + tag.length);
+  }
+  const alternatives = keywordPool.filter((k) => k.toLowerCase() !== tag.value.toLowerCase());
+  if (alternatives.length === 0) return null;
+  const replacement = alternatives[Math.floor(Math.random() * alternatives.length)];
+  return text.slice(0, tag.index) + `[${replacement}]` + text.slice(tag.index + tag.length);
+}
+
+/** The "plausible alternative keywords" pool for a domain, derived from the
+ *  card data itself (same spirit as tutorialSteps.ts deriving the newest set
+ *  name from SET_GROUPS instead of hardcoding it) rather than a separate
+ *  hardcoded keyword-by-domain list that can drift out of sync with the real
+ *  card pool. Falls back to the full card set's vocabulary — same escape
+ *  hatch buildKeywordQuestion uses below — when a small/filtered pool
+ *  doesn't have enough domain-scoped keywords to make a real choice. */
+function domainKeywordVocabulary(pool: Card[], domains: string[]): string[] {
+  const scoped = new Set<string>();
+  for (const c of pool) {
+    if (c.domain.some((d) => domains.includes(d))) {
+      for (const kw of c.keywords) scoped.add(kw);
+    }
+  }
+  if (scoped.size >= 2) return Array.from(scoped);
+  const global = new Set<string>(scoped);
+  for (const c of getAllCards()) {
+    if (c.domain.some((d) => domains.includes(d))) {
+      for (const kw of c.keywords) global.add(kw);
+    }
+  }
+  return Array.from(global);
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -263,17 +401,25 @@ export function eligibleModes(card: Card, activeSpeedFilter: string[] = []): Att
     const equipHasEffect =
       card.subtype !== "Equipment" || equipmentEffectText(card.text || "") !== null;
     if (equipHasEffect) {
-      // Fill-in-the-blank REPLACES text mode when the effect prose has
-      // exactly two blankable numbers (e.g. "discard 1, then draw 1") — a
-      // two-blank question is a sharper test of those values than picking
-      // the whole text out of a lineup. Cards with 0, 1, or 3+ blankable
-      // numbers keep the normal text mode. Equipment uses its effect line
-      // (not the [Equip] tag) for this count, same as text mode does.
+      // Fill-in-the-blank REPLACES text mode whenever the effect prose has
+      // one or more blankable numbers — a sharper test of those values than
+      // picking the whole text out of a lineup. Originally shipped for the
+      // exactly-2-number case only; Group B generalized it to 1 number
+      // (buildFillBlankQuestion's single-blank path) and 3+ numbers (same
+      // path, after priority-picking which one to blank). Equipment uses its
+      // effect line (not the [Equip] tag) for this count, same as text mode.
       const fillText =
         card.subtype === "Equipment" ? equipmentEffectText(card.text || "") ?? "" : card.text || "";
-      if (blankableNumbers(fillText).length === 2) {
+      if (blankableNumbers(fillText).length >= 1) {
         modes.push("fillBlank");
+      } else if (findPermutableBracket(fillText, card.speed, card.keywords)) {
+        // Group B Bucket 1 — 0 numbers, but a speed tag or curated keyword
+        // worth permuting into a false variant.
+        modes.push("bracketSwap");
       } else {
+        // Group B Bucket 2 — 0 numbers, no permutable bracket. Keeps text
+        // mode, whose fallback pool is now tightened to same
+        // domain+type+subtype before widening (see buildTextQuestion).
         modes.push("text");
       }
     }
@@ -293,6 +439,7 @@ export function eligibleModes(card: Card, activeSpeedFilter: string[] = []): Att
     "name",
     "text",
     "fillBlank",
+    "bracketSwap",
   ];
   const withOverrides = new Set(modes);
   for (const m of ALL_MODES) {
@@ -707,7 +854,7 @@ function equipmentEffectText(text: string): string | null {
   return joined.trim().length > 0 ? joined : null;
 }
 
-function buildTextQuestion(card: Card, pool: Card[]) {
+export function buildTextQuestion(card: Card, pool: Card[]) {
   // --- Battlefields: distractors are OTHER battlefields' abilities, never
   // number-mutations. A battlefield's whole identity is its ability, so a
   // near-miss number tweak is a weak decoy; a different battlefield's real
@@ -749,12 +896,31 @@ function buildTextQuestion(card: Card, pool: Card[]) {
 
   const decoys = [...numberVariants];
   if (decoys.length < 3) {
+    // Group B Bucket 2 (0 numbers, no permutable bracket) tightens this
+    // fallback with a same-domain+type+subtype tier ahead of the original
+    // same-set+type/type-only/whole-pool chain, so its distractors read as
+    // genuinely comparable cards rather than just "another card of this
+    // type." Still widens progressively if that tier comes up short.
+    const sameDomainTypeSubtype = pool.filter(
+      (c) =>
+        c.id !== card.id &&
+        c.type === card.type &&
+        c.subtype === card.subtype &&
+        c.domain.some((d) => card.domain.includes(d)) &&
+        c.text
+    );
     const sameSetAndType = pool.filter(
       (c) => c.id !== card.id && c.setId === card.setId && c.type === card.type && c.text
     );
     const sameType = pool.filter((c) => c.id !== card.id && c.type === card.type && c.text);
     const fallbackPool = shuffle(
-      sameSetAndType.length >= 3 ? sameSetAndType : sameType.length >= 3 ? sameType : pool
+      sameDomainTypeSubtype.length >= 3
+        ? sameDomainTypeSubtype
+        : sameSetAndType.length >= 3
+          ? sameSetAndType
+          : sameType.length >= 3
+            ? sameType
+            : pool
     );
     for (const c of fallbackPool) {
       if (decoys.length >= 3) break;
@@ -790,14 +956,77 @@ function alternateNumber(value: number): number {
   return closest[Math.floor(Math.random() * closest.length)];
 }
 
-function buildFillBlankQuestion(card: Card, _pool: Card[]) {
+type Blank = { value: number; start: number; end: number };
+
+// Group B Bucket 4's confirmed priority order for picking which of a 3+-
+// number card's blankable numbers to actually blank: combat values first,
+// then damage, then card draw, then cost — cost is last among these four
+// because it's the least interesting thing to quiz on a card that also does
+// something more game-relevant. A number whose kind doesn't match any of
+// these (or wasn't classifiable at all) is never auto-selected here; that
+// case falls through to a random pick in pickBlankForMultiple.
+const BLANK_PRIORITY: Exclude<NumberKind, null>[] = ["might", "damage", "draw", "cost"];
+
+/** Bucket 4 — 3+ blankable numbers, pick exactly one to blank rather than
+ *  redesigning the UI for multi-blank-3+. Walks BLANK_PRIORITY and takes the
+ *  first number matching the highest-priority kind present; `.find` over an
+ *  array built in text order naturally ties-break to the first (leftmost)
+ *  occurrence when more than one number shares the winning kind. Falls back
+ *  to a uniform-random pick when none of the numbers match any priority kind
+ *  at all. */
+function pickBlankForMultiple(sourceText: string, blanks: Blank[]): Blank {
+  const classified = blanks.map((b) => ({ blank: b, kind: classifyKind(sourceText, b.start, b.end) }));
+  for (const kind of BLANK_PRIORITY) {
+    const match = classified.find((c) => c.kind === kind);
+    if (match) return match.blank;
+  }
+  return blanks[Math.floor(Math.random() * blanks.length)];
+}
+
+/** Buckets 3 (exactly 1 number) and 4 (3+, after priority-picking one) share
+ *  this single-blank builder: one "____" in the caption, one number to
+ *  guess. Distractors reuse pickNearbyDistinctNumbers (same sequential,
+ *  non-negative logic as the cost/might attribute questions) rather than
+ *  alternateNumber's real/alternate-combination scheme, which only makes
+ *  sense for the two-blank case. 0 is excluded as a distractor (not as the
+ *  correct answer) whenever this number's verb context makes 0 a nonsensical
+ *  no-op wrong answer — "deal 0 damage," "draw 0 cards," etc. */
+function buildSingleBlankQuestion(sourceText: string, blank: Blank): AttributeQuestion {
+  const BLANK = "____";
+  const caption = sourceText.slice(0, blank.start) + BLANK + sourceText.slice(blank.end);
+
+  const kind = classifyKind(sourceText, blank.start, blank.end);
+  const minValue = NO_OP_ZERO_KINDS.has(kind) ? 1 : 0;
+  const distractorValues = pickNearbyDistinctNumbers(blank.value, [], 3, minValue);
+
+  const correct = `${blank.value}`;
+  const options = shuffle([correct, ...distractorValues.map((n) => `${n}`)]);
+  const correctIndex = options.indexOf(correct);
+  return {
+    mode: "fillBlank",
+    prompt: "Fill in the blank:",
+    options,
+    correctIndex,
+    caption,
+  };
+}
+
+export function buildFillBlankQuestion(card: Card, _pool: Card[]): AttributeQuestion {
   const sourceText =
     card.subtype === "Equipment" ? equipmentEffectText(card.text || "") ?? card.text : card.text;
   const blanks = blankableNumbers(sourceText);
-  // eligibleModes only routes here when there are exactly two, but guard
-  // anyway so a data change can't produce a malformed question.
-  if (blanks.length !== 2) return buildTextQuestion(card, _pool);
+  // eligibleModes only routes here when there's at least one blankable
+  // number, but guard anyway so a data change can't produce a malformed
+  // question.
+  if (blanks.length === 0) return buildTextQuestion(card, _pool);
 
+  if (blanks.length === 1) return buildSingleBlankQuestion(sourceText, blanks[0]);
+
+  if (blanks.length >= 3) {
+    return buildSingleBlankQuestion(sourceText, pickBlankForMultiple(sourceText, blanks));
+  }
+
+  // Group A's shipped exactly-2-numbers case, unchanged.
   const [b1, b2] = blanks;
   // Build the caption with both numbers replaced by "____", working
   // right-to-left so the first blank's indices stay valid after edits.
@@ -825,11 +1054,88 @@ function buildFillBlankQuestion(card: Card, _pool: Card[]) {
   const options = shuffle([correct, ...distractors]);
   const correctIndex = options.indexOf(correct);
   return {
-    mode: "fillBlank" as const,
+    mode: "fillBlank",
     prompt: "Fill in the blanks:",
     options,
     correctIndex,
     caption,
+  };
+}
+
+// Group B Bucket 1's confirmed shape (Ashwin's Star-Crossed worked example:
+// Factory Recall + Rebuke as the 2 comparison cards): pull this many
+// comparison cards from the same domain+type+subtype pool.
+const COMPARISON_CARD_COUNT = 2;
+
+function effectTextFor(card: Card): string {
+  return card.subtype === "Equipment" ? equipmentEffectText(card.text || "") ?? card.text : card.text;
+}
+
+/** Bucket 1 (0 numbers, has a permutable bracket) comparison-card pool,
+ *  mirroring buildTextQuestion's progressive-widening tiers: prefer cards
+ *  that share domain+type+subtype with the target, fall back to same-type,
+ *  then the whole pool, at each step requiring the candidate to actually
+ *  have its own permutable bracket (otherwise there's no real/false pair to
+ *  build from it). */
+function selectComparisonCards(card: Card, pool: Card[], correctText: string): Card[] {
+  const hasUsableBracket = (c: Card) => {
+    if (c.id === card.id || !c.text) return false;
+    const text = effectTextFor(c);
+    return text !== correctText && findPermutableBracket(text, c.speed, c.keywords) !== null;
+  };
+  const domainTypeSubtype = pool.filter(
+    (c) =>
+      hasUsableBracket(c) &&
+      c.type === card.type &&
+      c.subtype === card.subtype &&
+      c.domain.some((d) => card.domain.includes(d))
+  );
+  const sameType = pool.filter((c) => hasUsableBracket(c) && c.type === card.type);
+  const candidates =
+    domainTypeSubtype.length >= COMPARISON_CARD_COUNT
+      ? domainTypeSubtype
+      : sameType.length >= COMPARISON_CARD_COUNT
+        ? sameType
+        : pool.filter(hasUsableBracket);
+  return shuffle(candidates).slice(0, COMPARISON_CARD_COUNT);
+}
+
+/** Bucket 1 — 0 numbers, has brackets. Reference case: Star-Crossed
+ *  ("[Reaction] Return a friendly unit and an enemy unit to their owners'
+ *  hands.") against comparisons Factory Recall and Rebuke. Assembles the
+ *  target's own permuted-false variant + each comparison card's real text +
+ *  each comparison card's own permuted-false variant — 5 distractors total
+ *  with COMPARISON_CARD_COUNT=2, matching Ashwin's worked example. The
+ *  correct answer is the target card's real, unpermuted text. */
+export function buildBracketSwapQuestion(card: Card, pool: Card[]): AttributeQuestion {
+  const correctText = effectTextFor(card);
+  const targetTag = findPermutableBracket(correctText, card.speed, card.keywords)!;
+  const keywordPool = domainKeywordVocabulary(pool, card.domain);
+  const comparisons = selectComparisonCards(card, pool, correctText);
+
+  const distractors: string[] = [];
+  const targetFalse = permuteBracketTag(correctText, targetTag, keywordPool);
+  if (targetFalse) distractors.push(targetFalse);
+
+  for (const comp of comparisons) {
+    const compText = effectTextFor(comp);
+    distractors.push(compText);
+    const compTag = findPermutableBracket(compText, comp.speed, comp.keywords);
+    if (compTag) {
+      const compFalse = permuteBracketTag(compText, compTag, keywordPool);
+      if (compFalse) distractors.push(compFalse);
+    }
+  }
+
+  const uniqueDistractors = Array.from(new Set(distractors)).filter((d) => d !== correctText);
+  const options = shuffle([correctText, ...uniqueDistractors]);
+  const correctIndex = options.indexOf(correctText);
+  return {
+    mode: "bracketSwap",
+    prompt: "Which is this card's actual effect text?",
+    options,
+    correctIndex,
+    caption: null,
   };
 }
 
@@ -909,5 +1215,7 @@ export function buildAttributeQuestion(
       return buildTextQuestion(card, pool);
     case "fillBlank":
       return buildFillBlankQuestion(card, pool);
+    case "bracketSwap":
+      return buildBracketSwapQuestion(card, pool);
   }
 }
