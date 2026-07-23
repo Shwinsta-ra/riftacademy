@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   Animated,
@@ -43,6 +43,17 @@ type Props = {
    * from a fresh state rather than stacking.
    */
   playKey: number;
+  /**
+   * Identifies the card/question currently on screen (e.g. the card id).
+   * Sparklet stays mounted across question changes (it's rendered into
+   * QuizCardArt's fixed `decoration` slot), so its own ~1.9s fade-out timer
+   * keeps running on the wall clock regardless of what's showing underneath
+   * it. Without this, clicking "Next" before that timer finishes leaves the
+   * still-fading-out reaction from the OLD card visible on top of the NEW
+   * one. Whenever this changes, every channel snaps to hidden immediately
+   * instead of waiting out its own fade.
+   */
+  activeKey: string;
   /** Diameter-ish size of the mascot in px. */
   size?: number;
 };
@@ -83,7 +94,7 @@ type Props = {
  * native (iOS/Android) RN transform engine, which doesn't support
  * percentage transform values the way web CSS does.
  */
-export default function Sparklet({ playKey, size = 120 }: Props) {
+export default function Sparklet({ playKey, activeKey, size = 120 }: Props) {
   const [reduceMotion, setReduceMotion] = useState(false);
 
   // Body hop + squash/stretch (native).
@@ -110,6 +121,16 @@ export default function Sparklet({ playKey, size = 120 }: Props) {
       sub.remove();
     };
   }, []);
+
+  // Runs BEFORE paint, so the old card's still-fading reaction never has a
+  // chance to render on top of the newly-shown card, even for a frame.
+  useLayoutEffect(() => {
+    [body, cap, spark, toast, shown].forEach((v) => {
+      v.stopAnimation();
+      v.setValue(0);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeKey]);
 
   useEffect(() => {
     // Don't fire on first mount — only on real correct answers.
