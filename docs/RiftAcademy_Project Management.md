@@ -2,7 +2,7 @@
 
 **Owner:** Ashwin Sathe (sole dev, Sathe Consulting LLC) · **Repo:** `github.com/shwinsta-ra/riftacademy` (private, GitHub Pro)
 **Hard deadline:** **July 31, 2026** (Vendetta set release) · **Launch posture:** web-only, free, LJJ-compliant
-**Last updated:** July 20, 2026 (evening). Full reconciliation. Folds in: tutorial visual polish and the no-em-dash content rule (PR #52), three rounds of staging feedback (PRs #55/#58/#67), a tutorial timing fix plus first-launch welcome screen (PR #64), the ratified six-module architecture (PR #60), and the RiftCore package (PR #69), which shipped in code without a fragment, another real documentation gap caught here, not a stylistic one. Also resolves the Vendetta Prep vs. onboarding-tutorial tracking overlap. **This doc is no longer edited directly by feature/fix PRs — see Section 1a and `docs/updates/TEMPLATE.md`.**
+**Last updated:** July 23, 2026 (evening). Full reconciliation of 20 pending fragments (July 21–23). Folds in: card-data corrections and Vendetta text cleanup (166/166 base cards now present, ~90 decision-sheet rows applied), Group B general card-text question parsing fully implemented (not just spec'd), RiftCore data-model Phase A compiler (52/52 calibration match), the actual `WinningLine`/`PointSource` taxonomy build — correcting an earlier false "already merged" claim, preserved and corrected in Section 9 per the evidence-citing rule — three same-night rounds of Battlefield quiz-mask tuning (final values only, in Section 2), an 8-item launch-day fix batch, the RiftIQ Home "New Match" removal ahead of soft alpha, a tutorial-replay filter-reset fix, the Sparklet-lingering fix, and the hand-authored fill-in-blank caption split. All 20 fragments are now folded in and deleted per the fragment lifecycle. **This doc is no longer edited directly by feature/fix PRs — see Section 1a and `docs/updates/TEMPLATE.md`.**
 **Canonical file name:** `RiftAcademy_Project Management` — fixed name across GitHub, Project Knowledge, and Google Drive.
 **Status:** This is the single canonical project doc. If you're holding any other copy — a download from earlier today, a different thread's local merge — discard it.
 
@@ -14,14 +14,13 @@
 
 ## 0. Open this section first — what to do right now
 
-**Highest priority:** RiftIQ. Verify v1 puzzles, build the puzzle UI, add a homepage module for RiftIQ.
+**Highest priority:** RiftIQ. Verify v1 puzzles, build the puzzle UI, add a homepage module for RiftIQ. (RiftIQ Batch 1 v4 — 6 combat puzzles, one per domain — is landed and awaiting Ashwin's review; see Section 9. The referenced `RiftIQ_Puzzle_Design_Catalog.md` is still missing from `docs/riftiq/` — not resolved, despite an earlier report that it had been re-shared.)
 
 **2nd priority:** RiftCoach. Begin the pre-rift plan.
 
 **Unprioritized:**
-- Validate the 60 Vendetta distractor conversions plus 7 flagged cards (Ashwin).
-- Group B card-question follow-up (Ashwin + Claude).
-- Clean up the Master Card Inventory Function column for Vendetta cards (Ashwin).
+- Validate the 60 Vendetta distractor conversions plus 7 flagged cards (Ashwin) — see Section 6 for what this term actually refers to.
+- Clean up the Master Card Inventory Function column for Vendetta cards (Ashwin) — partially done (90-row decision sheet applied); rows for the new Empower mechanic still have no tagged analog to fill from.
 
 **Format note:** refresh this section every session; move completed items to Section 9's log rather than deleting them silently.
 
@@ -73,14 +72,17 @@
 - **Claude plan: Max** — Cowork on web/mobile, computer-use preview, and phone-based Remote Control/Dispatch all available.
 
 ### Card database
-- Master Card Inventory: 929+ cards across OGN, OGS, SFD, UNL, VEN.
-- **VEN: 141 of 166 base cards** currently in `cards.json` (all numbered 1–166, no dups, no over-total codes). The remaining 25 collector numbers are genuinely unreleased/not-yet-on-Riftcodex slots ahead of the July 31 launch, not ingestion errors.
+- **Two legitimately different counts, both current:** Master Card Inventory (spreadsheet, source of truth) = **928 rows** across all sets. `cards.json` (app runtime data) = **918 cards** (928 minus 10 removed by the existing 1v1 ban filter — expected, not data loss). Both confirm **166/166 Vendetta base cards** now present (up from 141/166) — all numbered 1–166, no dups, no over-total codes.
+- Applied all 90 rows from a decision sheet (`Master_Inventory_Decisions_For_Code.csv`) to the inventory: Domain(s)/Function/Subtype/Ability Target corrections, plus a blanket rule that Battlefield/Token cards' **Domain(s) column now reads "Colorless" instead of "None."**
+- Vendetta card text cleaned up: raw API placeholders (`:rb_energy_N:`, `:rb_rune_X:`, `:rb_might:`, `:rb_exhaust:`) converted to the app's plain-text/bracket convention, `&gt;` unescaped, floating costs folded back inside their bracket (e.g. `[Empower] (5)` → `[Empower (5)]`). Speed/Keywords auto-filled for previously-blank Vendetta rows (validated at 99.86%+ match rate against the non-Vendetta corpus). Ability Target/Function left blank for most new-mechanic (`Empower`) rows — no existing tagged analog exists yet.
+- Legend cards no longer generate "what champion is this?" (name-mode) quiz questions — ability and speed questions for them are unaffected. `eligibleModes()` in `src/lib/attributeQuiz.ts` hard-excludes `"name"` for `card.type === "Legend"`, same treatment as `"trigger"` (a per-card override can't reinstate it).
 - `cleanup_ven_reprints.py` removed 20 cards from the earlier 161 count: 8 provisional overnumbered champion codes (Vi/Jinx/Jayce/Viktor/Rengar/Khazix/Diana/Leona), 6 signature "SP" champion reprints, 6 VEN domain runes — each an exact duplicate of a card already in an earlier set.
 - All present VEN cards (and all cards overall) confirmed to have non-null `imageUrl`. RiftRecall's art-exclusion logic in `src/lib/quiz.ts` keys strictly off `imageUrl === null` — there is no `new` flag in `cards.json`, so no stale-flag path can bench a card that has art.
 - Baron Nashor (Ultimate) permanently blacklisted (`BLACKLISTED_IDS`).
 - Champion/Equipment stored as `Unit`/`Gear` + `subtype`; `Champion`/`Equipment` no longer valid `type` values.
 - Set filters grouped: Origins & Proving Grounds / Spiritforged / Unleashed / Vendetta. Speed filter (Action/Reaction) added.
 - Only 4 old Unleashed tokens remain without art — unrelated, low priority.
+- **Known regression risk:** the Master Card Inventory spreadsheet itself still has the same missing-space-after-period issue that was fixed directly in `cards.json` (see Section 3) — if `merge_sheet.py` re-runs against the sheet before that's cleaned up, the fix regresses. Already tracked in TickTick for Ashwin, not duplicated here.
 
 ### Shipped app features
 - **RiftRecall** (renamed from "Card Recall"/"Memory Game"), fully overhauled July 18–19 across PRs #29/#32/#33 — **this build-out shipped in code well before tonight but was never reflected here until now:**
@@ -89,12 +91,18 @@
   - **Control-sheet pipeline:** `build_master_sheet.py`/`apply_master_sheet.py` — one XLSX matching Ashwin's exact format, blank = auto-generated question, filled = permanently pinned.
   - **UI:** 2×2 answer grid (1×3 for exactly 3 options), larger card, bottom-anchored controls.
   - **Home screen rebuild:** `RIFT_BRAND` gold wordmark convention across RiftAcademy/RiftRecall/RiftIQ; RiftIQ introduced as an umbrella (placeholder content); live review-count preview; "What's New" box; fixed LJJ footer.
+  - **Group B general card-text question parsing — fully implemented** (July 21, `attributeQuiz.ts`), not just spec'd: 1-number and 3+-number fill-in-the-blank (extends the existing exactly-2-number case), a same-domain/type/subtype fallback tier for 0-number/no-bracket cards, and a new 6-option `bracketSwap` mode for cards with a permutable keyword bracket (Action/Reaction swap or curated keyword swap). Verb-context classifier (`classifyKind`) rebuilt from scratch — the original Group A version was never committed to the repo. Covered by a 12-case unit suite plus an 879-card full-pool smoke test, all passing.
+  - **Battlefield quiz-mask positions re-measured and fixed** (July 22, three same-night rounds against real staging screenshots, all 4 sets) — final values: `name.Battlefield.top` = 67.0, top-copy `text.Battlefield[0].top` = 7.5, bottom-copy `text.Battlefield[1].top` = 79.0. Scope stayed narrow to Battlefield only; standard name/text and cost/might/power masks untouched.
+  - **Study-batch cooldown now scoped per-filter** (`filterKey`, July 22) — changing filters immediately shows new/eligible cards instead of staying blocked by an unrelated batch's 10-minute timer; switching back to the original filter re-blocks with the countdown continuing from where it was (not reset).
+  - **RiftIQ Home entry narrowed ahead of soft alpha launch** (July 22): the "New Match" button is removed from Home (match analysis isn't shipping in this state for alpha); subheadline changed from "Match analysis & strategy puzzles" to "Game puzzles & tutorials." `MatchList`/`MatchDetail` screens and routes still exist, just unreachable from Home.
 - **Visual-direction "Rune Glow" pass** (PR #45, merged): ambient screen glow, glowing primary buttons (`GlowButton`), a `Sparklet` mascot that celebrates correct answers (respects reduce-motion). `RIFT_BRAND` gold widened to also cover the Sparklet cap only. No Reanimated/expo-blur in the project; glows use RN `shadow*`, Sparklet uses `react-native-svg`. The original holographic foil card-art frame (`QuizCardArt`) was dropped in favor of glow-behind only (PR #52); `FOIL` removed from `theme.ts`.
 - **First-launch onboarding tutorial** (PRs #46, #52, #55, #58, #64, #67, all merged): coach-mark style — highlighted ring + tip bubble walks through setting filters and starting a session using the real UI, advances on real taps, preceded by a one-time Welcome/alpha screen. Content-agnostic engine (`tutorialContext.tsx`) separate from the swappable 4-step script (`tutorialSteps.ts`) — deliberately temporary per Ashwin, meant to be replaced by a broader tour later without an engine rewrite. See Section 9 for the full run of staging-feedback fixes. Web fully verified; native (iOS/Android) still not explicitly confirmed.
 - **Match Tracker (core):** full live match dashboard.
 - **Feedback widget:** draggable bubble, screenshot/annotation, Discord webhook. `REQUIRED` tag removed from the "What happened" field (PR #55).
 - **Opponent Deck Knowledge Filter**, **GitHub + Vercel pipeline**, **Claude Code + Cowork** (both authenticated and validated July 19).
-- Unified `AppModal` across 6 modals; platform-aware CSV export.
+- Unified `AppModal` across 6 modals; platform-aware CSV export. `AppModal` gained an optional `ctaDestructive` prop (solid `theme.incorrect` red CTA) for destructive confirmations (used by the new "Reset progress" modal, see Section 3).
+- **RiftCore data-model Phase A** (July 21) — `scripts/compile_abilities.py`, a rule-based compiler parsing `cards.json` card text into candidate `card_abilities`/`ability_steps` rows. Calibrated at **52/52 exact match** against the locked decisions fixture; run against all 918 cards — 134 auto-accepted into `src/data/model/abilities.json`, 784 queued into `abilities.review.json` for human adjudication. Fully inert: nothing outside `src/data/model/` imports it yet, `cards.json` untouched, no CI wiring.
+- **Winning-line taxonomy — actually built now** (July 22) — `schema.ts`'s `WinningLine` is the real 6-value match-ending taxonomy (`holdAtSeven`, `conquerBothAtSix`, `holdOneConquerOneAtSix`, `cardEffect`, `deckDepletion`, `altWin`); `PointSource` is a flat 5-value union; `rulesKernel.ts`'s `canScoreWinningPoint` gates on it, scaling with `GameState.pointsToWin` rather than hardcoding 7/6. **This corrects a false claim from the July 21 EOD check-in that this schema work was already merged — it was not; see Section 9 for both the original claim and its correction, preserved per the evidence-citing rule.** Two known gaps carry forward as open items: (1) `conquerBothAtSix`'s check is a same-snapshot proxy for "both conquered this turn," not independent tracking of when each was conquered; (2) `deckDepletion`/`altWin` have no backing `GameState` field yet, so `canScoreWinningPoint` can never emit them today. Not customer-facing — `src/lib/core/` isn't wired into the app yet.
 
 ### Data pipeline
 - Google Sheets master workbook = source of truth; `merge_sheet.py`/`apply_*.py`/`build_master_sheet.py`/`apply_master_sheet.py` do CSV/XLSX↔JSON.
@@ -125,7 +133,18 @@
 | Claude Code + Cowork setup | Completed | Both authenticated and validated | Done Jul 19 | — | PAT found + revoked same day, non-load-bearing |
 | First-launch onboarding tutorial | Completed | 4-step coach-mark tour, real-tap advancement, plus a first-launch Welcome/alpha screen ahead of it | Shipped (PRs #46, #52, #55, #58, #64, #67) | None | Multiple staging-feedback rounds polished mask sizing, timing, and copy; native on-device check still not explicitly confirmed |
 | RiftCore package (M0) | Completed | Schema, forward rules kernel, effects, cards adapter (`src/lib/core/`); the shared kernel RiftEngine/RiftLab/RiftCoach/RiftIQ will import | Shipped Jul 20 | None | PR #69; shipped without a fragment, a real documentation gap caught at this reconciliation, not a stylistic one; added vitest as the project's first test runner; see docs/design/riftbound-module-architecture.md |
+| RiftRecall — filters persist across reload | Completed | `FiltersProvider` now backed by settings-table/localStorage, loaded on mount, saved on every change | Shipped Jul 22 | None | Launch-day batch |
+| RiftRecall — countdown-flash fix | Completed | `nowTick` re-stamped at every `batchGateUntil`-setting call site so the countdown never flashes an inflated value | Shipped Jul 22 | None | Launch-day batch fixed 2 of 3 sites; `quiz-countdown-jump-fix` (Jul 22) found and fixed the third (`handleNext`) — that's the final, precise fix |
+| RiftRecall — bracket-swap option-count fix | Completed | `buildBracketSwapQuestion` now samples down to 4 options like every other mode (was rendering up to 6) | Shipped Jul 22 | None | Launch-day batch; a pre-existing test had asserted the buggy behavior as correct, now fixed plus a blanket `options.length <= 4` regression guard |
+| RiftRecall — domain filter chip list fix | Completed | Settings now shows exactly the 7 real domains (Fury/Calm/Mind/Body/Chaos/Order/Colorless) instead of 15+ dual-domain combo chips; filtering is now component-based (splits on "/"), not exact-string | Shipped Jul 22 | None | Launch-day batch |
+| RiftRecall — reset-progress confirmation modal | Completed | "Reset progress" previously silently did nothing (`Alert.alert()` has no RN-web implementation); now a real `AppModal` confirmation with a solid red destructive CTA | Shipped Jul 22 | None | Launch-day batch |
+| Card text — missing space after period (39 cards) | Completed | Regex sweep fixed 38 VEN + 1 UNL card in `cards.json` (e.g. "Kill a gear.[Flow (4)(R)]") | Shipped Jul 22 | None | Launch-day batch; fixes `cards.json` only — the Master Card Inventory source sheet still needs the same cleanup, already tracked in TickTick for Ashwin, not duplicated here |
+| Tutorial replay — stuck "Set filters" button | Completed | `restart()` now clears filters to `DEFAULT_FILTERS` before resetting the tutorial step, so a returning user with filters already set can't get the chip stuck toggling back to a disabled state | Shipped Jul 22 | None | A separate, unfixed, low-confidence viewport-overlap issue (tutorial bubble overlapping "Set filters" at small desktop widths) was flagged for awareness only, not fixed |
+| Sparklet lingering on fast "Next" taps | Completed | New `activeKey` prop snaps all animated channels to hidden via `useLayoutEffect` when the active card changes, so the old card's fading celebration can't render on top of the new one | Shipped Jul 23 (PR #112) | None | Verified by code read only — `npm run typecheck` could not run this session (`node_modules` not installed); needs a real typecheck run before treating as fully proven |
+| Hand-authored fill-in-blank caption split | Completed | `apply_master_sheet.py`'s `split_fillblank_prompt()` gives hand-authored fillBlank rows the same prompt/caption rendering auto-generated ones already have | Shipped Jul 23 (PR #112) | None | Verified only against a synthetic 5-row CSV in this session — no real master-sheet export was available; needs real-data verification before treating as fully proven |
 | **ACTIVE THIS WEEK** |
+| Power-cost mask visual tuning | Unresolved | Mask is now a fixed-size rect (no longer scaled to a card's true `power` value, closing the same leak class as the might/cost fix) | Structurally done Jul 22 | Needs a real visual pass | Not visually verified against real card art — the session that built this had its CDN access blocked; distinct from the Battlefield mask *positioning* work above, which IS resolved — don't conflate the two |
+| Mystic Vortex / Piltovan Forge rendering bug | Unresolved | Reported as "renders rotated 180° / renders twice"; a 10-card spot-check (including both named cards) found clean rendering, no rotation/duplication | Investigated Jul 22 | Needs a live re-check | Inconclusive positive evidence only, not a confirmed fix — a bug not reproduced once isn't necessarily gone; distinct from the Battlefield mask *positioning* work above, which IS resolved — don't conflate the two |
 | Puzzle content (initial + Vendetta) | Not started | 3–5 strategy + 3–5 Vendetta puzzles; verify v1 puzzles, build puzzle UI, add RiftIQ homepage module | For app launch | None | Highest priority per Section 0; see docs/design/riftbound-module-architecture.md |
 | Vendetta full-set repull | In progress | Bring VEN from 141 to full 166 | Ahead of next week's pre-rift | Riftcodex indexing pace | — |
 | New User Ingestion Flow | Not started | Onboarding survey, user segmentation | Before next invite push | Survey design | — |
@@ -165,7 +184,7 @@ All four branches require a PR + passing status checks (`typecheck`, `check-sour
 
 **Step 1 — create and push your branch (Terminal):**
 ```
-cd ~/Downloads/riftacademy-current
+cd ~/Projects/riftacademy
 git checkout integration
 git pull
 git checkout -b feature/<short-name>
@@ -195,7 +214,7 @@ git push -u origin feature/<short-name>
 
 **Every time (Terminal):**
 ```
-cd ~/Downloads/riftacademy-current
+cd ~/Projects/riftacademy
 git checkout integration
 git pull
 git archive --format=zip -o ~/Downloads/riftacademy-upload.zip HEAD
@@ -220,6 +239,11 @@ git archive --format=zip -o ~/Downloads/riftacademy-upload.zip HEAD
 - Diagnose real git state with `git fetch origin` + `git diff origin/X origin/Y`, never the GitHub UI's "Delete branch."
 - **Doc updates use the fragment system (Section 1a), not direct edits to this file** — the single most important process rule as of tonight.
 - **No credentials in TickTick, docs, or any note-taking tool.** A GitHub PAT was found pasted in plaintext in a TickTick task July 19 — revoked immediately, never load-bearing (Claude Code uses `gh` OAuth). Use macOS Keychain or a real password manager if a credential must be stored anywhere retrievable.
+- **File placement is always Claude Code's job, never Ashwin's.** Any file that needs to land in the repo (new CSVs, generated content, config, source data exports) — Code locates the correct destination itself and places it directly, rather than asking Ashwin to run terminal `mv`/`cp` commands. Goal: minimize Ashwin's terminal use toward zero. Prefer Claude Desktop's Code tab over the terminal `claude` CLI for launching sessions, since that removes the one remaining terminal dependency. (Already adopted in `CLAUDE.md`; added here since this doc's Section 6 hadn't caught up.)
+- **Session topology:** separate Code sessions (via git worktrees) for independent module-level daily work; one unified session handles the nightly cross-cutting reconciliation. Working-style decision from the admin thread, not tied to any single fragment.
+
+**Terminology**
+- **"60 Vendetta distractor conversions"** (referenced in Section 0): a one-time manual CSV conversion pass from July 20, 2026. Confirmed **not yet imported** into the live Card Questions Control Sheet as of July 22 — tracked as a TickTick task for Ashwin, not duplicated here. This supersedes an earlier flagged uncertainty about the phrase's meaning; treat as settled.
 
 **Card data (Riftcodex ingestion)**
 - Trailing-letter codes = alt art → drop, use base numeric.
@@ -282,6 +306,62 @@ git archive --format=zip -o ~/Downloads/riftacademy-upload.zip HEAD
 ## 9. Recent updates log
 
 *Customer-facing lines are copyable into changelogs. Team-facing lines are internal context.*
+
+**July 23 (evening, fillblank caption split + Sparklet fix, PR #112)**
+- Customer-facing: Hand-authored fill-in-the-blank questions now render with the same short-label-plus-caption style auto-generated ones already use. Fixed the correct-answer Sparklet mascot lingering onto the next card on a fast "Next" tap.
+- Team-facing: `apply_master_sheet.py`'s new `split_fillblank_prompt()` splits hand-authored `fillBlank` custom prompts into `prompt`/`caption`, gated strictly to that mode; verified only against a synthetic sheet (no real master-sheet export available), flagged for real-data verification (Section 3). `Sparklet` gained a required `activeKey` prop (`card.id`) with a `useLayoutEffect` that snaps its animation state on card change; verified by code read only, `npm run typecheck` could not run this session (`node_modules` missing), flagged for a real typecheck run (Section 3).
+
+**July 22 (late night, winning-line taxonomy audit — corrects the July 21 RiftCore check-in below)**
+- Customer-facing: No visible change — RiftCore's kernel isn't wired into the app yet.
+- Team-facing: The July 21 EOD check-in (entry below) claimed the `WinningLine`/`PointSource` schema reconciliation was already merged to `integration`. **That claim was false.** Checked directly against `schema.ts`/`rulesKernel.ts` on every branch: the older 3-value reconstruction was still live, nothing had actually merged. This entry is the real build, done from scratch on `claude/audit-winning-point-values-45ra7y` off `integration`: `WinningLine` is now the real 6-value taxonomy, `PointSource` a flat 5-value union, `canScoreWinningPoint` gates on `GameState.pointsToWin`/`PlayerState.pointsAtTurnStart` rather than hardcoded 7/6. Two known gaps remain open (see Section 2). Per the evidence-citing standing rule, the original false claim below is left unedited rather than deleted — this entry is the correction of record.
+
+**July 22 (night, tutorial-replay filter-reset fix)**
+- Customer-facing: Fixed a bug where replaying the onboarding tutorial with a filter already set (e.g. Vendetta) could leave the "Set filters" button permanently disabled, stranding a returning user mid-tutorial.
+- Team-facing: `restart()` in `tutorialContext.tsx` now calls `setFilters(DEFAULT_FILTERS)` before resetting the tutorial step, so every replay starts from the same unselected state as a genuine first launch. `DEFAULT_FILTERS` exported from `filtersStore.tsx` for this. A separate, unfixed, low-confidence issue was flagged for awareness only (not fixed): at short/desktop viewport widths, the tutorial callout bubble can visually overlap the "Set filters" button.
+
+**July 22 (evening, RiftIQ Home entry narrowed for soft alpha)**
+- Customer-facing: Ahead of soft alpha launch to communities, the RiftIQ section on Home now only shows "Daily Puzzle (coming soon)" — the "New Match" button is removed, and the subheadline now reads "Game puzzles & tutorials" instead of "Match analysis & strategy puzzles."
+- Team-facing: Scope deliberately narrow, per explicit ask — only the Home entry point removed. `MatchList`/`MatchDetail` screens and routes are untouched, just unreachable from Home now.
+
+**July 22 (evening, morning-batch followups — investigative, no code shipped)**
+- Customer-facing: —
+- Team-facing: Resolved two questions left open from the morning handoff. (1) The 25 new Vendetta cards' visual verification had genuinely never been completed (that session's CDN access was blocked) — did a real 10-card spot-check this session across all three card types present, all rendered cleanly, including the two cards previously flagged for a rendering bug (see below). (2) Traced "the 60 Vendetta distractor conversions" phrase back through git history to a best-supported but unconfirmed reconstruction (likely the earlier exactly-2-number fill-in-blank engine's output, ~60 of 166 Vendetta cards) — **since superseded by a settled definition, see Section 6.**
+
+**July 22 (evening, launch-day fixes batch, 8 items)**
+- Customer-facing: Filters no longer reset on reload during the study-batch cooldown. Countdown no longer flashes a wrong number on load (refined further the same night by the dedicated countdown-jump fix below — that fix is the final, precise one). Text-effect questions always show exactly 4 options, never 6. Domain filter shows the real 7 domains instead of 15+ combo chips, with correct dual-domain inclusion. "Reset progress" now has a real confirmation modal and reads as a destructive action. Power-cost questions no longer leak the answer through box size. 39 cards' missing-space-after-period text bug fixed.
+- Team-facing: Root causes and fixes: `FiltersProvider` never persisted (now backed by settings-table/localStorage); `buildBracketSwapQuestion` (Group B Bucket 1) never sampled its up-to-5-distractor pool down to 4 (now does, plus a regression guard); `getAvailableDomains()` was deriving chips straight off raw dual-domain strings (now a fixed 7-item list, matching filtering logic now split on "/"); "Reset progress" used `Alert.alert()`, which has no RN-web implementation (replaced with `AppModal` + new `ctaDestructive` prop); `powerCost`'s mask height scaled with a card's true power value, itself a leak (now a fixed-size rect, sized to worst case) — **not visually tuned against real card art, that session's CDN access was blocked; still open, see Section 3.** A reported Battlefield-rendering bug (Mystic Vortex, Piltovan Forge — "rotated / renders twice") was investigated thoroughly with no code-level cause found; also blocked on CDN access; **still open pending a live re-check, see Section 3** (partially addressed by the July 22 morning-batch-followups spot-check above — inconclusive, not a confirmed fix).
+
+**July 22 (afternoon–evening, Battlefield quiz-mask tuning, 3 same-night rounds)**
+- Customer-facing: The RiftRecall quiz mask overlay for Battlefield cards now lines up correctly with the name and ability-text on the actual card art, after three rounds of same-night refinement based on direct feedback.
+- Team-facing: Final values only (see Section 2 for the numbers) — round 1 re-measured pixel-for-pixel against real staging screenshots; rounds 2–3 were direct feedback nudges, including the correct-answer Sparklet mascot's position and a filter-scoped batch-cooldown fix (cooldown now keyed to `filterKey`, not one global gate — see Section 2). Scope stayed narrow to Battlefield only throughout.
+
+**July 21 (night, zero-terminal file placement policy)**
+- Customer-facing: —
+- Team-facing: New standing rule adopted (see Section 6): file placement into the repo is always Claude Code's job, never Ashwin's.
+
+**July 21 (night, RiftIQ Batch 1 v4 + authoring gate)**
+- Customer-facing: No shipped in-app change yet — six Batch 1 combat puzzles (one per domain) landed in design/review form, awaiting Ashwin's review.
+- Team-facing: v3 → v4 fixed two puzzles silently broken by a legend's passive ability changing the combat math (puzzles were being validated card-by-card, not legend-by-legend). New validation checklist items adopted, applying beyond RiftIQ to any thread authoring board states: **G** (legend-passive audit), **H** (point-race safety), **I** (simultaneous-damage wording). A separately referenced `RiftIQ_Puzzle_Design_Catalog.md` could not be located in this session (checked Downloads, Drive, full-account search) — **as of this reconciliation it is still not present in `docs/riftiq/`, remains an open gap** (see Section 0).
+
+**July 21 (night, RiftCore data-model Phase A)**
+- Customer-facing: None — inert in-repo groundwork for the post-July-31 Supabase migration.
+- Team-facing: See Section 2 for the compiler/calibration details. Zero-impact verified: nothing outside `src/data/model/` imports it, `cards.json` untouched, no CI wiring.
+
+**July 21 (evening, RiftCore EOD check-in)**
+- Customer-facing: No visible change.
+- Team-facing: Database direction decided — Postgres via Supabase, load after July 31, same schema both phases. Ability-encoding decision — one row per ability-stage, compiler-derived. Two prior card rulings (Hidden Blade, Bellows Breath) double-checked and confirmed already correct in committed data, no fix needed. Also noted: the ability compiler landed a day earlier than that night's own control-summary plan called for — flagged for awareness, not acted on further. **Schema-reconciliation status claimed here: "confirmed merged to `integration`." This claim was false — see the July 22 correction entry above ("winning-line taxonomy audit"), preserved here unedited per the evidence-citing standing rule.**
+
+**July 21 (evening, RiftCoach pre-rift playbook v2)**
+- Customer-facing: No player-facing app change — Ashwin's personal Pre-Rift Vendetta Sealed prep material, not an in-app feature.
+- Team-facing: Landed `docs/riftcoach/pre-rift-playbook-vendetta.md` v2 — event/rules primer, the three new Vendetta mechanics (Empower/Flow/Burn), an on-sight evaluation rubric (explicitly parked as possible future in-app content only, not a current build), a rebuilt Vendetta-only rep deck. No RiftIQ/RiftLab/RiftCore code touched.
+
+**July 21 (afternoon, Group B general card-text question parsing — implemented)**
+- Customer-facing: The quiz now asks a sharper, more specific question for almost every card instead of falling back to "pick the real text out of a lineup" so often.
+- Team-facing: All four Group B buckets implemented in `attributeQuiz.ts` (see Section 2). The full spec lives in a Drive handoff doc (`group-b-text-parsing-handoff.md`), already answered by Ashwin prior to this — not re-derived from scratch. Covered by a new unit suite plus an 879-card smoke test; `npm run test`/`typecheck` both pass.
+
+**July 21 (afternoon, card data reconciliation)**
+- Customer-facing: Card data refresh across ~90 cards (domain/function/subtype corrections), Battlefield/Token cards now show "Colorless" instead of "None," Legend cards no longer generate "name" quiz questions, Vendetta card text cleaned up, and 166/166 Vendetta base cards are now in the app (up from 141/166).
+- Team-facing: See Section 2 for full detail. `cards.json` is now 918 cards (928 in the source inventory minus 10 removed by the existing 1v1 ban filter).
 
 **July 20 (late evening, RiftCore package)**
 - Customer-facing: No visible change.
