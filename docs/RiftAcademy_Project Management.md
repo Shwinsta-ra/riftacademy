@@ -2,7 +2,7 @@
 
 **Owner:** Ashwin Sathe (sole dev, Sathe Consulting LLC) · **Repo:** `github.com/shwinsta-ra/riftacademy` (private, GitHub Pro)
 **Hard deadline:** **July 31, 2026** (Vendetta set release) · **Launch posture:** web-only, free, LJJ-compliant
-**Last updated:** July 23, 2026 (evening). Full reconciliation of 20 pending fragments (July 21–23). Folds in: card-data corrections and Vendetta text cleanup (166/166 base cards now present, ~90 decision-sheet rows applied), Group B general card-text question parsing fully implemented (not just spec'd), RiftCore data-model Phase A compiler (52/52 calibration match), the actual `WinningLine`/`PointSource` taxonomy build — correcting an earlier false "already merged" claim, preserved and corrected in Section 9 per the evidence-citing rule — three same-night rounds of Battlefield quiz-mask tuning (final values only, in Section 2), an 8-item launch-day fix batch, the RiftIQ Home "New Match" removal ahead of soft alpha, a tutorial-replay filter-reset fix, the Sparklet-lingering fix, and the hand-authored fill-in-blank caption split. All 20 fragments are now folded in and deleted per the fragment lifecycle. **This doc is no longer edited directly by feature/fix PRs — see Section 1a and `docs/updates/TEMPLATE.md`.**
+**Last updated:** July 23, 2026 (evening, plus a small same-day true-up patch). Full reconciliation of 20 pending fragments (July 21–23), plus a follow-up correction pass: Section 0 refreshed to reflect actual current state (RiftIQ v4, not v1; RiftCoach deep into pre-rift prep, not "beginning"; the puzzle-catalog file confirmed genuinely landed, not still missing), three stale Section 3 rows corrected (VEN count, Vendetta repull status, puzzle content status), and three shipped features added to Section 3's table that had only ever gotten Section 2 prose (RiftCore Phase A compiler, the winning-line taxonomy, RiftIQ's Home narrowing) - this doc's own rule says feature status lives in one place, the Section 3 table, and these had drifted from that. All 20 fragments are folded in and deleted per the fragment lifecycle. **This doc is no longer edited directly by feature/fix PRs — see Section 1a and `docs/updates/TEMPLATE.md`.**
 **Canonical file name:** `RiftAcademy_Project Management` — fixed name across GitHub, Project Knowledge, and Google Drive.
 **Status:** This is the single canonical project doc. If you're holding any other copy — a download from earlier today, a different thread's local merge — discard it.
 
@@ -14,13 +14,15 @@
 
 ## 0. Open this section first — what to do right now
 
-**Highest priority:** RiftIQ. Verify v1 puzzles, build the puzzle UI, add a homepage module for RiftIQ. (RiftIQ Batch 1 v4 — 6 combat puzzles, one per domain — is landed and awaiting Ashwin's review; see Section 9. The referenced `RiftIQ_Puzzle_Design_Catalog.md` is still missing from `docs/riftiq/` — not resolved, despite an earlier report that it had been re-shared.)
+**Today (July 23) is the last full day before Vendetta Pre-Rift Session 1 (Friday July 24).**
 
-**2nd priority:** RiftCoach. Begin the pre-rift plan.
+**RiftCoach:** deep into pre-rift prep, not "beginning" — multiple sim-triage rounds today, writing the RiftLab prep brief + Friday observation instrument (needed before Friday, not before Monday).
 
-**Unprioritized:**
-- Validate the 60 Vendetta distractor conversions plus 7 flagged cards (Ashwin) — see Section 6 for what this term actually refers to.
-- Clean up the Master Card Inventory Function column for Vendetta cards (Ashwin) — partially done (90-row decision sheet applied); rows for the new Empower mechanic still have no tagged analog to fill from.
+**RiftIQ:** Batch 1 is at **v4** (6 puzzles, one per domain, all rules-legal) — awaiting Ashwin's review, which unblocks 3 open questions (calm-1 difficulty, Batch 2 Easy-slot rotation, legacy-14 audit decision — see Section 10). Confirmed **not blocked on RiftCore** (71% of the 924-card pool is authorable now with single-step abilities). `RiftIQ_Puzzle_Design_Catalog.md` is now genuinely present in `docs/riftiq/`, independently verified three ways (local disk, GitHub's branch copy, the Contents API) — the earlier "still missing" note in this section was itself stale by the time it was written; resolved as of PR #117.
+
+**Master Card Inventory:** fill Function, Ability Target, Keywords, and Subtype for Vendetta cards (Ashwin) — partially done (90-row decision sheet applied); rows for the new Empower mechanic still have no tagged analog to fill from.
+
+**RiftRecall:** clear all outstanding Discord bug reports related to card questions.
 
 **Format note:** refresh this section every session; move completed items to Section 9's log rather than deleting them silently.
 
@@ -124,7 +126,7 @@
 | GitHub integration | Completed | Repo + Vercel pipeline | Shipped Jul 16 | — | — |
 | Master Card Inventory + Vendetta prep | Completed | Full DB refresh, dedup/ban cleanup | Shipped | — | — |
 | Vendetta card images | Completed | All VEN cards have real art | Shipped Jul 17 | — | Re-verified Jul 19 |
-| VEN card-count reconciliation | Completed | 161 → 141 of 166, full reasoning documented | Fixed Jul 19 | — | PR #40 |
+| VEN card-count reconciliation | Completed | 161 → 141 → 166 of 166, full reasoning documented across both passes | Fixed Jul 21 | — | PR #40 (initial), card-data reconciliation Jul 21 (final 25 cards) |
 | RiftRecall — session persistence & batch pacing | Completed | Long-term + in-session state, 20-card capped batches | Shipped | — | PR #29/#33 — **previously undocumented here** |
 | RiftRecall — question-quality overhaul | Completed | Split cost modes, sane distractors, epithet-restricted name quiz | Shipped | Epithet CSV review pending | PR #29/#32/#33 — **previously undocumented here** |
 | RiftRecall — control-sheet pipeline | Completed | `build_master_sheet.py`/`apply_master_sheet.py` | Shipped | — | PR #29 — **previously undocumented here** |
@@ -142,11 +144,15 @@
 | Tutorial replay — stuck "Set filters" button | Completed | `restart()` now clears filters to `DEFAULT_FILTERS` before resetting the tutorial step, so a returning user with filters already set can't get the chip stuck toggling back to a disabled state | Shipped Jul 22 | None | A separate, unfixed, low-confidence viewport-overlap issue (tutorial bubble overlapping "Set filters" at small desktop widths) was flagged for awareness only, not fixed |
 | Sparklet lingering on fast "Next" taps | Completed | New `activeKey` prop snaps all animated channels to hidden via `useLayoutEffect` when the active card changes, so the old card's fading celebration can't render on top of the new one | Shipped Jul 23 (PR #112) | None | Verified by code read only — `npm run typecheck` could not run this session (`node_modules` not installed); needs a real typecheck run before treating as fully proven |
 | Hand-authored fill-in-blank caption split | Completed | `apply_master_sheet.py`'s `split_fillblank_prompt()` gives hand-authored fillBlank rows the same prompt/caption rendering auto-generated ones already have | Shipped Jul 23 (PR #112) | None | Verified only against a synthetic 5-row CSV in this session — no real master-sheet export was available; needs real-data verification before treating as fully proven |
+| RiftCore data-model Phase A | Completed | `compile_abilities.py` compiler, 52/52 calibration match, run against all 918 cards | Shipped Jul 21 | None | 134 auto-accepted, 784 queued for review; fully inert, zero-impact by design |
+| Winning-line taxonomy | Completed | 6-value `WinningLine`/`PointSource` in `schema.ts`/`rulesKernel.ts` | Shipped Jul 22 | None | Corrects a false "already merged" claim from Jul 21 - see Section 9. Two known gaps carry forward: same-turn-conquer proxy limitation, deckDepletion/altWin have no backing GameState field yet |
+| RiftIQ Home entry narrowed for soft alpha | Completed | "New Match" button removed, subheadline now "Game puzzles & tutorials", version label "Alpha v1.0" | Shipped Jul 22 | None | `MatchList`/`MatchDetail` screens/routes untouched, just unreachable from Home |
 | **ACTIVE THIS WEEK** |
 | Power-cost mask visual tuning | Unresolved | Mask is now a fixed-size rect (no longer scaled to a card's true `power` value, closing the same leak class as the might/cost fix) | Structurally done Jul 22 | Needs a real visual pass | Not visually verified against real card art — the session that built this had its CDN access blocked; distinct from the Battlefield mask *positioning* work above, which IS resolved — don't conflate the two |
 | Mystic Vortex / Piltovan Forge rendering bug | Unresolved | Reported as "renders rotated 180° / renders twice"; a 10-card spot-check (including both named cards) found clean rendering, no rotation/duplication | Investigated Jul 22 | Needs a live re-check | Inconclusive positive evidence only, not a confirmed fix — a bug not reproduced once isn't necessarily gone; distinct from the Battlefield mask *positioning* work above, which IS resolved — don't conflate the two |
-| Puzzle content (initial + Vendetta) | Not started | 3–5 strategy + 3–5 Vendetta puzzles; verify v1 puzzles, build puzzle UI, add RiftIQ homepage module | For app launch | None | Highest priority per Section 0; see docs/design/riftbound-module-architecture.md |
-| Vendetta full-set repull | In progress | Bring VEN from 141 to full 166 | Ahead of next week's pre-rift | Riftcodex indexing pace | — |
+| RiftIQ Batch 1 v4 | Awaiting review | 6 combat puzzles, one per domain, all rules-legal | For app launch | Ashwin's review + 3 open questions (Section 10) | Confirmed NOT blocked on RiftCore - 71% of the 924-card pool is authorable now with single-step abilities |
+| RiftIQ puzzle UI | In progress | Top-down board, code-driven | This week | Ashwin's own mockup | Working with Ashwin directly on visual direction |
+| Vendetta full-set repull | Completed | Brought VEN from 141 to full 166 | Jul 21 | — | See Section 2; superseded the "ahead of next week's pre-rift" framing - it's this week's pre-rift now |
 | New User Ingestion Flow | Not started | Onboarding survey, user segmentation | Before next invite push | Survey design | — |
 | **THIS MONTH (BEFORE JULY 31)** |
 | Deckbuilder v1 | Not started | Template deck, save personal version | Before Jul 31 | None | — |
