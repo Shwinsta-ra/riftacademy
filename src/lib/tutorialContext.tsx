@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { View } from "react-native";
 import { getHasSeenTutorial, setHasSeenTutorial } from "./db";
 import { TUTORIAL_STEPS, TutorialStep, TutorialStepId } from "./tutorialSteps";
+import { DEFAULT_FILTERS, useFilters } from "./filtersStore";
 
 export type TargetRect = { x: number; y: number; width: number; height: number };
 
@@ -27,6 +28,7 @@ const TutorialContext = createContext<TutorialContextValue | undefined>(undefine
 export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [stepIndex, setStepIndex] = useState<number | null>(null);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
+  const { setFilters } = useFilters();
 
   // On first mount, check whether this device has already been through (or
   // dismissed) the tutorial. Only ever auto-starts once, ever, per device —
@@ -79,9 +81,18 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   }, [finish]);
 
   const restart = useCallback(() => {
+    // Replaying the tutorial must start from the exact same clean slate as a
+    // genuine first launch (empty filters). Without this, a returning user
+    // who already has filters set (e.g. Vendetta) walks into the
+    // "newestSetChip" step with that chip already selected — tapping it per
+    // the tutorial's own instruction DESELECTS it instead, and re-tapping to
+    // reselect lands back on the exact filters that were already saved, so
+    // "Set filters" (disabled whenever staged === saved) never re-enables
+    // and the tutorial gets stuck with no way to continue.
+    setFilters(DEFAULT_FILTERS);
     setTargetRect(null);
     setStepIndex(0);
-  }, []);
+  }, [setFilters]);
 
   return (
     <TutorialContext.Provider
