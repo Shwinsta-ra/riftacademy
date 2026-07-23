@@ -212,14 +212,13 @@ git push -u origin feature/<short-name>
 
 ## 5. New thread creation flow
 
-**Every time (Terminal):**
-```
-cd ~/Projects/riftacademy
-git checkout integration
-git pull
-git archive --format=zip -o ~/Downloads/riftacademy-upload.zip HEAD
-```
-*(use `main` instead of `integration` for a hotfix)*
+**Every morning, before starting any thread's work — a single message to Code, not manual terminal commands.** Paste this exact prompt:
+
+> "Good morning — start today's routine: checkout and pull the latest integration, then (1) generate a fresh zip of HEAD as usual, and (2) separately extract `docs/RiftAcademy_Project Management.md` as its own standalone file. Save both to `~/Downloads`. Confirm both files are there when done."
+
+Code then runs the equivalent of the old manual commands (checkout `integration`, pull, `git archive` for the zip, and a direct copy/extraction of the PM doc to its own file) and places both in `~/Downloads` for Ashwin to route from there — Downloads stays the temporary daily drop point, never a working location.
+
+*(For a hotfix, say `main` instead of `integration` in the prompt.)*
 
 **Then, in the new thread:**
 - Attach `~/Downloads/riftacademy-upload.zip`. **Don't separately paste another copy of this doc** — the zip already contains the current version at `docs/RiftAcademy_Project Management.md`, and the `git pull` immediately before archiving guarantees it's as current as GitHub, seconds old.
