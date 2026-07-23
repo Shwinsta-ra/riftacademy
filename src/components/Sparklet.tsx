@@ -66,18 +66,19 @@ type Props = {
  * Positioning: rendered via QuizCardArt's `decoration` slot, which places it
  * on the card's own unclipped outer container (position: relative, overflow:
  * visible) — so `styles.overlay` below is anchored to the CARD's box, not
- * the whole screen. Pinned to the middle-right edge (vertically centered,
- * peeking slightly past the right edge), rather than the bottom-right
- * corner (which used to sit awkwardly close to the caption band below it)
- * or centered over the card (which used to overlap the caption/prompt/
- * answers below it).
+ * the whole screen. Pinned to the right edge, 10% above dead vertical
+ * center (per Ashwin's follow-up -- dead-center read a little low), rather
+ * than the bottom-right corner (which used to sit awkwardly close to the
+ * caption band below it) or centered over the card (which used to overlap
+ * the caption/prompt/answers below it).
  *
- * Anchored from `top: '50%'` + a numeric `marginTop` of minus half the
- * mascot's own pixel height (computed below as `height`), NOT a `bottom`
- * offset or a percentage transform: QuizCardArt's container aspect ratio
- * varies by card orientation (portrait for most cards, landscape for
- * Battlefields — see BATTLEFIELD_ASPECT_RATIO in QuizScreen.tsx), so `top:
- * '50%'` still centers correctly regardless of that height, and a numeric
+ * Anchored from `top: '40%'` (50% dead-center minus the 10% nudge up) + a
+ * numeric `marginTop` of minus half the mascot's own pixel height (computed
+ * below as `height`), NOT a `bottom` offset or a percentage transform:
+ * QuizCardArt's container aspect ratio varies by card orientation (portrait
+ * for most cards, landscape for Battlefields — see BATTLEFIELD_ASPECT_RATIO
+ * in QuizScreen.tsx), so a percentage `top` still lands at the same
+ * relative height regardless of that container height, and a numeric
  * marginTop (rather than a percentage `translateY`) is required for the
  * native (iOS/Android) RN transform engine, which doesn't support
  * percentage transform values the way web CSS does.
@@ -363,16 +364,16 @@ export default function Sparklet({ playKey, size = 120 }: Props) {
 }
 
 const styles = StyleSheet.create({
-  // Middle-right edge, vertically centered -- `top: '50%'` works for both
-  // portrait and landscape (Battlefield) cards since it's relative to
+  // Right edge, 10% above dead vertical center -- `top: '40%'` works for
+  // both portrait and landscape (Battlefield) cards since it's relative to
   // container height either way; the numeric `marginTop` (set inline above,
-  // -height/2) shifts it up by half its own pixel height to actually center
-  // it rather than just starting at the midpoint. Not bottom-right (used to
-  // sit awkwardly close to the caption band) or centered over the card
-  // (used to overlap the caption/prompt/answers below it).
+  // -height/2) shifts it up by half its own pixel height so that 40% point
+  // is the mascot's actual center, not just where it starts drawing. Not
+  // bottom-right (used to sit awkwardly close to the caption band) or dead
+  // center (per Ashwin's follow-up, read a little low).
   overlay: {
     position: "absolute",
-    top: "50%",
+    top: "40%",
     right: -10,
     alignItems: "center",
   },
