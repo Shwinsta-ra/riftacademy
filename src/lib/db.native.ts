@@ -1,5 +1,5 @@
 import * as SQLite from "expo-sqlite";
-import { CardProgress, QuizFilters } from "./types";
+import { BatchGate, CardProgress, QuizFilters } from "./types";
 
 const DB_NAME = "riftbound_trainer.db";
 
@@ -54,21 +54,32 @@ const WELCOME_SEEN_KEY = "hasSeenWelcome";
 // filters.
 const FILTERS_KEY = "quizFilters";
 
-export async function getLastBatchCompletedAt(): Promise<number | null> {
+export async function getLastBatchCompletedAt(): Promise<BatchGate | null> {
   const db = await getDb();
   const row = await db.getFirstAsync<{ value: string }>(
     "SELECT value FROM settings WHERE key = ?",
     [BATCH_GATE_KEY]
   );
-  return row ? parseInt(row.value, 10) : null;
+  if (!row) return null;
+  // Pre-filter-scoping installs stored a bare timestamp string (no JSON, no
+  // filterKey) -- treat that as "no filter recorded" rather than crashing
+  // JSON.parse on a plain number string, so an existing gate from before
+  // this change degrades gracefully instead of erroring.
+  try {
+    const parsed = JSON.parse(row.value);
+    if (typeof parsed === "number") return { timestamp: parsed, filterKey: null };
+    return parsed as BatchGate;
+  } catch {
+    return null;
+  }
 }
 
-export async function setLastBatchCompletedAt(timestamp: number): Promise<void> {
+export async function setLastBatchCompletedAt(timestamp: number, filterKey: string): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `INSERT INTO settings (key, value) VALUES (?, ?)
      ON CONFLICT(key) DO UPDATE SET value = excluded.value;`,
-    [BATCH_GATE_KEY, String(timestamp)]
+    [BATCH_GATE_KEY, JSON.stringify({ timestamp, filterKey })]
   );
 }
 
