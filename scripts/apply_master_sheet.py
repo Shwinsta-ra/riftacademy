@@ -42,6 +42,28 @@ CATEGORY_MAP = {
     "fill in the blanks": "fillBlank",
 }
 
+# The only two prompt strings auto-generation ever produces for fillBlank
+# (see buildSingleBlankQuestion/buildFillBlankQuestion in attributeQuiz.ts).
+# Hand-authored rows follow the same visual convention -- label, then the
+# blanked sentence in brackets -- but typed into one cell with nowhere to
+# store prompt/caption separately, so this splits it back apart.
+FILLBLANK_LABELS = ("Fill in the blank:", "Fill in the blanks:")
+
+
+def split_fillblank_prompt(custom_prompt):
+    """Splits a hand-authored fillBlank prompt into (prompt, caption) if it
+    matches the auto-generated label + bracketed-sentence convention exactly;
+    otherwise returns (custom_prompt, None) unchanged. Only the outermost
+    bracket pair is ever stripped -- card text routinely contains its own
+    real brackets (e.g. [Empower]), and this must never touch those."""
+    for label in FILLBLANK_LABELS:
+        if custom_prompt.startswith(label):
+            remainder = custom_prompt[len(label):].strip()
+            if remainder.startswith("[") and remainder.endswith("]"):
+                return label, remainder[1:-1].strip()
+            break
+    return custom_prompt, None
+
 
 def main():
     if len(sys.argv) < 2:
@@ -56,6 +78,8 @@ def main():
     questions = {}
     skipped_incomplete = []
     skipped_bad_category = []
+    fillblank_split_ok = []
+    fillblank_split_fallback = []
 
     for row in rows:
         card_code = (row.get("Card Code") or "").strip().lower()
@@ -109,6 +133,14 @@ def main():
             "correctAnswer": custom_answer,
             "distractorPool": distractors,
         }
+        if mode == "fillBlank":
+            split_prompt, split_caption = split_fillblank_prompt(custom_prompt)
+            if split_caption is not None:
+                variant["prompt"] = split_prompt
+                variant["caption"] = split_caption
+                fillblank_split_ok.append(card_code)
+            else:
+                fillblank_split_fallback.append(card_code)
         questions.setdefault(card_code, {}).setdefault(mode, []).append(variant)
 
     with open(OVERRIDES_PATH, "w") as f:
@@ -136,6 +168,17 @@ def main():
               f"(need BOTH Custom Prompt + Correct Answer, plus at least 1 distractor):")
         for code, cat, row in skipped_incomplete[:20]:
             print(f"   {code} / {cat}")
+
+    total_fillblank = len(fillblank_split_ok) + len(fillblank_split_fallback)
+    if total_fillblank:
+        print()
+        print(f"Fill-in-the-blank custom rows: {total_fillblank} found, "
+              f"{len(fillblank_split_ok)} split into prompt+caption, "
+              f"{len(fillblank_split_fallback)} fell back to an unsplit prompt")
+        if fillblank_split_fallback:
+            print("  Fallback card(s) (didn't match the expected label + bracket pattern):")
+            for code in fillblank_split_fallback[:20]:
+                print(f"   {code}")
 
 
 if __name__ == "__main__":
