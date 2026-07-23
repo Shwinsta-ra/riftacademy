@@ -159,14 +159,7 @@ export default function HomeScreen({ navigation }: Props) {
 
         <FeatureBox>
           <RiftWord suffix="IQ" style={styles.boxLabel} />
-          <Text style={styles.iqSubtitle}>Match analysis & strategy puzzles</Text>
-          <GlowButton
-            label="New Match"
-            onPress={() => navigation.navigate("MatchList")}
-            style={styles.bigButtonWrap}
-            contentStyle={styles.bigButtonBody}
-            textStyle={styles.bigButtonText}
-          />
+          <Text style={styles.iqSubtitle}>Game puzzles & tutorials</Text>
           <Pressable style={styles.disabledButton} disabled>
             <Text style={styles.disabledButtonText}>Daily Puzzle (coming soon)</Text>
           </Pressable>
