@@ -397,6 +397,19 @@ export default function QuizScreen({ navigation }: Props) {
       setLastBatchCompletedAt(now, filtersKey(filters));
       clearSessionSnapshot();
       setBatchGateUntil(now + BATCH_COOLDOWN_MIN * 60_000);
+      // nowTick only advances via the countdown's own 1s interval (see the
+      // effect below), which doesn't start running until batchGateUntil is
+      // truthy -- during the study session that just ended, batchGateUntil
+      // was null, so nowTick has been sitting frozen at whatever it was
+      // stamped to last (this screen's mount time, for a session that never
+      // hit a gate before now). Without this, the very first countdown
+      // render computes msLeft against that stale timestamp -- showing
+      // 10 minutes PLUS however long the just-finished session actually
+      // took -- and then visibly snaps down to the correct value a moment
+      // later once the interval's first tick fires. Same fix as the two
+      // gate branches in loadSession above, needed here for the same
+      // reason.
+      setNowTick(now);
       return;
     }
 
