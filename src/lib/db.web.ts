@@ -1,4 +1,4 @@
-import { CardProgress } from "./types";
+import { BatchGate, CardProgress, QuizFilters } from "./types";
 
 // expo-sqlite's web implementation depends on a wa-sqlite WASM asset that
 // doesn't resolve cleanly through Metro's web bundler (confirmed: it fails
@@ -35,6 +35,14 @@ const TUTORIAL_SEEN_KEY = "riftboundTrainerHasSeenTutorial";
 // either (e.g. replaying just the tutorial) can't accidentally re-trigger
 // the other.
 const WELCOME_SEEN_KEY = "riftboundTrainerHasSeenWelcome";
+// The active QuizFilters selection -- unlike sessionState's queue/score
+// bookkeeping (allowed to clear whenever the tab closes), the filters
+// someone deliberately set in Settings need to survive a reload the same
+// way progress and the batch gate do. Without this, an app remount during
+// an active BATCH_COOLDOWN_MIN wait snaps filters back to default while
+// the persisted batch-gate timestamp survives untouched, so the fresh
+// batch that builds once the cooldown clears uses the wrong filters.
+const FILTERS_KEY = "riftboundTrainerQuizFilters";
 
 function readAll(): Record<string, CardProgress> {
   try {
@@ -51,6 +59,23 @@ function writeAll(all: Record<string, CardProgress>): void {
   } catch {
     // localStorage can throw in rare cases (private browsing quota limits,
     // etc.) — silently no-op rather than crash the quiz over a save miss.
+  }
+}
+
+export async function getSavedFilters(): Promise<QuizFilters | null> {
+  try {
+    const raw = localStorage.getItem(FILTERS_KEY);
+    return raw ? (JSON.parse(raw) as QuizFilters) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setSavedFilters(filters: QuizFilters): Promise<void> {
+  try {
+    localStorage.setItem(FILTERS_KEY, JSON.stringify(filters));
+  } catch {
+    // no-op, same reasoning as above
   }
 }
 
@@ -72,18 +97,25 @@ export async function resetAllProgress(): Promise<void> {
   }
 }
 
-export async function getLastBatchCompletedAt(): Promise<number | null> {
+export async function getLastBatchCompletedAt(): Promise<BatchGate | null> {
   try {
     const raw = localStorage.getItem(BATCH_GATE_KEY);
-    return raw ? parseInt(raw, 10) : null;
+    if (!raw) return null;
+    // Pre-filter-scoping installs stored a bare timestamp string (no JSON,
+    // no filterKey) -- treat that as "no filter recorded" rather than
+    // crashing JSON.parse on a plain number string, so an existing gate
+    // from before this change degrades gracefully instead of erroring.
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === "number") return { timestamp: parsed, filterKey: null };
+    return parsed as BatchGate;
   } catch {
     return null;
   }
 }
 
-export async function setLastBatchCompletedAt(timestamp: number): Promise<void> {
+export async function setLastBatchCompletedAt(timestamp: number, filterKey: string): Promise<void> {
   try {
-    localStorage.setItem(BATCH_GATE_KEY, String(timestamp));
+    localStorage.setItem(BATCH_GATE_KEY, JSON.stringify({ timestamp, filterKey }));
   } catch {
     // no-op
   }

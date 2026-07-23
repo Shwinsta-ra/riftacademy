@@ -1,0 +1,1668 @@
+{
+  "artifact": "riftcore-function-decisions",
+  "schemaVersion": "0.1.0-draft",
+  "generated": "2026-07-22",
+  "status": "DECISIONS OF RECORD ONLY - not imported by the app, no runtime path reads this. Zero launch impact. All 52 cards confirmed; no open discrepancies.",
+  "purpose": "Captures Ashwin's locked Function/ability decisions in the proposed normalized ability model, and stress-tests whether that model can express them.",
+  "cardCount": 52,
+  "cards": [
+    {
+      "cardCode": "ogn-009-298",
+      "name": "Hextech Ray",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 3,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogs-003-024",
+      "name": "Incinerate",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-004-298",
+      "name": "Cleave",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 3,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-043-298",
+      "name": "Charm",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Move",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-097-221",
+      "name": "Punch First",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 5,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-046-298",
+      "name": "En Garde",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "thisTurn"
+              },
+              "condition": "if-solo-at-location",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-045-298",
+      "name": "Defy",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Counter",
+              "target": "spell",
+              "targetScope": "single",
+              "value": {
+                "maxCost": 4
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-093-298",
+      "name": "Smoke Screen",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "DebuffMight",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": -4,
+                "floor": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "Subtype=Reaction spell; target=an enemy unit (confirmed 2026-07-22)"
+    },
+    {
+      "cardCode": "sfd-066-221",
+      "name": "Frigid Touch",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": {
+            "repeat": {
+              "cost": "2",
+              "maxTimes": 1
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "DebuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": -2,
+                "floor": null,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "Repeat re-runs the step"
+    },
+    {
+      "cardCode": "ogn-108-298",
+      "name": "Convergent Mutation",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "SetMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "toSourceUnit": true,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-169-298",
+      "name": "Gust",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "ReturnToHand",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "maxMight": 3
+              },
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-134-219",
+      "name": "Existential Dread",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": {
+            "repeat": {
+              "cost": "2",
+              "maxTimes": 1
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Stun",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "is-attacking",
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "ReturnToHand",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "if-already-stunned",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-241-298",
+      "name": "Shen, Kinkou",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "Static",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Shield",
+                "value": 2
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "GrantKeyword",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Tank"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "Static printed keywords; no executable program. Reaction-speed unit."
+    },
+    {
+      "cardCode": "ogn-096-298",
+      "name": "Watchful Sentry",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "Deathknell",
+          "timing": "None",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-136-298",
+      "name": "Pit Rookie",
+      "lockedOn": "2026-07-20",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "permanent"
+              },
+              "condition": "another-friendly",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-005-298",
+      "name": "Disintegrate",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": 3,
+              "condition": "at-battlefield",
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": "if-previous-step-killed",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-022-298",
+      "name": "Thermo Beam",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillGear",
+              "target": "any-gear",
+              "targetScope": "all",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-254-298",
+      "name": "Noxian Guillotine",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "RegisterDelayedKill",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "firesOn": "nextDamageTakenThisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "KillUnit",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "if-Legion-active",
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: fires 'when damaged', not generic-delayed. Legion upgrades to immediate kill."
+    },
+    {
+      "cardCode": "sfd-003-221",
+      "name": "Blood Rush",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": {
+            "repeat": {
+              "cost": "1",
+              "maxTimes": 1
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 2,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: Repeat capped at ONCE."
+    },
+    {
+      "cardCode": "unl-010-219",
+      "name": "Vault Breaker",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Assault",
+                "value": 2,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Ganking",
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-020-219",
+      "name": "Dancing Grenade",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Damage",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "ReplayFromChain",
+              "target": "self",
+              "targetScope": "single",
+              "value": {
+                "cost": "Any",
+                "bonusDamage": {
+                  "expr": "1 * timesThisSpellDealtDamageThisTurn"
+                }
+              },
+              "condition": "controller-may",
+              "optional": true
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: dynamic scaling bonus damage; replay is controller-optional."
+    },
+    {
+      "cardCode": "ogn-050-298",
+      "name": "Rune Prison",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Stun",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-057-298",
+      "name": "Block",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Shield",
+                "value": 3,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "GrantKeyword",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "keyword": "Tank",
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "Hidden (Any)"
+    },
+    {
+      "cardCode": "ogn-058-298",
+      "name": "Discipline",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 2,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-064-298",
+      "name": "Wind Wall",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Counter",
+              "target": "spell",
+              "targetScope": "single",
+              "value": {
+                "maxCost": null
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "sfd-045-221",
+      "name": "Not So Fast",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Counter",
+              "target": "spell-or-ability",
+              "targetScope": "single",
+              "value": {
+                "restriction": "chooses-friendly-unit-or-gear"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-053-298",
+      "name": "Stand United",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "permanent"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "BuffAmplify",
+              "target": "own-unit",
+              "targetScope": "all",
+              "value": {
+                "amount": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: explicit +1 / amplify +1."
+    },
+    {
+      "cardCode": "ogn-256-298",
+      "name": "Fox-Fire",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillUnit",
+              "target": "any-unit",
+              "targetScope": "multi",
+              "value": {
+                "maxTotalMight": 4
+              },
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "Hidden (Any)"
+    },
+    {
+      "cardCode": "ogn-095-298",
+      "name": "Stupefy",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "DebuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": -1,
+                "floor": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 1,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-104-298",
+      "name": "Retreat",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "ReturnToHand",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Channel",
+              "target": "own-runes",
+              "targetScope": "single",
+              "value": {
+                "count": 1,
+                "exhausted": true
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: includes channel 1 rune exhausted."
+    },
+    {
+      "cardCode": "unl-063-219",
+      "name": "Eclipse",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "DebuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": -4,
+                "floor": null,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Predict",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: carries Predict."
+    },
+    {
+      "cardCode": "ogn-266-298",
+      "name": "Siphon Power",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "all-at-battlefield",
+              "value": {
+                "amount": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "DebuffMight",
+              "target": "opponent-unit",
+              "targetScope": "all-at-battlefield",
+              "value": {
+                "amount": -1,
+                "floor": 1,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: debuff has floor 1."
+    },
+    {
+      "cardCode": "ogn-264-298",
+      "name": "Guerilla Warfare",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "ReturnFromTrash",
+              "target": "own-trash",
+              "targetScope": "multi",
+              "value": {
+                "maxCount": 2,
+                "restriction": "has-Hidden"
+              },
+              "condition": null,
+              "optional": true
+            },
+            {
+              "stepIdx": 2,
+              "function": "GrantCostIgnore",
+              "target": "own-hand",
+              "targetScope": "all",
+              "value": {
+                "restriction": "hide-actions",
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: up to 2 cards."
+    },
+    {
+      "cardCode": "unl-198-219",
+      "name": "Moonfall",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Move",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": {
+                "to": "chosen-battlefield",
+                "maxCount": 1
+              },
+              "condition": "battlefield-where-you-have-units",
+              "optional": true
+            },
+            {
+              "stepIdx": 2,
+              "function": "DebuffMight",
+              "target": "opponent-unit",
+              "targetScope": "all-at-battlefield",
+              "value": {
+                "amount": -2,
+                "floor": null,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: -2; BF must be one where you have units; move is optional."
+    },
+    {
+      "cardCode": "ogn-128-298",
+      "name": "Challenge",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Fight",
+              "target": "own-unit+opponent-unit",
+              "targetScope": "pair",
+              "value": {
+                "mode": "exchange-might-as-damage"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: exchange Might values between chosen friendly/enemy unit."
+    },
+    {
+      "cardCode": "ogn-154-298",
+      "name": "Primal Strength",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 7,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-156-298",
+      "name": "Sabotage",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Reveal",
+              "target": "opponent-hand",
+              "targetScope": "all",
+              "value": null,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "RecycleFromHand",
+              "target": "opponent-hand",
+              "targetScope": "single",
+              "value": {
+                "restriction": "non-unit"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: explicitly opponent's hand."
+    },
+    {
+      "cardCode": "ogn-146-298",
+      "name": "Wallop",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": {
+            "alternative": {
+              "spendBuff": true,
+              "effect": "ignore-cost"
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Ready",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-270-298",
+      "name": "Showstopper",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 1,
+                "duration": "permanent"
+              },
+              "condition": "in-own-base",
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "MoveToBattlefield",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: move is specifically base -> battlefield."
+    },
+    {
+      "cardCode": "ogs-008-024",
+      "name": "Gentlemen's Duel",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": {
+                "amount": 3,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Fight",
+              "target": "own-unit+opponent-unit",
+              "targetScope": "pair",
+              "value": {
+                "mode": "exchange-might-as-damage"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-172-298",
+      "name": "Rebuke",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "ReturnToHand",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "at-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-173-298",
+      "name": "Ride the Wind",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Move",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Ready",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "Casing: 'Ride the Wind' (cards.json code-side fix pending)"
+    },
+    {
+      "cardCode": "ogn-179-298",
+      "name": "Acceptable Losses",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillGear",
+              "target": "each-player-gear",
+              "targetScope": "one-each",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-139-219",
+      "name": "Bone Skewer",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Reveal",
+              "target": "opponent-hand",
+              "targetScope": "all",
+              "value": null,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "ForcePlay",
+              "target": "opponent-hand",
+              "targetScope": "single",
+              "value": {
+                "restriction": "unit",
+                "to": "chosen-battlefield",
+                "ignoreCosts": true
+              },
+              "condition": "you-may-choose",
+              "optional": true
+            },
+            {
+              "stepIdx": 3,
+              "function": "Stun",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "on-forced-play",
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: Reveal + Stun confirmed in card text."
+    },
+    {
+      "cardCode": "ogs-011-024",
+      "name": "Flash",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Move",
+              "target": "own-unit",
+              "targetScope": "multi",
+              "value": {
+                "maxCount": 2,
+                "to": "base"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-187-298",
+      "name": "Whirlwind",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "ReturnToHand",
+              "target": "each-player-unit",
+              "targetScope": "one-each",
+              "value": null,
+              "condition": "starting-with-next-player",
+              "optional": true
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: each player MAY (optional per player)."
+    },
+    {
+      "cardCode": "ogn-209-298",
+      "name": "Cull the Weak",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillUnit",
+              "target": "each-player-unit",
+              "targetScope": "one-each",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-213-298",
+      "name": "Hidden Blade",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillUnit",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "at-battlefield",
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Draw",
+              "target": "killed-unit-controller",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "Hidden (Any). CONFIRMED 2026-07-22: 'Its controller' = the KILLED unit's controller draws 2 (a downside for the caster's target choice), per printed text."
+    },
+    {
+      "cardCode": "ogn-220-298",
+      "name": "Facebreaker",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Action",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Stun",
+              "target": "own-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "same-battlefield",
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Stun",
+              "target": "opponent-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": "same-battlefield",
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: both must be at the SAME battlefield. Hidden (Any)."
+    },
+    {
+      "cardCode": "ogn-206-298",
+      "name": "Back to Back",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "BuffMight",
+              "target": "own-unit",
+              "targetScope": "multi",
+              "value": {
+                "amount": 2,
+                "count": 2,
+                "duration": "thisTurn"
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "ogn-229-298",
+      "name": "Vengeance",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Normal",
+          "additionalCost": null,
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "KillUnit",
+              "target": "any-unit",
+              "targetScope": "single",
+              "value": null,
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cardCode": "unl-173-219",
+      "name": "Sacrifice",
+      "lockedOn": "2026-07-22",
+      "abilities": [
+        {
+          "abilityIdx": 1,
+          "trigger": "OnPlay",
+          "timing": "Reaction",
+          "additionalCost": {
+            "additional": {
+              "function": "KillUnit",
+              "target": "own-unit",
+              "restriction": "has-Mighty"
+            }
+          },
+          "steps": [
+            {
+              "stepIdx": 1,
+              "function": "Draw",
+              "target": "own-deck",
+              "targetScope": "single",
+              "value": 2,
+              "condition": null,
+              "optional": false
+            },
+            {
+              "stepIdx": 2,
+              "function": "Channel",
+              "target": "own-runes",
+              "targetScope": "single",
+              "value": {
+                "count": 1,
+                "exhausted": true
+              },
+              "condition": null,
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "note": "CORRECTED: includes channel 1 rune exhausted. Kill is an ADDITIONAL COST, not an effect."
+    }
+  ]
+}

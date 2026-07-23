@@ -10,25 +10,27 @@
     ]
   },
   "power": {
-    "default": {
-      "top": 14.44,
-      "left": 4.7,
-      "width": 10.75,
-      "heightIntercept": 3.37,
-      "heightPerPip": 3.85
-    },
-    "Gear": {
-      "top": 14.44,
-      "left": 2.02,
-      "width": 10.75,
-      "heightIntercept": 4.81,
-      "heightPerPip": 2.41
-    }
+    "default": [
+      {
+        "top": 4.2,
+        "height": 29.0,
+        "left": 4.7,
+        "width": 12.9
+      }
+    ],
+    "Gear": [
+      {
+        "top": 4.2,
+        "height": 24.7,
+        "left": 2.02,
+        "width": 15.58
+      }
+    ]
   },
   "might": {
     "default": [
       {
-        "top": 5.32,
+        "top": 4.32,
         "height": 9.0,
         "left": 83.35,
         "width": 12.6
@@ -54,7 +56,7 @@
     ],
     "Battlefield": [
       {
-        "top": 54.0,
+        "top": 67.0,
         "height": 10.0,
         "left": 2.5,
         "width": 95.0
@@ -88,14 +90,14 @@
     ],
     "Battlefield": [
       {
-        "top": 30.0,
-        "height": 7.5,
+        "top": 7.5,
+        "height": 11.0,
         "left": 2.5,
         "width": 95.0
       },
       {
-        "top": 64.0,
-        "height": 7.5,
+        "top": 79.0,
+        "height": 11.0,
         "left": 2.5,
         "width": 95.0
       }

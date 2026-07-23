@@ -1,4 +1,4 @@
-import { CardProgress } from "./types";
+import { CardProgress, QuizFilters } from "./types";
 
 // Leitner box intervals in minutes. Index = box number (1-5).
 // Box 1 = missed, short retry. Higher boxes = longer gaps = better known.
@@ -31,6 +31,19 @@ export const MIN_COOLDOWN_MIN = 10;
 // back to back.
 export const BATCH_SIZE = 20;
 export const BATCH_COOLDOWN_MIN = 10;
+
+// Identifies which QuizFilters selection a persisted batch-completion gate
+// (see BATCH_GATE_KEY in db.web.ts/db.native.ts) was earned under. The gate
+// is a pacing limit on a specific pool of cards, not a blanket "wait 10
+// minutes no matter what" rule — switching filters means the person is
+// asking to study a different pool, so a gate earned under the old filters
+// shouldn't block a fresh batch under the new ones (see loadSession in
+// QuizScreen.tsx / HomeScreen.tsx for where this is used). Simple JSON
+// equality, same reasoning as sessionState's filtersEqual: QuizFilters is a
+// flat structure of strings/arrays/null, no functions or cycles.
+export function filtersKey(filters: QuizFilters): string {
+  return JSON.stringify(filters);
+}
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];

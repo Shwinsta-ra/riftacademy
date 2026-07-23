@@ -212,23 +212,53 @@ function totalDefensiveMight(units: UnitState[]): number {
   return units.reduce((sum, u) => sum + Math.max(0, trueMight(u, "defender")), 0);
 }
 
+// The battlefield-based lines key off pointsAtTurnStart (snapshotted at this
+// player's Beginning Phase — see applyEvent's "phaseChange" case), not live
+// `points`: a mid-turn conquer must not retroactively satisfy a threshold
+// that was only reached after the turn started. conquerBothAtSix's "both
+// conquered this turn" is checked as "both currently Might-won in this
+// snapshot" — the two conquer points don't need to land simultaneously in
+// the real game, but GameState doesn't track "already conquered earlier this
+// turn" separately from current board state, so a battlefield already
+// secured earlier this turn (its defenders gone) reads as hold-eligible, not
+// conquer-eligible, here. Known limitation, not a guess to revisit later.
+//
+// deckDepletion and altWin have no corresponding GameState field yet (no
+// opponent-deck-empty flag, no alt-win-condition flag), so this function can
+// never emit them today — they exist on WinningLine for completeness only.
 export function canScoreWinningPoint(state: GameState, player: PlayerId): WinningLine[] {
   const lines = new Set<WinningLine>();
   const opponent = opponentOf(player);
+  const startPoints = state.players[player].pointsAtTurnStart;
+  const pointsToWin = state.pointsToWin;
 
+  const holdEligible: Battlefield[] = [];
+  const conquerEligible: Battlefield[] = [];
   for (const bf of state.battlefields) {
     const mine = unitsPresent(bf, player);
     const theirs = unitsPresent(bf, opponent);
     if (mine.length === 0) continue;
     if (theirs.length === 0) {
-      lines.add("hold");
+      holdEligible.push(bf);
     } else if (totalDefensiveMight(mine) > totalDefensiveMight(theirs)) {
-      lines.add("conquer");
+      conquerEligible.push(bf);
+    }
+  }
+
+  if (holdEligible.length > 0 && startPoints === pointsToWin - 1) {
+    lines.add("holdAtSeven");
+  }
+
+  if (state.battlefields.length === 2 && startPoints === pointsToWin - 2) {
+    if (conquerEligible.length === 2) {
+      lines.add("conquerBothAtSix");
+    } else if (holdEligible.length === 1 && conquerEligible.length === 1) {
+      lines.add("holdOneConquerOneAtSix");
     }
   }
 
   if ((state.pendingDirectPoints[player] ?? 0) > 0) {
-    lines.add("direct");
+    lines.add("cardEffect");
   }
 
   return Array.from(lines);
@@ -434,7 +464,15 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
       const p = state.players[event.player];
       return {
         ...state,
-        players: { ...state.players, [event.player]: { ...p, points: p.points + event.source.amount } },
+        players: { ...state.players, [event.player]: { ...p, points: p.points + event.amount } },
+      };
+    }
+    case "phaseChange": {
+      if (event.phase !== "beginning") return state;
+      const p = state.players[event.player];
+      return {
+        ...state,
+        players: { ...state.players, [event.player]: { ...p, pointsAtTurnStart: p.points } },
       };
     }
     default: {
