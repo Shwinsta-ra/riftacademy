@@ -544,7 +544,7 @@ export default function QuizScreen({ navigation }: Props) {
       >
         <QuizCardArt
           aspectRatio={cardAspectRatio}
-          decoration={<Sparklet playKey={correctPlayKey} />}
+          decoration={<Sparklet playKey={correctPlayKey} activeKey={card.id} />}
         >
           <Image
             // Non-null assertion is safe here: getFilteredCards() (quiz.ts)
@@ -726,7 +726,11 @@ const styles = StyleSheet.create({
   },
   // Cost pips are round on the actual card art -- see isCircularMask above.
   maskOverlayCircle: { borderRadius: 999 },
-  maskText: { color: theme.accent, fontSize: 17, fontWeight: "800" },
+  // Sized against the smallest mask box in quizPositions.json (cost/might's
+  // "default" region, ~35-45px square on typical phone widths at the card's
+  // 78%-of-screen-width sizing) -- big enough to read clearly while still
+  // leaving a comfortable margin inside that box's border.
+  maskText: { color: theme.accent, fontSize: 23, fontWeight: "800" },
   // Full-width single column — used only for long-answer text-mode questions.
   optionsColumn: { gap: 8, alignItems: "stretch" },
   // 2x2 grid — 4 short options (cost/might/name/keyword).
