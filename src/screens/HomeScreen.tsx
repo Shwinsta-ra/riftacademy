@@ -21,7 +21,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 // process/version number exists. Each entry starting with a star renders in
 // green to flag it as a highlighted/new-feature item; a plain entry (no
 // star) renders in the same italic style but without the highlight.
-const APP_VERSION = "v1.4";
+const APP_VERSION = "Alpha v1.0";
 const WHATS_NEW: string[] = [
   "\u2605 RiftRecall: smarter question variety across every card type",
   "\u2605 Vendetta set added to the card pool",
@@ -159,14 +159,7 @@ export default function HomeScreen({ navigation }: Props) {
 
         <FeatureBox>
           <RiftWord suffix="IQ" style={styles.boxLabel} />
-          <Text style={styles.iqSubtitle}>Match analysis & strategy puzzles</Text>
-          <GlowButton
-            label="New Match"
-            onPress={() => navigation.navigate("MatchList")}
-            style={styles.bigButtonWrap}
-            contentStyle={styles.bigButtonBody}
-            textStyle={styles.bigButtonText}
-          />
+          <Text style={styles.iqSubtitle}>Game puzzles & tutorials</Text>
           <Pressable style={styles.disabledButton} disabled>
             <Text style={styles.disabledButtonText}>Daily Puzzle (coming soon)</Text>
           </Pressable>
