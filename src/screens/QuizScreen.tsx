@@ -21,7 +21,14 @@ import { buildAttributeQuestion, AttributeQuestion, getMaskRegions } from "../li
 import { humanizeCardText, preventOrphanWord } from "../lib/textDisplay";
 import { loadAllProgress, saveProgress, getLastBatchCompletedAt, setLastBatchCompletedAt } from "../lib/db";
 import { loadSessionSnapshot, saveSessionSnapshot, clearSessionSnapshot } from "../lib/sessionState";
-import { buildBatch, applyResult, newProgress, BATCH_SIZE, BATCH_COOLDOWN_MIN } from "../lib/leitner";
+import {
+  buildBatch,
+  applyResult,
+  newProgress,
+  filtersKey,
+  BATCH_SIZE,
+  BATCH_COOLDOWN_MIN,
+} from "../lib/leitner";
 import { Card, CardProgress } from "../lib/types";
 import { useFilters } from "../lib/filtersStore";
 import { useFeedbackSafe } from "../feedback/context";
@@ -137,9 +144,18 @@ export default function QuizScreen({ navigation }: Props) {
 
     // No batch to resume — check whether we're still within the pacing
     // cooldown from the last COMPLETED batch before starting a fresh one.
+    // The gate only blocks a fresh batch under the SAME filter selection it
+    // was earned under (see filtersKey in leitner.ts): switching filters
+    // means the person is asking for a different pool of cards, so it
+    // should immediately surface whatever in THAT pool is new or outside
+    // its own per-card cooldown, rather than staying blocked by an
+    // unrelated pool's timer.
+    const currentFilterKey = filtersKey(filters);
     const lastCompleted = await getLastBatchCompletedAt();
-    const gateUntil = lastCompleted ? lastCompleted + BATCH_COOLDOWN_MIN * 60_000 : null;
-    if (gateUntil && now < gateUntil) {
+    const gateUntil = lastCompleted ? lastCompleted.timestamp + BATCH_COOLDOWN_MIN * 60_000 : null;
+    const gateAppliesHere = lastCompleted !== null && lastCompleted.filterKey === currentFilterKey;
+
+    if (gateAppliesHere && gateUntil && now < gateUntil) {
       setPool(cards);
       setProgressMap(progress);
       setQueue([]);
@@ -160,22 +176,61 @@ export default function QuizScreen({ navigation }: Props) {
       return;
     }
 
-    // Clear to start a fresh batch.
+    if (freshBatch.length > 0) {
+      // Either no gate is active at all, or one is active but was earned
+      // under a DIFFERENT filter selection -- either way there's something
+      // new (or out of its own cooldown) to show under the current filter
+      // right now, so show it instead of staying gated on an unrelated
+      // pool's timer.
+      setPool(cards);
+      setProgressMap(progress);
+      setQueue(freshBatch);
+      setNothingAvailable(false);
+      setBatchGateUntil(null);
+      shownThisSessionRef.current = new Set();
+      setSessionCorrect(0);
+      setSessionTotal(0);
+      saveSessionSnapshot({
+        filters,
+        queue: freshBatch,
+        shownThisSession: [],
+        sessionCorrect: 0,
+        sessionTotal: 0,
+      });
+      setLoading(false);
+      return;
+    }
+
+    // freshBatch is empty. If cards actually match this filter but none are
+    // due, the person has already seen/mastered everything this filter can
+    // currently offer -- rather than a flat "nothing available" dead end,
+    // fall back to whatever pacing countdown is already running (even one
+    // earned under a different filter): continue it rather than resetting
+    // it, so the "come back at X" signal survives a filter change instead
+    // of restarting a fresh 10 minutes.
+    if (cards.length > 0 && gateUntil && now < gateUntil) {
+      setPool(cards);
+      setProgressMap(progress);
+      setQueue([]);
+      setNothingAvailable(false);
+      setBatchGateUntil(gateUntil);
+      setNowTick(now);
+      shownThisSessionRef.current = new Set();
+      setSessionCorrect(0);
+      setSessionTotal(0);
+      setLoading(false);
+      return;
+    }
+
+    // Truly nothing to show right now and no countdown to fall back on.
     setPool(cards);
     setProgressMap(progress);
-    setQueue(freshBatch);
-    setNothingAvailable(cards.length > 0 && freshBatch.length === 0);
+    setQueue([]);
+    setNothingAvailable(cards.length > 0);
     setBatchGateUntil(null);
     shownThisSessionRef.current = new Set();
     setSessionCorrect(0);
     setSessionTotal(0);
-    saveSessionSnapshot({
-      filters,
-      queue: freshBatch,
-      shownThisSession: [],
-      sessionCorrect: 0,
-      sessionTotal: 0,
-    });
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
@@ -334,11 +389,12 @@ export default function QuizScreen({ navigation }: Props) {
 
     if (remaining.length === 0) {
       // This batch is fully done — start the pacing cooldown for the next
-      // one (see BATCH_COOLDOWN_MIN) and clear the resumable snapshot, since
-      // there's nothing left in it to resume. loadSession's own gate check
-      // will pick this up the moment the countdown effect notices it expire.
+      // one under THIS filter selection (see BATCH_COOLDOWN_MIN and
+      // filtersKey) and clear the resumable snapshot, since there's nothing
+      // left in it to resume. loadSession's own gate check will pick this
+      // up the moment the countdown effect notices it expire.
       const now = Date.now();
-      setLastBatchCompletedAt(now);
+      setLastBatchCompletedAt(now, filtersKey(filters));
       clearSessionSnapshot();
       setBatchGateUntil(now + BATCH_COOLDOWN_MIN * 60_000);
       return;

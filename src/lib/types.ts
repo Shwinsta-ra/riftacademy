@@ -87,6 +87,18 @@ export type QuizFilters = {
   deckId: string | null;
 };
 
+// Persisted record of when a study batch last completed and which
+// QuizFilters selection (see leitner.ts's filtersKey) it was earned under —
+// the BATCH_COOLDOWN_MIN pacing gate only blocks a fresh batch under that
+// SAME filter selection; switching filters recomputes normally instead of
+// staying blocked by an unrelated pool's timer. `filterKey` is null only for
+// a gate persisted before this scoping existed (see db.web.ts/db.native.ts's
+// migration handling), in which case it's treated as matching no filter.
+export type BatchGate = {
+  timestamp: number;
+  filterKey: string | null;
+};
+
 export type QuizMode = "name" | "text";
 // "name": shown the card image, guess the name
 // "text": shown the card image, guess which ability text/domain/type matches

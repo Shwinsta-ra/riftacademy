@@ -1,4 +1,4 @@
-import { CardProgress, QuizFilters } from "./types";
+import { BatchGate, CardProgress, QuizFilters } from "./types";
 
 // expo-sqlite's web implementation depends on a wa-sqlite WASM asset that
 // doesn't resolve cleanly through Metro's web bundler (confirmed: it fails
@@ -97,18 +97,25 @@ export async function resetAllProgress(): Promise<void> {
   }
 }
 
-export async function getLastBatchCompletedAt(): Promise<number | null> {
+export async function getLastBatchCompletedAt(): Promise<BatchGate | null> {
   try {
     const raw = localStorage.getItem(BATCH_GATE_KEY);
-    return raw ? parseInt(raw, 10) : null;
+    if (!raw) return null;
+    // Pre-filter-scoping installs stored a bare timestamp string (no JSON,
+    // no filterKey) -- treat that as "no filter recorded" rather than
+    // crashing JSON.parse on a plain number string, so an existing gate
+    // from before this change degrades gracefully instead of erroring.
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === "number") return { timestamp: parsed, filterKey: null };
+    return parsed as BatchGate;
   } catch {
     return null;
   }
 }
 
-export async function setLastBatchCompletedAt(timestamp: number): Promise<void> {
+export async function setLastBatchCompletedAt(timestamp: number, filterKey: string): Promise<void> {
   try {
-    localStorage.setItem(BATCH_GATE_KEY, String(timestamp));
+    localStorage.setItem(BATCH_GATE_KEY, JSON.stringify({ timestamp, filterKey }));
   } catch {
     // no-op
   }
