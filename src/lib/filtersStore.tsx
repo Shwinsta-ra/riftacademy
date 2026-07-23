@@ -2,7 +2,11 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { QuizFilters } from "./types";
 import { getSavedFilters, setSavedFilters } from "./db";
 
-const DEFAULT_FILTERS: QuizFilters = { sets: [], domains: [], types: [], speeds: [], deckId: null };
+// Exported so callers that need to reset to a clean slate (e.g. the
+// tutorial's "Replay tutorial" restart, which must start from the same
+// empty-filters state as a genuine first launch) don't have to duplicate
+// this literal themselves and risk it drifting out of sync.
+export const DEFAULT_FILTERS: QuizFilters = { sets: [], domains: [], types: [], speeds: [], deckId: null };
 
 type FiltersContextValue = {
   filters: QuizFilters;
