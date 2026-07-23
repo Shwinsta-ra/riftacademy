@@ -75,6 +75,12 @@ Never place tokens, passwords, or API keys in TickTick, this doc, or any note-ta
 - Domain hex: Fury `#CC2929`, Calm `#3FA34D`, Mind `#2B73C2`, Body `#E57921`, Chaos `#8629B3`, Order `#EBB113`.
 - `RIFT_BRAND` gold `#E8B44A` = the literal word "Rift" in every product name, plus (as of the Rune Glow pass) the foil card-art rim/trim and the Sparklet cap only. Nowhere else — it does not carry general semantic meaning.
 
+## PNG-only UI delivery (cross-thread, learned 2026-07-22)
+UI screenshots and mockups must always be delivered as PNG, rendered at 2x for phone legibility (e.g. wkhtmltoimage at width 430, zoom 2). Ashwin reviews on his phone and cannot open HTML, .jsx/React artifacts, or interactive previews there - HTML downloads instead of rendering. An interactive version is a supplement, never a replacement. This rule already existed in Claude's persistent memory before today but hadn't been written here, which is why a session hit it fresh and cost a round trip - the lesson: rules Claude "knows" from memory don't reach Code sessions unless they're written into this file.
+
+## Fragment verification claims must cite evidence
+Any fragment asserting a verification (e.g. "confirmed merged," "verified working") must cite its evidence - branch, file:line, or the actual command run. A claim with no evidence trail is not acceptable. This exists because a false "confirmed merged to integration" claim shipped in a fragment on 2026-07-21, sat wrong for a day, and gated real work (RiftIQ) on the wrong assumption before another thread caught it via direct code verification.
+
 ## Deliverable style
 - Terminal commands handed to Ashwin must be bare, with **no inline `#` comments** — they break copy-paste into his terminal. Put explanations in prose before/after the code block, never inside it.
 - Instructions should be granular and exact: full paths, explicit commands, no assumed context.
