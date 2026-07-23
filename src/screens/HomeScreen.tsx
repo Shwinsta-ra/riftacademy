@@ -10,7 +10,7 @@ import RiftWord from "../components/RiftWord";
 import { getAllCards, getFilteredCards } from "../lib/quiz";
 import { loadAllProgress, getLastBatchCompletedAt } from "../lib/db";
 import { loadSessionSnapshot } from "../lib/sessionState";
-import { buildBatch, BATCH_SIZE, BATCH_COOLDOWN_MIN } from "../lib/leitner";
+import { buildBatch, filtersKey, BATCH_SIZE, BATCH_COOLDOWN_MIN } from "../lib/leitner";
 import { useFilters } from "../lib/filtersStore";
 import { useTutorialTarget, useTutorial } from "../lib/tutorialContext";
 
@@ -75,9 +75,13 @@ export default function HomeScreen({ navigation }: Props) {
           return;
         }
 
+        // Gate only applies if it was earned under this exact filter
+        // selection — see filtersKey in leitner.ts and the matching logic
+        // in QuizScreen's loadSession, which this mirrors.
         const lastCompleted = await getLastBatchCompletedAt();
-        const gateUntil = lastCompleted ? lastCompleted + BATCH_COOLDOWN_MIN * 60_000 : null;
-        if (gateUntil && now < gateUntil) {
+        const gateUntil = lastCompleted ? lastCompleted.timestamp + BATCH_COOLDOWN_MIN * 60_000 : null;
+        const gateAppliesHere = lastCompleted !== null && lastCompleted.filterKey === filtersKey(filters);
+        if (gateAppliesHere && gateUntil && now < gateUntil) {
           setReviewCount(0);
           return;
         }
