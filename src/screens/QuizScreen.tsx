@@ -544,7 +544,7 @@ export default function QuizScreen({ navigation }: Props) {
       >
         <QuizCardArt
           aspectRatio={cardAspectRatio}
-          decoration={<Sparklet playKey={correctPlayKey} />}
+          decoration={<Sparklet playKey={correctPlayKey} activeKey={card.id} />}
         >
           <Image
             // Non-null assertion is safe here: getFilteredCards() (quiz.ts)
