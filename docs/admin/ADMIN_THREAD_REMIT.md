@@ -78,3 +78,5 @@ When a thread's output clearly belongs to a different module (like RiftCoach cat
 - When two threads reach different conclusions about the same ambiguous item, don't just pick one — if the admin thread has first-hand knowledge (e.g., built the thing in question), use it to resolve the conflict directly rather than deferring to either guess.
 - Own admin-thread mistakes directly and plainly when found, rather than only auditing other threads' work.
 - Every substantial deliverable check-in ends with a clear next-step list, not just a status dump.
+
+**Deliverable consolidation:** Any substantial response ends with two sections, in this order — (1) "Decisions needed from you": every question/confirmation/decision raised anywhere in the message, even if already inline; (2) "Action items for you": every task you need to do, even if already inline. Inline mentions stay in the body. Adopted 2026-07-23, practiced since but never actually written down until now.

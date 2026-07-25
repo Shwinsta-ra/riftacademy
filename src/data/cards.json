@@ -5370,7 +5370,7 @@
   },
   {
     "id": "ogn-173-298",
-    "name": "Ride The Wind",
+    "name": "Ride the Wind",
     "collectorNumber": 173,
     "energy": 2,
     "might": null,
@@ -8535,7 +8535,7 @@
   },
   {
     "id": "ogn-274-298",
-    "name": "Sprite (274) // Buff",
+    "name": "Sprite",
     "collectorNumber": 274,
     "energy": null,
     "might": 3,
