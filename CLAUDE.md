@@ -84,3 +84,8 @@ Any fragment asserting a verification (e.g. "confirmed merged," "verified workin
 ## Deliverable style
 - Terminal commands handed to Ashwin must be bare, with **no inline `#` comments** — they break copy-paste into his terminal. Put explanations in prose before/after the code block, never inside it.
 - Instructions should be granular and exact: full paths, explicit commands, no assumed context.
+
+## Deliverable consolidation
+Any substantial response ends with two sections, in this order — (1) "Decisions needed from you": every question/confirmation/decision raised anywhere in the message, even if already inline; (2) "Action items for you": every task you need to do, even if already inline. Inline mentions stay in the body.
+
+Adopted 2026-07-23, practiced since but never actually written down until now.
