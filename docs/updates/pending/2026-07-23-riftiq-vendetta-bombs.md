@@ -22,8 +22,10 @@ run in-session.
   `Renekton, Rage Fueled` resolves to `ven-019-166`, not `ven-019a-166`. The alt-art hazard I
   flagged in yesterday's RiftCoach brief validation does not exist in the repo's processed
   data - it was only in the raw riftcodex JSON.
-- **The cached list was incomplete: 19 Vendetta units sit at M6+, not 11.** Eight missing,
-  the significant one being **Sandstone Chimera** (`ven-036-166`, M8 for E7, Calm) - the most
+- **The cached list was incomplete: 18 Vendetta units sit at M6+, not 11.** Seven missing
+  (Ocean Drake was already correctly in the cached 11 - an earlier count miscounted it as an
+  eighth omission and said 19; corrected here by agreement between RiftIQ and Code), the
+  significant one being **Sandstone Chimera** (`ven-036-166`, M8 for E7, Calm) - the most
   efficient M8 in the set and absent from the list entirely. Others: Shen Scourge of Shadows
   `ven-042-166`, Nasus Guardian of Knowledge `ven-063-166`, Swain Visionary `ven-065-166`,
   Baccai Sandspinner `ven-001-166`, Minah Swiftfoot `ven-111-166`, Horns of the Dragon

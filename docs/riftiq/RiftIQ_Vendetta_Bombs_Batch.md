@@ -36,8 +36,10 @@ snapshot matches today's `cards.json`. No drift. Base codes confirmed (the pipel
 already dropping alternate-art suffixes, so `Renekton, Rage Fueled` correctly resolves to
 `ven-019-166`, not `ven-019a-166`).
 
-**But the cached list is incomplete: there are 19 Vendetta units at M6+, not 11.** Eight were
-missing:
+**But the cached list is incomplete: there are 18 Vendetta units at M6+, not 11.** Seven were
+missing (Ocean Drake, in the table below, was already correctly in the cached 11 - it's
+included only for confirmation, not as a missing card; an earlier draft of this doc
+miscounted it as an eighth omission and said 19, corrected here by agreement with RiftIQ):
 
 | Card | Code | Might | Energy | Domain | Why it matters |
 |---|---|---|---|---|---|
