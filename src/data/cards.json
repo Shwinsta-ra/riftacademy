@@ -8445,7 +8445,7 @@
   },
   {
     "id": "ogn-271-298",
-    "name": "Recruit (271) // Buff",
+    "name": "Recruit (DE)",
     "collectorNumber": 271,
     "energy": null,
     "might": 1,
@@ -8475,7 +8475,7 @@
   },
   {
     "id": "ogn-272-298",
-    "name": "Recruit (272) // Buff",
+    "name": "Recruit (NX)",
     "collectorNumber": 272,
     "energy": null,
     "might": 1,
@@ -8505,7 +8505,7 @@
   },
   {
     "id": "ogn-273-298",
-    "name": "Recruit (273) // Buff",
+    "name": "Recruit (ZN)",
     "collectorNumber": 273,
     "energy": null,
     "might": 1,
@@ -24141,7 +24141,7 @@
     "domain": [
       "Fury"
     ],
-    "text": "[Equip (R)]",
+    "text": "[Equip (R)] When I move to a battlefield, give me +2 Might this turn.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -24590,7 +24590,7 @@
     "domain": [
       "Calm"
     ],
-    "text": "[Equip (G)]",
+    "text": "[Equip (G)] I have +2 Might while I'm at a battlefield with exactly one other unit you control.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
@@ -25826,7 +25826,7 @@
     "domain": [
       "Body"
     ],
-    "text": "[Equip (O)]",
+    "text": "[Equip (O)] I can't be moved by enemy spells and abilities.",
     "flavour": null,
     "setId": "VEN",
     "setLabel": "Vendetta",
