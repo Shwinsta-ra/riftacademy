@@ -4,6 +4,22 @@ Merges Ashwin's curated Master Card Inventory export into src/data/cards.json.
 Usage:
     python3 scripts/merge_sheet.py path/to/exported_sheet.csv
 
+v4 changes (ban handling, name refresh):
+- 1v1-banned cards are no longer deleted from cards.json -- they're kept
+  and flagged `banned1v1: true` instead. A card that's both brand-new AND
+  1v1-banned in the same sheet (e.g. Draven, Vanquisher) previously got
+  inserted then deleted in the same run, before ever being visible
+  anywhere. RiftRecall's own eligibility filtering (getFilteredCards in
+  quiz.ts) reads card.banned1v1 to exclude it from Review Cards / quiz
+  pools -- this script no longer decides visibility, only the flag.
+- `name` is now refreshed from the sheet for every matched card, not just
+  champions/legends (which still go through canonical_champion_name) --
+  e.g. picks up a Recruit (DE) -> Recruit, DE convention change
+  automatically. normalize_name() converts trailing "(X)" into ", X"
+  (matching the existing "Name, Epithet" convention) instead of stripping
+  it, so a punctuation-only rename doesn't false-positive as a name
+  mismatch and get skipped.
+
 v3 changes (correction pass — type/subtype, blacklist):
 - REVERSED from v2: `type` is now ALWAYS the sheet's literal Type value.
   Champion and Equipment are never collapsed into their own `type` — a
@@ -122,7 +138,12 @@ def normalize_name(name):
     n = name.lower().strip()
     n = re.sub(r"\s*\(starter\)\s*$", "", n)
     n = re.sub(r"\s*//\s*buff\s*$", "", n)
-    n = re.sub(r"\s*\([^)]*\)\s*$", "", n)
+    # Trailing parenthetical epithets (the old "Recruit (DE)" convention)
+    # normalize to the same comma format as the current "Name, Epithet"
+    # convention, rather than being stripped outright -- otherwise a sheet
+    # rename from parens to commas reads as an unrelated name and gets
+    # skipped by the mismatch guard below instead of applied.
+    n = re.sub(r"\s*\(([^)]*)\)\s*$", r", \1", n)
     n = n.replace(" - ", ", ")
     n = n.replace("\u2019", "'")
     n = n.replace("'", "")
@@ -178,6 +199,20 @@ def parse_list(val):
     if v in ("", "-", "None"):
         return []
     return [p.strip() for p in v.split(",") if p.strip()]
+
+def parse_domain(val):
+    """Domain(s) is the one comma-list column where multiple values don't
+    stay separate elements -- a dual-domain card is stored throughout
+    cards.json as ONE list element joining both with "/" (e.g.
+    ["Fury/Body"]), which is what cardMatchesDomainFilter in quiz.ts splits
+    back apart. The sheet writes dual domains comma-separated (e.g.
+    "Fury, Body"), same as every other list column, so a plain parse_list()
+    would wrongly produce two separate elements instead of the expected
+    single joined one."""
+    parts = parse_list(val)
+    if len(parts) > 1:
+        return ["/".join(parts)]
+    return parts
 
 def parse_ban_modes(val):
     """Parses the sheet's 'Bans' column into a set of game modes a card is
@@ -272,7 +307,7 @@ def build_new_card(row):
         "type": resolved_type,
         "supertype": derive_supertype(subtype, is_token, is_signature),
         "rarity": row["Rarity"].strip(),
-        "domain": parse_list(row["Domain(s)"]),
+        "domain": parse_domain(row["Domain(s)"]),
         "text": text,
         "flavour": None,
         "setId": card_code.split("-")[0].strip().upper(),
@@ -287,6 +322,7 @@ def build_new_card(row):
         "isToken": is_token,
         "abilityTrigger": classify_ability_trigger(text),
         "subtype": subtype,
+        "banned1v1": False,  # set for real just below, after cards.extend()
     }
 
 def main():
@@ -345,7 +381,7 @@ def main():
             name_mismatches.append((cid, card["name"], csv_name))
             continue
 
-        domain = parse_list(row["Domain(s)"])
+        domain = parse_domain(row["Domain(s)"])
         if domain:
             card["domain"] = domain
         card["energy"] = parse_num(row["Energy"])
@@ -374,8 +410,15 @@ def main():
         subtype_raw = row["Subtype"].strip()
         card["subtype"] = None if subtype_raw in ("", "-", "None") else subtype_raw
 
-        if csv_name and (card["subtype"] == "Champion" or card["type"] == "Legend"):
-            card["name"] = canonical_champion_name(csv_name)
+        if csv_name:
+            if card["subtype"] == "Champion" or card["type"] == "Legend":
+                card["name"] = canonical_champion_name(csv_name)
+            else:
+                # Sheet is the source of truth for name the same way it
+                # already is for text/domain/etc -- e.g. picks up the
+                # Recruit (DE)/(NX)/(ZN) -> Recruit, DE/NX/ZN convention
+                # change automatically on every run.
+                card["name"] = csv_name
 
         (alt_matched if via_alt else direct_matched).append(cid)
 
@@ -387,6 +430,7 @@ def main():
         c.setdefault("shorthand", None)
         c.setdefault("recycleCost", [])
         c.setdefault("subtype", None)
+        c.setdefault("banned1v1", False)
 
     new_cards = []
     for row in rows:
@@ -405,18 +449,27 @@ def main():
     cards = [c for c in cards if c["id"] not in BLACKLISTED_IDS]
 
     # Competitive bans (dynamic, read from the sheet's own "Bans" column):
-    # remove any card banned in 1v1 (in any combination, e.g. "1v1" or
-    # "1v1, 2v2"). Cards banned ONLY in 2v2 (e.g. Master Yi, Wuju Bladesman)
-    # are KEPT — RiftRecall targets the 1v1 format. Because this reads the
-    # sheet every run, future banlist changes are a sheet edit, not a code
-    # change. A card gone from the banlist naturally reappears next merge.
+    # flag any card banned in 1v1 (in any combination, e.g. "1v1" or "1v1,
+    # 2v2") rather than deleting it from the dataset. Cards banned ONLY in
+    # 2v2 (e.g. Master Yi, Wuju Bladesman) are NOT flagged — RiftRecall
+    # targets the 1v1 format. Deletion previously meant a card that's both
+    # brand-new AND 1v1-banned in the same sheet (e.g. Draven, Vanquisher)
+    # would be inserted and removed in the same run, before ever being
+    # visible anywhere -- per Ashwin's explicit correction, the master
+    # dataset must never lose cards this way. RiftRecall's own eligibility
+    # filtering (getFilteredCards in quiz.ts) is what excludes banned1v1
+    # cards from Review Cards / quiz pools; card.banned1v1 is read there,
+    # not here. Because this reads the sheet every run, future banlist
+    # changes are a sheet edit, not a code change — a card dropped from the
+    # banlist naturally becomes quiz-eligible again next merge.
     banned_1v1_ids = set()
     for row in rows:
         modes = parse_ban_modes(row.get("Bans"))
         if "1v1" in modes:
             banned_1v1_ids.add(row["Card Code"].strip().lower())
-    ban_removed = [c for c in cards if c["id"] in banned_1v1_ids]
-    cards = [c for c in cards if c["id"] not in banned_1v1_ids]
+    for c in cards:
+        c["banned1v1"] = c["id"] in banned_1v1_ids
+    ban_removed = [c for c in cards if c["banned1v1"]]
 
     with open(CARDS_PATH, "w") as f:
         json.dump(cards, f, indent=2)
@@ -454,10 +507,11 @@ def main():
     if not removed and any(bid not in {c["id"] for c in cards} for bid in BLACKLISTED_IDS):
         pass  # already gone from a prior run, nothing to report as newly removed
     print()
-    print("=== 1v1-banned cards removed (from sheet's Bans column) ===")
+    print("=== 1v1-banned cards flagged banned1v1 (from sheet's Bans column) ===")
+    print("(kept in cards.json; excluded from quiz eligibility in quiz.ts, not deleted here)")
     for c in sorted(ban_removed, key=lambda c: c["id"]):
         print("  ", c["id"], c["name"])
-    print(f"  ({len(ban_removed)} removed; cards banned only in 2v2 were kept)")
+    print(f"  ({len(ban_removed)} flagged; cards banned only in 2v2 were left unflagged)")
 
 if __name__ == "__main__":
     main()
