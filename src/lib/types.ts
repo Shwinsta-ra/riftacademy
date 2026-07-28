@@ -53,6 +53,12 @@ export type Card = {
   // supertype field, since Ashwin's sheet may mark cards as tokens that the
   // API classification didn't, or vice versa).
   isToken: boolean;
+  // True when the sheet's "Bans" column includes 1v1 (in any combination,
+  // e.g. "1v1" or "1v1, 2v2"). Cards banned only in 2v2 are NOT flagged --
+  // RiftRecall targets the 1v1 format. The card stays in the dataset (for
+  // match tracking, distractor generation, etc); it's excluded from Review
+  // Cards / quiz pools by getFilteredCards in quiz.ts, not removed here.
+  banned1v1: boolean;
 };
 
 export type CardProgress = {
