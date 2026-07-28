@@ -2,7 +2,7 @@
   "ogn-002-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [As you play me, you may discard ____ as an additional cost. If you do, reduce my cost by ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 2",
         "distractorPool": [
           "2 | 2",
@@ -10,28 +10,30 @@
           "3 | 3",
           "2 | 1",
           "3 | 2"
-        ]
+        ],
+        "caption": "As you play me, you may discard ____ as an additional cost. If you do, reduce my cost by ____."
       }
     ]
   },
   "ogn-005-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Action] Deal ____ to a unit at a battlefield. If this kills it, do this: draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "3 | 1",
         "distractorPool": [
           "2 | 1",
           "1 | 1",
           "4 | 1",
           "5 | 1"
-        ]
+        ],
+        "caption": "[Action] Deal ____ to a unit at a battlefield. If this kills it, do this: draw ____."
       }
     ]
   },
   "ogn-020-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Legion] - When you play me, discard ____, then draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 2",
         "distractorPool": [
           "1 | 1",
@@ -39,27 +41,29 @@
           "1 | 2",
           "3 | 2",
           "2 | 3"
-        ]
+        ],
+        "caption": "[Legion] - When you play me, discard ____, then draw ____."
       }
     ]
   },
   "ogn-024-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Action] Deal ____ to a unit at a battlefield. Draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "4 | 1",
         "distractorPool": [
           "2 | 1",
           "3 | 1",
           "5 | 1"
-        ]
+        ],
+        "caption": "[Action] Deal ____ to a unit at a battlefield. Draw ____."
       }
     ]
   },
   "ogn-033-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Reaction] Choose an enemy unit. Deal ____ to it unless its controller has you draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "6 | 2",
         "distractorPool": [
           "5 | 2",
@@ -67,27 +71,29 @@
           "4 | 1",
           "6 | 1",
           "5 | 1"
-        ]
+        ],
+        "caption": "[Reaction] Choose an enemy unit. Deal ____ to it unless its controller has you draw ____."
       }
     ]
   },
   "ogn-058-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Reaction] Give a unit +____ Might this turn. Draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 1",
         "distractorPool": [
           "1 | 1",
           "3 | 1",
           "4 | 1"
-        ]
+        ],
+        "caption": "[Reaction] Give a unit +____ Might this turn. Draw ____."
       }
     ]
   },
   "ogn-062-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [Look at the top ____ cards of your Main Deck. You may banish a unit from among them, then play it, reducing its cost by ____. Recycle the remaining cards.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "5 | 5",
         "distractorPool": [
           "4 | 4",
@@ -95,253 +101,272 @@
           "4 | 3",
           "5 | 3",
           "4 | 5"
-        ]
+        ],
+        "caption": "Look at the top ____ cards of your Main Deck. You may banish a unit from among them, then play it, reducing its cost by ____. Recycle the remaining cards."
       }
     ]
   },
   "ogn-071-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [Each other player chooses Cards or Runes. For each player that chooses Cards, you and that player each draw ____. For each player that chooses Runes, you and that player each channel ____ rune exhausted.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "Each other player chooses Cards or Runes. For each player that chooses Cards, you and that player each draw ____. For each player that chooses Runes, you and that player each channel ____ rune exhausted."
       }
     ]
   },
   "ogn-075-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Accelerate (1)(G)] [Deathknell] - Channel ____ runes exhausted and draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 1",
         "distractorPool": [
           "1 | 1",
           "1 | 2",
           "2 | 2"
-        ]
+        ],
+        "caption": "[Accelerate (1)(G)] [Deathknell] - Channel ____ runes exhausted and draw ____."
       }
     ]
   },
   "ogn-090-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Tap]: Give a unit -____ Might this turn, to a minimum of ____ Might.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "2 | 1",
           "3 | 1",
           "4 | 1"
-        ]
+        ],
+        "caption": "[Tap]: Give a unit -____ Might this turn, to a minimum of ____ Might."
       }
     ]
   },
   "ogn-093-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Reaction] Give a unit -____ Might this turn, to a minimum of ____ Might.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "4 | 1",
         "distractorPool": [
           "3 | 1",
           "2 | 1",
           "1 | 1"
-        ]
+        ],
+        "caption": "[Reaction] Give a unit -____ Might this turn, to a minimum of ____ Might."
       }
     ]
   },
   "ogn-097-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Hidden (Any)] When you play me, give a unit -____ Might this turn, to a minimum of ____ Might.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 1",
         "distractorPool": [
           "1 | 1",
           "3 | 1",
           "4 | 1"
-        ]
+        ],
+        "caption": "[Hidden (Any)] When you play me, give a unit -____ Might this turn, to a minimum of ____ Might."
       }
     ]
   },
   "ogn-116-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Accelerate (1)(B)] When you play me, give enemy units -____ Might this turn, to a minimum of ____ Might.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "3 | 1",
         "distractorPool": [
           "1 | 1",
           "2 | 1",
           "4 | 1"
-        ]
+        ],
+        "caption": "[Accelerate (1)(B)] When you play me, give enemy units -____ Might this turn, to a minimum of ____ Might."
       }
     ]
   },
   "ogn-119-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When I attack or defend, give an enemy unit here -____ Might this turn, to a minimum of ____ Might.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 1",
         "distractorPool": [
           "1 | 1",
           "3 | 1",
           "4 | 1"
-        ]
+        ],
+        "caption": "When I attack or defend, give an enemy unit here -____ Might this turn, to a minimum of ____ Might."
       }
     ]
   },
   "ogn-121-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Hidden (Any)] When I defend, choose an enemy unit here and reveal the top ____ cards of your Main Deck. Deal ____ to that unit for each card with [Hidden] revealed this way, then recycle the revealed cards.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "5 | 1",
         "distractorPool": [
           "4 | 1",
           "6 | 1",
           "7 | 1",
           "3 | 1"
-        ]
+        ],
+        "caption": "[Hidden (Any)] When I defend, choose an enemy unit here and reveal the top ____ cards of your Main Deck. Deal ____ to that unit for each card with [Hidden] revealed this way, then recycle the revealed cards."
       }
     ]
   },
   "ogn-134-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [Channel ____ rune exhausted. If you can't, draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "Channel ____ rune exhausted. If you can't, draw ____."
       }
     ]
   },
   "ogn-144-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Reaction] If an enemy unit has died this turn, this costs ____ less.\nDraw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 2",
         "distractorPool": [
           "1 | 1",
           "2 | 1",
           "1 | 2",
           "3 | 1"
-        ]
+        ],
+        "caption": "[Reaction] If an enemy unit has died this turn, this costs ____ less.\nDraw ____."
       }
     ]
   },
   "ogn-178-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Deathknell] - Discard ____, then draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 2",
         "distractorPool": [
           "1 | 1",
           "2 | 1",
           "1 | 2",
           "3 | 2"
-        ]
+        ],
+        "caption": "[Deathknell] - Discard ____, then draw ____."
       }
     ]
   },
   "ogn-183-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Action] Look at the top ____ cards of your Main Deck. Put ____ into your hand and recycle the rest.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "3 | 1",
         "distractorPool": [
           "2 | 1",
           "4 | 1",
           "5 | 1"
-        ]
+        ],
+        "caption": "[Action] Look at the top ____ cards of your Main Deck. Put ____ into your hand and recycle the rest."
       }
     ]
   },
   "ogn-185-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When I move, discard ____, then draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "When I move, discard ____, then draw ____."
       }
     ]
   },
   "ogn-212-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play this, play a ____ Might Recruit unit token at your base.\nKill this: Recycle up to ____ cards from trashes.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 4",
         "distractorPool": [
           "1 | 3",
           "1 | 2",
           "2 | 2",
           "2 | 3"
-        ]
+        ],
+        "caption": "When you play this, play a ____ Might Recruit unit token at your base.\nKill this: Recycle up to ____ cards from trashes."
       }
     ]
   },
   "ogn-252-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [Deal ____ to a unit.\nWhen you conquer, you may discard ____ to return this from your trash to your hand.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "5 | 1",
         "distractorPool": [
           "4 | 1",
           "3 | 1",
           "5 | 2",
           "4 | 2"
-        ]
+        ],
+        "caption": "Deal ____ to a unit.\nWhen you conquer, you may discard ____ to return this from your trash to your hand."
       }
     ]
   },
   "ogn-255-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When an enemy unit attacks a battlefield you control, give it -____ Might this turn, to a minimum of ____ Might.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "2 | 1",
           "3 | 1",
           "4 | 1"
-        ]
+        ],
+        "caption": "When an enemy unit attacks a battlefield you control, give it -____ Might this turn, to a minimum of ____ Might."
       }
     ]
   },
   "ogn-263-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [You may pay ____ to hide a card with [Hidden] instead of (Any).\n____, [Tap]: Put a Teemo unit you own into your hand from your Champion Zone or the board.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "1 | 3",
           "1 | 4"
-        ]
+        ],
+        "caption": "You may pay ____ to hide a card with [Hidden] instead of (Any).\n____, [Tap]: Put a Teemo unit you own into your hand from your Champion Zone or the board."
       }
     ]
   },
   "ogn-298-298": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you conquer here, discard ____, then draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "When you conquer here, discard ____, then draw ____."
       }
     ]
   },
   "ogs-004-024": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [While you have ____+ runes, I have +____ Might.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "8 | 4",
         "distractorPool": [
           "8 | 3",
@@ -349,14 +374,15 @@
           "9 | 4",
           "9 | 5",
           "7 | 4"
-        ]
+        ],
+        "caption": "While you have ____+ runes, I have +____ Might."
       }
     ]
   },
   "ogs-006-024": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play a spell that costs ____ or more, give me +____ Might this turn.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "5 | 3",
         "distractorPool": [
           "5 | 2",
@@ -364,14 +390,15 @@
           "6 | 4",
           "4 | 3",
           "4 | 2"
-        ]
+        ],
+        "caption": "When you play a spell that costs ____ or more, give me +____ Might this turn."
       }
     ]
   },
   "ogs-021-024": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play a spell that costs ____ or more, draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "5 | 1",
         "distractorPool": [
           "5 | 2",
@@ -379,14 +406,15 @@
           "6 | 2",
           "4 | 1",
           "3 | 1"
-        ]
+        ],
+        "caption": "When you play a spell that costs ____ or more, draw ____."
       }
     ]
   },
   "ogs-023-024": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you conquer, if you have ____+ units at that battlefield, draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "4 | 2",
         "distractorPool": [
           "4 | 1",
@@ -394,27 +422,29 @@
           "5 | 1",
           "3 | 1",
           "3 | 2"
-        ]
+        ],
+        "caption": "When you conquer, if you have ____+ units at that battlefield, draw ____."
       }
     ]
   },
   "sfd-012-221": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [I cost ____ less for each card you've played this turn, to a minimum of ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "2 | 1",
           "1 | 2",
           "1 | 3"
-        ]
+        ],
+        "caption": "I cost ____ less for each card you've played this turn, to a minimum of ____."
       }
     ]
   },
   "sfd-013-221": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [You may pay ____(R) as an additional cost to play me.\nWhen you play me, if you paid the additional cost, deal ____ to a unit at a battlefield.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 2",
         "distractorPool": [
           "1 | 3",
@@ -422,14 +452,15 @@
           "2 | 2",
           "2 | 3",
           "1 | 1"
-        ]
+        ],
+        "caption": "You may pay ____(R) as an additional cost to play me.\nWhen you play me, if you paid the additional cost, deal ____ to a unit at a battlefield."
       }
     ]
   },
   "sfd-089-221": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [Your Mechs have +____ Might.\nWhen I hold, play a ____ Might Mech unit token to your base.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 3",
         "distractorPool": [
           "1 | 2",
@@ -437,106 +468,114 @@
           "2 | 1",
           "2 | 2",
           "2 | 3"
-        ]
+        ],
+        "caption": "Your Mechs have +____ Might.\nWhen I hold, play a ____ Might Mech unit token to your base."
       }
     ]
   },
   "sfd-119-221": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Weaponmaster (Any)] When you attach an Equipment to me, you may pay ____ to draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "2 | 2",
           "1 | 2",
           "2 | 1"
-        ]
+        ],
+        "caption": "[Weaponmaster (Any)] When you attach an Equipment to me, you may pay ____ to draw ____."
       }
     ]
   },
   "sfd-123-221": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When I move to a battlefield, discard ____.\nWhen I win a combat, draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "When I move to a battlefield, discard ____.\nWhen I win a combat, draw ____."
       }
     ]
   },
   "sfd-124-221": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When I conquer, discard ____, then draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "When I conquer, discard ____, then draw ____."
       }
     ]
   },
   "sfd-144-221": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you choose a friendly unit, you may pay ____ and exhaust this to draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "When you choose a friendly unit, you may pay ____ and exhaust this to draw ____."
       }
     ]
   },
   "sfd-188-221": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [Reveal the top ____ cards of your Main Deck. You may banish one, then play it, reducing its cost by ____. Draw any you didn't banish.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 2",
         "distractorPool": [
           "3 | 2",
           "2 | 1",
           "3 | 1",
           "4 | 2"
-        ]
+        ],
+        "caption": "Reveal the top ____ cards of your Main Deck. You may banish one, then play it, reducing its cost by ____. Draw any you didn't banish."
       }
     ]
   },
   "sfd-207-221": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you conquer here, you may pay ____ and return a unit you control here to its owner's hand. If you do, play a ____ Might Sand Soldier unit token here.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 2",
         "distractorPool": [
           "1 | 3",
           "2 | 3",
           "2 | 4"
-        ]
+        ],
+        "caption": "When you conquer here, you may pay ____ and return a unit you control here to its owner's hand. If you do, play a ____ Might Sand Soldier unit token here."
       }
     ]
   },
   "sfd-218-221": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you conquer here with one or more [Mighty] units, you may pay ____ to draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "When you conquer here with one or more [Mighty] units, you may pay ____ to draw ____."
       }
     ]
   },
   "unl-004-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [If you've spent ____ or more to play a spell this turn, I have +____ Might.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "4 | 4",
         "distractorPool": [
           "5 | 5",
@@ -544,41 +583,44 @@
           "4 | 3",
           "5 | 4",
           "3 | 2"
-        ]
+        ],
+        "caption": "If you've spent ____ or more to play a spell this turn, I have +____ Might."
       }
     ]
   },
   "unl-020-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [Deal ____ to a unit. Its controller may play this spell again for (Any). If they do, this deals ____ additional Bonus Damage for each time this spell has dealt damage this turn.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 1",
         "distractorPool": [
           "2 | 2",
           "3 | 1",
           "4 | 1"
-        ]
+        ],
+        "caption": "Deal ____ to a unit. Its controller may play this spell again for (Any). If they do, this deals ____ additional Bonus Damage for each time this spell has dealt damage this turn."
       }
     ]
   },
   "unl-053-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play me, draw ____.\n[Deathknell] Choose an opponent. They reveal their hand. You can look at their facedown cards this turn. Gain ____ XP.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "1 | 3",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "When you play me, draw ____.\n[Deathknell] Choose an opponent. They reveal their hand. You can look at their facedown cards this turn. Gain ____ XP."
       }
     ]
   },
   "unl-064-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play me, look at the top ____ cards of your Main Deck. You may reveal a spell with Energy cost ____ or more from among them and draw it. Recycle the rest.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "4 | 4",
         "distractorPool": [
           "4 | 2",
@@ -586,14 +628,15 @@
           "5 | 4",
           "5 | 3",
           "3 | 3"
-        ]
+        ],
+        "caption": "When you play me, look at the top ____ cards of your Main Deck. You may reveal a spell with Energy cost ____ or more from among them and draw it. Recycle the rest."
       }
     ]
   },
   "unl-095-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Action] Give a friendly unit +____ Might this turn. When it wins a combat this turn, gain ____ XP.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "3 | 2",
         "distractorPool": [
           "3 | 1",
@@ -601,100 +644,108 @@
           "2 | 2",
           "4 | 2",
           "4 |1"
-        ]
+        ],
+        "caption": "[Action] Give a friendly unit +____ Might this turn. When it wins a combat this turn, gain ____ XP."
       }
     ]
   },
   "unl-097-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play me, draw ____ if your other units have total Might ____ or more.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 5",
         "distractorPool": [
           "1 | 4",
           "1 | 6",
           "1 | 3",
           "1 | 7"
-        ]
+        ],
+        "caption": "When you play me, draw ____ if your other units have total Might ____ or more."
       }
     ]
   },
   "unl-103-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Reaction] Choose one -\n- Choose up to ____ cards from opponents' trashes. Their owners recycle them.\n- Draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "3 | 1",
         "distractorPool": [
           "2 | 1",
           "3 | 2",
           "4 | 2"
-        ]
+        ],
+        "caption": "[Reaction] Choose one -\n- Choose up to ____ cards from opponents' trashes. Their owners recycle them.\n- Draw ____."
       }
     ]
   },
   "unl-123-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play me, discard ____, then draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "When you play me, discard ____, then draw ____."
       }
     ]
   },
   "unl-125-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Reaction] Discard ____, then draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 2",
         "distractorPool": [
           "1 | 1",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "[Reaction] Discard ____, then draw ____."
       }
     ]
   },
   "unl-135-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play me, choose an opponent. They reveal their hand. You may pay ____ XP to choose a card from their hand. If you do, they discard that card and draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 1",
         "distractorPool": [
           "1 | 1",
           "3 | 2",
           "3 | 1"
-        ]
+        ],
+        "caption": "When you play me, choose an opponent. They reveal their hand. You may pay ____ XP to choose a card from their hand. If you do, they discard that card and draw ____."
       }
     ]
   },
   "unl-168-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [This costs ____ less if you choose a Bird, Cat, Dog, or Poro.\nPlay a unit with cost no more than ____ and no more than (Any) from your trash, ignoring its cost.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 2",
         "distractorPool": [
           "1 | 3",
           "2 | 3",
           "2 | 4"
-        ]
+        ],
+        "caption": "This costs ____ less if you choose a Bird, Cat, Dog, or Poro.\nPlay a unit with cost no more than ____ and no more than (Any) from your trash, ignoring its cost."
       }
     ]
   },
   "unl-178-219": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [You may spend ____ XP as an additional cost to play me. If you do, I cost ____ less.\n[Ambush] [Tank]]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "3 | 3",
         "distractorPool": [
           "3 | 2",
           "2 | 2",
           "2 | 1",
           "3 | 1"
-        ]
+        ],
+        "caption": "You may spend ____ XP as an additional cost to play me. If you do, I cost ____ less.\n[Ambush] [Tank]"
       }
     ]
   },
@@ -714,61 +765,65 @@
   "ven-009-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blank: [When I attack, you may pay Fury to give me [Assault _] this turn.]",
+        "prompt": "Fill in the blank:",
         "correctAnswer": "2",
         "distractorPool": [
           "1",
           "3",
           "4"
-        ]
+        ],
+        "caption": "When I attack, you may pay Fury to give me [Assault _] this turn."
       }
     ]
   },
   "ven-010-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Action] Deal ____ to a unit at a battlefield. This deals ____ Bonus Damage for each card with this name in your trash.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 1",
         "distractorPool": [
           "3 | 1",
           "4 | 1",
           "1 | 1"
-        ]
+        ],
+        "caption": "[Action] Deal ____ to a unit at a battlefield. This deals ____ Bonus Damage for each card with this name in your trash."
       }
     ]
   },
   "ven-016-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Accelerate] When I move, if you control ____ or fewer runes, draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "4 | 1",
         "distractorPool": [
           "3 | 1",
           "5 | 1",
           "6 | 1",
           "2 | 1"
-        ]
+        ],
+        "caption": "[Accelerate] When I move, if you control ____ or fewer runes, draw ____."
       }
     ]
   },
   "ven-018-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blank:  [[Empower (___)(R)] Your units have +1 Might. If I'm [Empowered], they have +2 Might instead.]",
+        "prompt": "Fill in the blank:",
         "correctAnswer": "6",
         "distractorPool": [
           "4",
           "5",
           "7",
           "8"
-        ]
+        ],
+        "caption": "[Empower (___)(R)] Your units have +1 Might. If I'm [Empowered], they have +2 Might instead."
       }
     ]
   },
   "ven-019-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Accelerate] When I attack, if you control ____ or fewer runes, deal ____ to all enemy units here.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "4 | 2",
         "distractorPool": [
           "4 | 1",
@@ -776,14 +831,15 @@
           "3 | 2",
           "5 | 1",
           "5 | 2"
-        ]
+        ],
+        "caption": "[Accelerate] When I attack, if you control ____ or fewer runes, deal ____ to all enemy units here."
       }
     ]
   },
   "ven-021-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Empower (2)(R)] When I move, you may deal 1 to a unit at a battlefield I moved to or from. If I'm [Empowered], deal ___ instead.[Empowered] I have +___ Might.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 1",
         "distractorPool": [
           "3 | 1",
@@ -791,20 +847,22 @@
           "2 | 2",
           "4 | 1",
           "4 | 2"
-        ]
+        ],
+        "caption": "[Empower (2)(R)] When I move, you may deal 1 to a unit at a battlefield I moved to or from. If I'm [Empowered], deal ___ instead.[Empowered] I have +___ Might."
       }
     ]
   },
   "ven-023-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [You may discard ____ as an additional cost to play me.When you play me, if you paid the additional cost, play a ____ Might Shadow Clone unit token.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 0",
         "distractorPool": [
           "1 | 1",
           "2 | 1",
           "2 | 0"
-        ]
+        ],
+        "caption": "You may discard ____ as an additional cost to play me.When you play me, if you paid the additional cost, play a ____ Might Shadow Clone unit token."
       }
     ]
   },
@@ -824,7 +882,7 @@
   "ven-046-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks: [[Deflect _] [Empower (_)] [Empowered] When I conquer, you score 1 point.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 8",
         "distractorPool": [
           "2 | 7",
@@ -832,80 +890,86 @@
           "1 | 7",
           "1 | 8",
           "1 | 6"
-        ]
+        ],
+        "caption": "[Deflect _] [Empower (_)] [Empowered] When I conquer, you score 1 point."
       }
     ]
   },
   "ven-053-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [If a player would score ____ point from conquering or holding during their first or second turn, they draw ____ instead.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "1 | 3"
-        ]
+        ],
+        "caption": "If a player would score ____ point from conquering or holding during their first or second turn, they draw ____ instead."
       }
     ]
   },
   "ven-054-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Empower] - [Tap] Disempower this, ____, [Tap]: Draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "[Empower] - [Tap] Disempower this, ____, [Tap]: Draw ____."
       }
     ]
   },
   "ven-058-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play me, if you control ____ or more other gear, draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "3 | 1",
         "distractorPool": [
           "2 | 1",
           "3 | 2",
           "4 | 1",
           "4 | 2"
-        ]
+        ],
+        "caption": "When you play me, if you control ____ or more other gear, draw ____."
       }
     ]
   },
   "ven-060-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [Discard a gear, ____, [Tap]: Deal ____ to a unit at a battlefield.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 4",
         "distractorPool": [
           "1 | 3",
           "1 | 5",
           "2 | 4",
           "2 | 5"
-        ]
+        ],
+        "caption": "Discard a gear, ____, [Tap]: Deal ____ to a unit at a battlefield."
       }
     ]
   },
   "ven-069-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play me, draw ____.[Empower (3)] [Empowered] Your spells and abilities can't be countered. If a spell or ability you control would give -Might to a unit it chooses, it gives an additional -____ Might.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "When you play me, draw ____.[Empower (3)] [Empowered] Your spells and abilities can't be countered. If a spell or ability you control would give -Might to a unit it chooses, it gives an additional -____ Might."
       }
     ]
   },
   "ven-089-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [Look at the top ____ cards of your Main Deck. You may banish a unit or gear from among them and play it, reducing its Energy cost by ____. Recycle the rest. Then you may do this: Empower it.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "5 | 5",
         "distractorPool": [
           "5 | 4",
@@ -913,60 +977,79 @@
           "4 | 4",
           "4 | 3",
           "4 | 2"
-        ]
+        ],
+        "caption": "Look at the top ____ cards of your Main Deck. You may banish a unit or gear from among them and play it, reducing its Energy cost by ____. Recycle the rest. Then you may do this: Empower it."
+      }
+    ]
+  },
+  "ven-108-166": {
+    "fillBlank": [
+      {
+        "prompt": "Fill in the blanks:",
+        "correctAnswer": "1 | Might",
+        "distractorPool": [
+          "1 | Cost",
+          "2 | Might",
+          "2 | Cost"
+        ],
+        "caption": "When you play this or at the start of your Beginning Phase, [Burn ___]. When you burn a unit this way, do this: Give a friendly unit +Might equal to the burned card's _____ this turn."
       }
     ]
   },
   "ven-109-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play me or when I score, play a ____ Might Tentacle unit token from Bilgewater.I have +____ Might for each token unit you control.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "When you play me or when I score, play a ____ Might Tentacle unit token from Bilgewater.I have +____ Might for each token unit you control."
       }
     ]
   },
   "ven-135-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [[Hidden] When you play me or I attack, you may pay ____ Energy to [Stun] a unit. While there's a stunned enemy unit here, I have +____ Might.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "2 | 2",
         "distractorPool": [
           "3 | 1",
           "3 | 2",
           "2 | 1"
-        ]
+        ],
+        "caption": "[Hidden] When you play me or I attack, you may pay ____ Energy to [Stun] a unit. While there's a stunned enemy unit here, I have +____ Might."
       }
     ]
   },
   "ven-143-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you banish a card you own, empower me. [Action] Disempower me, [Tap]: Discard ____, then draw ____.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "1 | 1",
         "distractorPool": [
           "1 | 2",
           "2 | 1",
           "2 | 2"
-        ]
+        ],
+        "caption": "When you banish a card you own, empower me. [Action] Disempower me, [Tap]: Discard ____, then draw ____."
       }
     ]
   },
   "ven-145-166": {
     "fillBlank": [
       {
-        "prompt": "Fill in the blanks:  [When you play a unit, gear, or activated ability with Energy cost ____ or more, you may exhaust me to ready up to ____ runes.]",
+        "prompt": "Fill in the blanks:",
         "correctAnswer": "7 | 2",
         "distractorPool": [
           "7 | 3",
           "6 | 2",
           "5 | 2",
           "6 | 3"
-        ]
+        ],
+        "caption": "When you play a unit, gear, or activated ability with Energy cost ____ or more, you may exhaust me to ready up to ____ runes."
       }
     ]
   }
