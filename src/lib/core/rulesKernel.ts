@@ -6,6 +6,7 @@
 
 import { costOf, getCard } from "./cards";
 import { getEffectEntry, primitiveToEvents, type EffectPrimitive } from "./effects";
+import { CURRENT_SCHEMA_VERSION } from "./schema";
 import type {
   Battlefield,
   Cost,
@@ -13,14 +14,18 @@ import type {
   Domain,
   GameEvent,
   GameState,
+  GateResult,
   KeywordGrant,
+  MatchStateSnapshot,
   MightMod,
   ObjectInstance,
   Play,
   PlayerId,
   PlayerState,
+  ReconstructedMatch,
   RuneState,
   UnitState,
+  UnrecognizedEvent,
   WinningLine,
   ZoneRef,
 } from "./schema";
@@ -362,6 +367,63 @@ function findHandOwner(state: GameState, instanceId: string): PlayerId | null {
   return null;
 }
 
+const OBJECT_ZONES = ["hand", "deck", "discard", "banished"] as const;
+
+// Finds an ObjectInstance across any of a player's non-battlefield zones
+// (both players) and applies `fn`. Used by "cardRevealed" to resolve a
+// cardId:null placeholder once its identity becomes known.
+function mapObject(
+  state: GameState,
+  instanceId: string,
+  fn: (o: ObjectInstance, owner: PlayerId) => ObjectInstance
+): GameState {
+  for (const pid of Object.keys(state.players) as PlayerId[]) {
+    const p = state.players[pid];
+    for (const zoneKey of OBJECT_ZONES) {
+      const idx = p[zoneKey].findIndex((o) => o.instanceId === instanceId);
+      if (idx !== -1) {
+        const zone = [...p[zoneKey]];
+        zone[idx] = fn(zone[idx], pid);
+        return { ...state, players: { ...state.players, [pid]: { ...p, [zoneKey]: zone } } };
+      }
+    }
+  }
+  return state;
+}
+
+// Every known GameEvent variant's `type` string. Used by foldEvents to
+// route unknown types to UnrecognizedEvent *before* calling applyEvent —
+// see the docstring on applyEvent's default branch below.
+const KNOWN_EVENT_TYPES: ReadonlySet<string> = new Set([
+  "cardPlayed",
+  "unitEntered",
+  "damageDealt",
+  "mightModApplied",
+  "mightSet",
+  "keywordGranted",
+  "unitStunned",
+  "unitKilled",
+  "unitMoved",
+  "unitReturnedToHand",
+  "cardDrawn",
+  "runeExhausted",
+  "runeRecycled",
+  "spellCountered",
+  "pointScored",
+  "phaseChange",
+  "cardRevealed",
+  "gameStarted",
+  "mulligan",
+  "runeChanneled",
+]);
+
+// Parser-only (RiftEngine). Folds one known GameEvent into GameState. Do
+// not call this directly on unvalidated/external data — an unknown event
+// `type` here throws (see the default branch) rather than being tolerated,
+// because tolerance-without-corruption requires recording *which* event was
+// skipped, and applyEvent has no return channel for that. Use foldEvents
+// (below) instead, which routes unknown types to UnrecognizedEvent before
+// ever calling this. See docs/design/RiftCore_Match_Pipeline_Contract.md §5.
 export function applyEvent(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
     case "cardPlayed": {
@@ -475,11 +537,81 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
         players: { ...state.players, [event.player]: { ...p, pointsAtTurnStart: p.points } },
       };
     }
+    case "cardRevealed":
+      return mapObject(state, event.cardInstanceId, (o, owner) => ({
+        ...o,
+        cardId: event.cardId,
+        knownToOpponent: owner !== event.toPlayer ? true : o.knownToOpponent,
+      }));
+    case "gameStarted":
+      return { ...state, activePlayer: event.firstPlayer };
+    case "mulligan": {
+      const p = state.players[event.player];
+      const returned = p.hand.filter((o) => event.returnedInstanceIds.includes(o.instanceId));
+      const hand = p.hand.filter((o) => !event.returnedInstanceIds.includes(o.instanceId));
+      // Shuffle semantics are a no-op placeholder here (returned cards land
+      // at the back of the deck, unshuffled) — a real shuffle isn't needed
+      // for folding to a coherent snapshot.
+      return {
+        ...state,
+        players: { ...state.players, [event.player]: { ...p, hand, deck: [...p.deck, ...returned] } },
+      };
+    }
+    case "runeChanneled": {
+      const p = state.players[event.player];
+      const rune: RuneState = { instanceId: event.instanceId, domain: event.domain, tapped: false };
+      return { ...state, players: { ...state.players, [event.player]: { ...p, runes: [...p.runes, rune] } } };
+    }
     default: {
+      // Exhaustiveness check for known variants — TS errors here if a new
+      // GameEvent variant is added without a case above. At runtime this
+      // must be unreachable: foldEvents (the only sanctioned fold entry
+      // point) filters unknown event types into UnrecognizedEvent before
+      // ever calling applyEvent. Reaching here means a caller bypassed
+      // foldEvents and called applyEvent directly on unvalidated data —
+      // that's a caller bug, so this throws rather than silently
+      // tolerating (silent tolerance here would fabricate "nothing
+      // happened" with no record of what was skipped; see contract §5).
       const _exhaustive: never = event;
-      return _exhaustive;
+      const raw = _exhaustive as unknown as { type?: string };
+      throw new Error(`applyEvent: unreachable — unrecognized event type "${raw?.type}". Use foldEvents instead.`);
     }
   }
+}
+
+// Parser-only (RiftEngine). The one sanctioned fold entry point over a raw
+// GameEvent[] — record-don't-skip: a known event type folds via applyEvent
+// and gets a "full" snapshot; an unknown type is recorded as an
+// UnrecognizedEvent (never thrown, never silently dropped) and the *prior*
+// state carries forward unchanged with a "partial" snapshot. See
+// docs/design/RiftCore_Match_Pipeline_Contract.md §5, §8.
+export function foldEvents(
+  initial: GameState,
+  events: GameEvent[]
+): { finalState: GameState; snapshots: MatchStateSnapshot[]; unresolved: UnrecognizedEvent[] } {
+  let state = initial;
+  const snapshots: MatchStateSnapshot[] = [];
+  const unresolved: UnrecognizedEvent[] = [];
+
+  events.forEach((event, index) => {
+    if (KNOWN_EVENT_TYPES.has(event.type)) {
+      state = applyEvent(state, event);
+      snapshots.push({ state, completeness: "full" });
+    } else {
+      unresolved.push({ index, rawEvent: event, schemaVersion: CURRENT_SCHEMA_VERSION, reason: "unrecognized-type" });
+      snapshots.push({ state, completeness: "partial" });
+    }
+  });
+
+  return { finalState: state, snapshots, unresolved };
+}
+
+// Parser-only (RiftEngine). Thin wrapper over foldEvents returning just the
+// per-step snapshots — this is how Engine produces the reader-facing
+// materialized state. Readers consume these snapshots (via readSnapshot);
+// they never call foldEvents/materialize/applyEvent themselves (contract §1).
+export function materialize(initial: GameState, events: GameEvent[]): MatchStateSnapshot[] {
+  return foldEvents(initial, events).snapshots;
 }
 
 // ---------------------------------------------------------------------------
@@ -491,8 +623,11 @@ export function isCounterableBy(play: Play, counterCardId: string, state: GameSt
   const owner = findHandOwner(state, play.cardInstanceId);
   if (!owner) return false;
   const handCard = state.players[owner].hand.find((o) => o.instanceId === play.cardInstanceId);
-  if (!handCard) return false;
-  const card = getCard(handCard.cardId);
+  // A card in a player's own hand always has a known identity — cardId is
+  // only ever null for an opponent's hidden hand as captured by RiftNotes.
+  if (!handCard || handCard.cardId === null) return false;
+  const cardId = handCard.cardId;
+  const card = getCard(cardId);
   if (card.type !== "Spell") return false;
 
   const entry = getEffectEntry(counterCardId);
@@ -501,7 +636,7 @@ export function isCounterableBy(play: Play, counterCardId: string, state: GameSt
   if (!counterPrimitive) return false;
 
   if (counterPrimitive.maxCost === undefined) return true;
-  const cost = costOf(handCard.cardId);
+  const cost = costOf(cardId);
   return cost.energy + cost.powerCount <= counterPrimitive.maxCost;
 }
 
@@ -534,13 +669,18 @@ function applyOnePlay(state: GameState, play: Play): PlayResult {
       const owner = findHandOwner(state, play.cardInstanceId);
       if (!owner) return illegal(state, "card not in hand");
       const handCard = state.players[owner].hand.find((o) => o.instanceId === play.cardInstanceId)!;
-      const card = getCard(handCard.cardId);
+      // A card in a player's own hand always has a known identity — cardId
+      // is only ever null for an opponent's hidden hand as captured by
+      // RiftNotes, which never reaches applyPlay directly.
+      if (handCard.cardId === null) return illegal(state, "card identity unknown");
+      const cardId = handCard.cardId;
+      const card = getCard(cardId);
 
       if (card.speed === "Action" && state.activePlayer !== owner) {
         return illegal(state, "wrong speed: Action requires your turn");
       }
 
-      const baseCost = costOf(handCard.cardId);
+      const baseCost = costOf(cardId);
       const cost: Cost = play.repeat
         ? {
             energy: baseCost.energy * 2,
@@ -552,7 +692,7 @@ function applyOnePlay(state: GameState, play: Play): PlayResult {
       const payment = pickPaymentRunes(cost, state.players[owner].runes);
       if (!payment) return illegal(state, "unaffordable");
 
-      const entry = getEffectEntry(handCard.cardId);
+      const entry = getEffectEntry(cardId);
       const target = play.targets[0];
 
       if (entry?.kind === "program") {
@@ -608,16 +748,20 @@ function applyOnePlay(state: GameState, play: Play): PlayResult {
       if (!owner) return illegal(state, "card not in hand");
       if (state.activePlayer !== owner) return illegal(state, "wrong speed: units require your turn");
       const handCard = state.players[owner].hand.find((o) => o.instanceId === play.cardInstanceId)!;
-      const card = getCard(handCard.cardId);
+      // See castSpell above: a player's own hand card always has a known
+      // identity by the time it reaches applyPlay.
+      if (handCard.cardId === null) return illegal(state, "card identity unknown");
+      const cardId = handCard.cardId;
+      const card = getCard(cardId);
 
-      const cost = costOf(handCard.cardId);
+      const cost = costOf(cardId);
       const payment = pickPaymentRunes(cost, state.players[owner].runes);
       if (!payment) return illegal(state, "unaffordable");
 
-      const entry = getEffectEntry(handCard.cardId);
+      const entry = getEffectEntry(cardId);
       const unit: UnitState = {
         instanceId: play.cardInstanceId,
-        cardId: handCard.cardId,
+        cardId,
         controller: owner,
         might: card.might ?? 0,
         mightMods: [],
@@ -759,4 +903,109 @@ export function applyPlay(state: GameState, play: Play | Play[]): PlayResult {
   }
 
   return { legal: true, events: allEvents, resultState: current, resolution };
+}
+
+// ---------------------------------------------------------------------------
+// checkClean — the clean-stream gate (contract §3). Pure, no inference: it
+// only checks what's already present on `m` (built by Engine's foldEvents /
+// materialize) against an independently captured outcome. It does not
+// re-run reconstruction and does not guess.
+// ---------------------------------------------------------------------------
+
+function foldedWinner(state: GameState): PlayerId | undefined {
+  return (Object.keys(state.players) as PlayerId[]).find((pid) => state.players[pid].points >= state.pointsToWin);
+}
+
+export function checkClean(
+  m: ReconstructedMatch,
+  capturedOutcome: { winner?: PlayerId; finalPoints?: Record<PlayerId, number> }
+): GateResult {
+  const failures: string[] = [];
+
+  // 1. Foldable — foldEvents produced one snapshot per event (it never
+  // throws or drops an event; a mismatch here means `m` wasn't actually
+  // built by foldEvents/materialize).
+  const foldable = m.snapshots.length === m.events.length;
+  if (!foldable) {
+    failures.push(`snapshot count (${m.snapshots.length}) does not match event count (${m.events.length})`);
+  }
+
+  // 2. No black boxes — every event resolved to a known type.
+  const noBlackBoxes = m.unresolved.length === 0;
+  if (!noBlackBoxes) {
+    failures.push(`${m.unresolved.length} unresolved event(s) at index ${m.unresolved.map((u) => u.index).join(", ")}`);
+  }
+
+  // 3. Legal — verifiable only where an event actually carries the data to
+  // check against (costPaid on cardPlayed, checked against the runes
+  // available in the immediately preceding snapshot). An event without
+  // that data isn't flagged illegal — there's nothing to deductively
+  // disprove — but it also isn't proof of legality; this is a check on
+  // what's present, not a legality *inference*.
+  let allLegal = true;
+  m.events.forEach((event, index) => {
+    if (event.type !== "cardPlayed" || !event.costPaid) return;
+    const before = index > 0 ? m.snapshots[index - 1]?.state : undefined;
+    if (!before) return;
+    if (!canAfford(event.costPaid, before.players[event.player].runes)) {
+      allLegal = false;
+      failures.push(`event ${index}: cardPlayed by ${event.player} is unaffordable per its costPaid`);
+    }
+  });
+
+  // 4. Outcome-consistent — the folded final state vs. the independently
+  // captured result.
+  let outcomeConsistent = true;
+  const finalState = m.snapshots[m.snapshots.length - 1]?.state;
+  if (!finalState) {
+    if (capturedOutcome.winner || capturedOutcome.finalPoints) {
+      outcomeConsistent = false;
+      failures.push("no final state to check outcome against (empty snapshots)");
+    }
+  } else {
+    if (capturedOutcome.finalPoints) {
+      for (const pid of Object.keys(capturedOutcome.finalPoints) as PlayerId[]) {
+        const expected = capturedOutcome.finalPoints[pid];
+        const actual = finalState.players[pid].points;
+        if (actual !== expected) {
+          outcomeConsistent = false;
+          failures.push(`final points for ${pid}: expected ${expected}, folded to ${actual}`);
+        }
+      }
+    }
+    if (capturedOutcome.winner) {
+      const winner = foldedWinner(finalState);
+      if (winner !== capturedOutcome.winner) {
+        outcomeConsistent = false;
+        failures.push(`winner: expected ${capturedOutcome.winner}, folded winner is ${winner ?? "none"}`);
+      }
+    }
+  }
+
+  return {
+    pass: foldable && noBlackBoxes && allLegal && outcomeConsistent,
+    foldable,
+    noBlackBoxes,
+    allLegal,
+    outcomeConsistent,
+    failures,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// readSnapshot — the reader accessor (contract §1, §7). Readers import
+// *only* this (plus the snapshot/state types) and never foldEvents /
+// materialize / applyEvent directly — that structural gap is what makes it
+// impossible for a reader to accidentally parse.
+// ---------------------------------------------------------------------------
+
+export function readSnapshot(m: ReconstructedMatch, at: number): MatchStateSnapshot {
+  if (m.status !== "verified") {
+    throw new Error(`readSnapshot: match status is "${m.status}", not "verified" — readers may only consume verified streams`);
+  }
+  const snapshot = m.snapshots[at];
+  if (!snapshot) {
+    throw new Error(`readSnapshot: no snapshot at index ${at} (stream has ${m.snapshots.length})`);
+  }
+  return snapshot;
 }
