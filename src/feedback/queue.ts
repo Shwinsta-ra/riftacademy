@@ -44,9 +44,13 @@ export function pendingCount(): number {
   return read().length;
 }
 
-// Try now, queue on failure.
-export async function submit(report: Report): Promise<"sent" | "queued"> {
-  if (await send(report)) return "sent";
+// Try now, queue on failure. "rejected" is terminal — the server refused
+// this exact payload, so retrying (now or from the offline queue) would just
+// repeat the rejection. Only "retry" outcomes go in the queue.
+export async function submit(report: Report): Promise<"sent" | "queued" | "rejected"> {
+  const outcome = await send(report);
+  if (outcome === "rejected") return "rejected";
+  if (outcome === "sent") return "sent";
   write([...read(), report]);
   return "queued";
 }
@@ -62,8 +66,11 @@ export async function flush(): Promise<number> {
 
   for (const report of queue) {
     if (report.attempts >= MAX_ATTEMPTS) continue; // stop trying, drop it
-    if (await send(report)) sent++;
-    else remaining.push({ ...report, attempts: report.attempts + 1 });
+    const outcome = await send(report);
+    if (outcome === "sent") sent++;
+    else if (outcome === "retry") remaining.push({ ...report, attempts: report.attempts + 1 });
+    // "rejected": drop silently, same as exhausting MAX_ATTEMPTS — nothing
+    // about retrying this exact payload would change the outcome.
   }
 
   write(remaining);
