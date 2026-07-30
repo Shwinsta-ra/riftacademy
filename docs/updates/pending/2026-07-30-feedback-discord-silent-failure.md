@@ -17,4 +17,4 @@ Added `src/feedback/__tests__/queue.test.ts` covering the 200/400/429/500 outcom
 **Anything another thread working today should know before touching related code:**
 If you touch `FeedbackSheet.tsx`'s required-field gating again, check `api/feedback.ts` and `src/feedback/transport.ts`'s `buildDiscordPayload` (used by the direct-send path) for a matching change — they're deliberately separate implementations (see the "imports nothing" comment in `api/feedback.ts`) and won't fail loudly if they drift.
 
-**Still open, not fixed here — needs Ashwin to check in the Vercel dashboard:** whether `DISCORD_FEEDBACK_WEBHOOK` is actually set and valid in the Vercel project's env vars. That's separate from this bug and I have no way to verify it from the repo.
+**Ruled out:** Ashwin confirmed `DISCORD_FEEDBACK_WEBHOOK` is present and looks valid in the Vercel project's env vars, so the validation mismatch above is the actual end-to-end root cause, not a missing/invalid webhook.
