@@ -88,7 +88,7 @@ export default function FeedbackSheet({ visible, shot, onClose }: Props) {
   const [previewWidth, setPreviewWidth] = useState(0);
   const [keepShot, setKeepShot] = useState(true);
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<"sent" | "queued" | null>(null);
+  const [result, setResult] = useState<"sent" | "queued" | "rejected" | null>(null);
   const [drawing, setDrawing] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
@@ -192,13 +192,17 @@ export default function FeedbackSheet({ visible, shot, onClose }: Props) {
 
         {result ? (
           <View style={styles.done}>
-            <Text style={styles.doneTitle}>
-              {result === "sent" ? "Report sent" : "Report queued"}
+            <Text style={[styles.doneTitle, result === "rejected" && styles.doneTitleError]}>
+              {result === "sent" && "Report sent"}
+              {result === "queued" && "Report queued"}
+              {result === "rejected" && "Report didn't go through"}
             </Text>
             <Text style={styles.doneBody}>
-              {result === "sent"
-                ? "It's in the dev channel."
-                : "You're offline. It'll send as soon as you reconnect."}
+              {result === "sent" && "It's in the dev channel."}
+              {result === "queued" &&
+                "You're offline. It'll send as soon as you reconnect."}
+              {result === "rejected" &&
+                "The server rejected it. Try again, or mention it directly if it keeps happening."}
             </Text>
           </View>
         ) : (
@@ -453,5 +457,8 @@ const styles = StyleSheet.create({
   tail: { height: 40 },
   done: { paddingVertical: 48, alignItems: "center" },
   doneTitle: { color: DOMAIN_COLORS.Calm, fontSize: 18, fontWeight: "700" },
+  // Fury red is this platform's "something is broken" convention (see
+  // lib/theme.ts) — reused here rather than a one-off error color.
+  doneTitleError: { color: DOMAIN_COLORS.Fury },
   doneBody: { color: theme.textDim, fontSize: 14, marginTop: 8, textAlign: "center" },
 });
