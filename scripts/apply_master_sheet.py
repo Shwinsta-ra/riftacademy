@@ -40,6 +40,7 @@ CATEGORY_MAP = {
     "speed": "speed",
     "trigger": "trigger",
     "fill in the blanks": "fillBlank",
+    "fill in the blank": "fillBlank",
 }
 
 # The only two prompt strings auto-generation ever produces for fillBlank

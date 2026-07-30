@@ -37,17 +37,25 @@ const PROXY_URL = "/api/feedback";
 
 export const transportMode = (): "direct" | "proxy" => (DIRECT_URL ? "direct" : "proxy");
 
-// Resolves true if the report is done with — either it landed, or it was
-// rejected on its merits and retrying would just repeat the rejection.
-export async function send(report: Report): Promise<boolean> {
+// Three-way, not boolean — "the server won't take this one, ever" and "it
+// actually landed in Discord" used to collapse into the same `true`, which
+// meant a permanently-rejected report (e.g. failed validation) was reported
+// to the user as "sent". Now:
+//   "sent"    — it's in Discord.
+//   "rejected"— the server refused it on its merits; identical payload would
+//               fail identically, so there's no point queueing a retry.
+//   "retry"   — network error, 5xx, or rate-limited; worth trying again.
+export type SendResult = "sent" | "rejected" | "retry";
+
+export async function send(report: Report): Promise<SendResult> {
   try {
     return DIRECT_URL ? await sendDirect(report) : await sendViaProxy(report);
   } catch {
-    return false; // network — worth a retry, so requeue
+    return "retry"; // network — worth a retry
   }
 }
 
-async function sendViaProxy(report: Report): Promise<boolean> {
+async function sendViaProxy(report: Report): Promise<SendResult> {
   const res = await fetch(PROXY_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -55,11 +63,11 @@ async function sendViaProxy(report: Report): Promise<boolean> {
   });
   // A 4xx means the server rejected the content, not the connection. Retrying
   // an identical payload will fail identically — drop it rather than loop.
-  if (res.status >= 400 && res.status < 500 && res.status !== 429) return true;
-  return res.ok;
+  if (res.status >= 400 && res.status < 500 && res.status !== 429) return "rejected";
+  return res.ok ? "sent" : "retry";
 }
 
-async function sendDirect(report: Report): Promise<boolean> {
+async function sendDirect(report: Report): Promise<SendResult> {
   const form = new FormData();
   form.append("payload_json", JSON.stringify(buildDiscordPayload(report)));
   form.append(
@@ -72,8 +80,8 @@ async function sendDirect(report: Report): Promise<boolean> {
   if (img) form.append("files[0]", img, `shot-${report.id}.jpg`);
 
   const res = await fetch(DIRECT_URL, { method: "POST", body: form });
-  if (res.status >= 400 && res.status < 500 && res.status !== 429) return true;
-  return res.ok;
+  if (res.status >= 400 && res.status < 500 && res.status !== 429) return "rejected";
+  return res.ok ? "sent" : "retry";
 }
 
 // Shared by both transports, so a report looks identical in Discord either way
@@ -130,7 +138,7 @@ export function buildDiscordPayload(report: Report) {
         // Title carries every tag, so the forum thread list is scannable without
         // opening anything.
         title: report.tags.map((t) => t.label).join(" + ") || "Report",
-        description: report.whatHappened.slice(0, 4000),
+        description: report.whatHappened.slice(0, 4000) || "_no description given_",
         // Colour by the FIRST tag. Multi-tag reports get one stripe, and the
         // user's first pick is the closest thing to a primary we have.
         // Untagged reports get Order yellow — they need a human to decide what

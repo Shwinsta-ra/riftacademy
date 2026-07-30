@@ -65,7 +65,7 @@ export function getFilteredCards(filters: QuizFilters): Card[] {
     // excluded the same way as the normal path below, not shown as a
     // question subject until imageUrl exists.
     const deckCards = (pool ? pool.cards : []).filter(
-      (c) => c.imageUrl !== null && !c.isToken,
+      (c) => c.imageUrl !== null && !c.isToken && !c.banned1v1,
     );
     if (!filters.types.length) return deckCards;
     return deckCards.filter((c) => matchesTypeFilter(c, filters.types));
@@ -82,6 +82,11 @@ export function getFilteredCards(filters: QuizFilters): Card[] {
     // but never quizzed — see eligibleModes(); excluded here too so they
     // don't inflate the pool count shown before a session starts.
     if (c.isToken) return false;
+    // Kept in the dataset (match tracking, distractor generation, set
+    // counts) but never quizzed -- RiftRecall targets 1v1, so a card
+    // banned there shouldn't surface as a question subject even though
+    // it's still real data. See card.banned1v1 in types.ts.
+    if (c.banned1v1) return false;
     if (filters.sets.length && !filters.sets.includes(c.setId)) return false;
     if (!matchesTypeFilter(c, filters.types)) return false;
     if (filters.domains.length && !cardMatchesDomainFilter(c, filters.domains)) return false;

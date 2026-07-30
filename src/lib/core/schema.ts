@@ -114,10 +114,12 @@ export type KeywordGrant = {
 // ---------------------------------------------------------------------------
 
 // A card instance sitting in a zone that doesn't need full battle state
-// (hand, deck, discard, banished).
+// (hand, deck, discard, banished). `cardId: null` = identity unknown to the
+// perspective holding this instance (e.g. an opponent's hidden hand as
+// captured by RiftNotes) — resolved by a later "cardRevealed" event.
 export type ObjectInstance = {
   instanceId: string;
-  cardId: string;
+  cardId: string | null;
   privacy: Privacy;
   knownToOpponent: boolean;
 };
@@ -162,6 +164,12 @@ export type PlayerState = {
   // key off this, not live `points` — a mid-turn conquer must not retroactively
   // satisfy a threshold that was only reached after the turn started.
   pointsAtTurnStart: number;
+  // Game-setup state (§4 match-event schema deltas). Puzzles start mid-game
+  // and leave these empty; a captured full match populates them from the
+  // "gameStarted"/"mulligan" events.
+  legendCardId?: string;
+  champion?: UnitState;
+  runeDeck?: { count: number; byDomain?: Partial<Record<Domain, number>> };
 };
 
 export type Battlefield = {
@@ -246,7 +254,17 @@ export type ZoneRef = { zone: ZoneKind; battlefieldId?: string; player: PlayerId
 export type TurnPhase = "beginning" | "main" | "combat" | "end";
 
 export type GameEvent =
-  | { type: "cardPlayed"; player: PlayerId; cardInstanceId: string }
+  | {
+      type: "cardPlayed";
+      player: PlayerId;
+      cardInstanceId: string;
+      // Capture/reconstruction extensions (§4 match-event schema deltas) —
+      // all optional, so a bare 2-field "cardPlayed" still folds unchanged.
+      targets?: string[];
+      battlefieldId?: string;
+      fromZone?: ZoneKind;
+      costPaid?: Cost;
+    }
   | { type: "unitEntered"; handInstanceId: string; unit: UnitState }
   | { type: "damageDealt"; targetInstanceId: string; amount: number }
   | { type: "mightModApplied"; targetInstanceId: string; mod: MightMod }
@@ -261,7 +279,13 @@ export type GameEvent =
   | { type: "runeRecycled"; instanceId: string }
   | { type: "spellCountered"; chainItemId: string }
   | ({ type: "pointScored" } & ScoreEvent)
-  | { type: "phaseChange"; player: PlayerId; phase: TurnPhase };
+  | { type: "phaseChange"; player: PlayerId; phase: TurnPhase }
+  // The belief-state primitive (restored — see §3 G1 of the match-event
+  // schema doc): records when a hidden card became known to whom.
+  | { type: "cardRevealed"; cardInstanceId: string; cardId: string; toPlayer: PlayerId; source: string }
+  | { type: "gameStarted"; firstPlayer: PlayerId }
+  | { type: "mulligan"; player: PlayerId; returnedInstanceIds: string[] }
+  | { type: "runeChanneled"; player: PlayerId; instanceId: string; domain: Domain };
 
 // ---------------------------------------------------------------------------
 // E1 envelope (deferred, optional, unpopulated) — §2 deltas
@@ -269,13 +293,95 @@ export type GameEvent =
 
 export type MatchStateSnapshot = {
   state: GameState;
-  perspective: PlayerId;
+  // Optional (widened from required — no existing consumer set this field;
+  // see docs/design/RiftCore_Match_Pipeline_Contract.md §8): an authored
+  // puzzle snapshot is inherently one player's view and sets this, but a
+  // materialized snapshot from foldEvents/materialize is the omniscient
+  // fold result and has no single perspective to name.
+  perspective?: PlayerId;
   completeness?: "full" | "partial";
   confidence?: number;
   provenance?: {
     source: "authored" | "field" | "player" | "selfplay";
     fidelity?: number;
   };
+};
+
+// ---------------------------------------------------------------------------
+// CapturedMatch — versioned container for a persisted match (§4, §7 of
+// docs/design/RiftCore_Match_Event_Schema.md). RiftNotes produces this;
+// every consumer keys migrations off `schemaVersion` (see ./migrate.ts).
+// ---------------------------------------------------------------------------
+
+// Bump on every schema change; migrations in ./migrate.ts chain off this.
+export const CURRENT_SCHEMA_VERSION = 1;
+
+export type CapturedMatch = {
+  schemaVersion: number;
+  initialState: GameState;
+  events: GameEvent[];
+  meta?: { source: "field" | "player" | "selfplay"; capturedAt?: string; perspective?: PlayerId };
+  // Capture-layer annotations — NOT game facts, so they stay OUT of
+  // GameEvent[]. A real lossy capture carries misplay flags ("!") and
+  // uncertainty ("?") that must travel with the match without polluting the
+  // canonical event stream (validated 2026-07-30, see
+  // docs/design/RiftNotes_v04_Validation_2026-07-30.md). RiftNotes
+  // populates; RiftCoach reads flags (coaching signal), RiftEngine reads
+  // uncertainty (reconstruction priors).
+  captureMeta?: {
+    tier?: "live-personal" | "digital-personal" | "field-digital";
+    lossy?: boolean;
+    flags?: { eventIndex: number; flag: "!" | "?"; note?: string }[];
+    uncertain?: { eventIndex: number; candidates?: string[]; note?: string }[];
+  };
+};
+
+// ---------------------------------------------------------------------------
+// Match pipeline — writer/parser/reader roles (see
+// docs/design/RiftCore_Match_Pipeline_Contract.md). RiftCore defines these
+// primitives; RiftEngine (M2) is the only role that produces a
+// ReconstructedMatch or resolves an UnrecognizedEvent — see rulesKernel.ts's
+// foldEvents/materialize/checkClean/readSnapshot.
+// ---------------------------------------------------------------------------
+
+// An event whose `type` isn't a known GameEvent variant at the fold's
+// schemaVersion — recorded, never skipped or corrupted. Distinct from
+// migrate(): a known type whose *meaning* changed across versions is a
+// migration concern; an unknown type is an UnrecognizedEvent.
+export type UnrecognizedEvent = {
+  index: number;
+  rawEvent: unknown;
+  schemaVersion: number;
+  reason: "unrecognized-type";
+};
+
+export type StreamStatus = "raw" | "reconstructed" | "verified";
+
+// RiftEngine's output; what a reader's readSnapshot() accepts as input.
+export type ReconstructedMatch = {
+  schemaVersion: number;
+  events: GameEvent[]; // the cleaned stream (Engine's product)
+  snapshots: MatchStateSnapshot[]; // materialized; what readers consume
+  status: StreamStatus;
+  unresolved: UnrecognizedEvent[]; // must be empty to pass the gate
+  deductiveConfidence?: number; // 0..1, computed by Engine (field only here)
+  // Retained tier-1 reconstruction from BEFORE human review, so
+  // deductive-vs-human divergence is computable later (calibration,
+  // contract §4b). RiftCore only retains this field; Engine populates it.
+  deductiveEvents?: GameEvent[];
+  gate?: GateResult;
+};
+
+// The four deductive clean-stream gate checks (contract §3). Pure — no
+// inference; RiftCore's checkClean() computes this over an already-built
+// ReconstructedMatch.
+export type GateResult = {
+  pass: boolean;
+  foldable: boolean;
+  noBlackBoxes: boolean;
+  allLegal: boolean;
+  outcomeConsistent: boolean;
+  failures: string[];
 };
 
 // ---------------------------------------------------------------------------
