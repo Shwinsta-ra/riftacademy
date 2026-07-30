@@ -85,6 +85,12 @@ Any fragment asserting a verification (e.g. "confirmed merged," "verified workin
 - Terminal commands handed to Ashwin must be bare, with **no inline `#` comments** — they break copy-paste into his terminal. Put explanations in prose before/after the code block, never inside it.
 - Instructions should be granular and exact: full paths, explicit commands, no assumed context.
 
+## Reporting format preferences
+Adopted 2026-07-28, from Finance/ROI EOD, to apply everywhere:
+- Tables over prose blocks, always, for reference/reporting content.
+- Card lists: domain first, then alphabetical (for searching/locating) or energy cost (for deckbuilding/gameplay).
+- Large lists always get pivot-style summary stats (counts/breakdowns) alongside the raw data.
+
 ## Deliverable consolidation
 Any substantial response ends with two sections, in this order — (1) "Decisions needed from you": every question/confirmation/decision raised anywhere in the message, even if already inline; (2) "Action items for you": every task you need to do, even if already inline. Inline mentions stay in the body.
 
