@@ -120,12 +120,17 @@ describe("setup + rune events (G4/G5)", () => {
   });
 });
 
-describe("tolerance for unknown event types (§7 evolution contract)", () => {
-  it("does not throw and returns state unchanged for an unrecognized event type", () => {
+describe("unknown event types (superseded by docs/design/RiftCore_Match_Pipeline_Contract.md §5)", () => {
+  // Silent tolerance turned out to be the wrong contract — it fabricates
+  // "nothing happened" with no record of what was skipped. That's now
+  // foldEvents' job (see matchPipeline.test.ts): it routes an unknown type
+  // to an UnrecognizedEvent instead of calling applyEvent at all.
+  // applyEvent itself now throws if it's ever reached with an unknown type,
+  // as a defensive invariant for callers that bypass foldEvents.
+  it("applyEvent throws (defensively) for an unrecognized event type reaching it directly", () => {
     const state = makeState();
     const futureEvent = { type: "someFutureEventNotYetDefined", foo: "bar" } as unknown as GameEvent;
-    expect(() => applyEvent(state, futureEvent)).not.toThrow();
-    expect(applyEvent(state, futureEvent)).toEqual(state);
+    expect(() => applyEvent(state, futureEvent)).toThrow(/unreachable/);
   });
 });
 

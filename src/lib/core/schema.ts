@@ -293,7 +293,12 @@ export type GameEvent =
 
 export type MatchStateSnapshot = {
   state: GameState;
-  perspective: PlayerId;
+  // Optional (widened from required — no existing consumer set this field;
+  // see docs/design/RiftCore_Match_Pipeline_Contract.md §8): an authored
+  // puzzle snapshot is inherently one player's view and sets this, but a
+  // materialized snapshot from foldEvents/materialize is the omniscient
+  // fold result and has no single perspective to name.
+  perspective?: PlayerId;
   completeness?: "full" | "partial";
   confidence?: number;
   provenance?: {
@@ -329,6 +334,54 @@ export type CapturedMatch = {
     flags?: { eventIndex: number; flag: "!" | "?"; note?: string }[];
     uncertain?: { eventIndex: number; candidates?: string[]; note?: string }[];
   };
+};
+
+// ---------------------------------------------------------------------------
+// Match pipeline — writer/parser/reader roles (see
+// docs/design/RiftCore_Match_Pipeline_Contract.md). RiftCore defines these
+// primitives; RiftEngine (M2) is the only role that produces a
+// ReconstructedMatch or resolves an UnrecognizedEvent — see rulesKernel.ts's
+// foldEvents/materialize/checkClean/readSnapshot.
+// ---------------------------------------------------------------------------
+
+// An event whose `type` isn't a known GameEvent variant at the fold's
+// schemaVersion — recorded, never skipped or corrupted. Distinct from
+// migrate(): a known type whose *meaning* changed across versions is a
+// migration concern; an unknown type is an UnrecognizedEvent.
+export type UnrecognizedEvent = {
+  index: number;
+  rawEvent: unknown;
+  schemaVersion: number;
+  reason: "unrecognized-type";
+};
+
+export type StreamStatus = "raw" | "reconstructed" | "verified";
+
+// RiftEngine's output; what a reader's readSnapshot() accepts as input.
+export type ReconstructedMatch = {
+  schemaVersion: number;
+  events: GameEvent[]; // the cleaned stream (Engine's product)
+  snapshots: MatchStateSnapshot[]; // materialized; what readers consume
+  status: StreamStatus;
+  unresolved: UnrecognizedEvent[]; // must be empty to pass the gate
+  deductiveConfidence?: number; // 0..1, computed by Engine (field only here)
+  // Retained tier-1 reconstruction from BEFORE human review, so
+  // deductive-vs-human divergence is computable later (calibration,
+  // contract §4b). RiftCore only retains this field; Engine populates it.
+  deductiveEvents?: GameEvent[];
+  gate?: GateResult;
+};
+
+// The four deductive clean-stream gate checks (contract §3). Pure — no
+// inference; RiftCore's checkClean() computes this over an already-built
+// ReconstructedMatch.
+export type GateResult = {
+  pass: boolean;
+  foldable: boolean;
+  noBlackBoxes: boolean;
+  allLegal: boolean;
+  outcomeConsistent: boolean;
+  failures: string[];
 };
 
 // ---------------------------------------------------------------------------
