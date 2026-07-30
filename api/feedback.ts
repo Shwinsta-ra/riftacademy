@@ -96,8 +96,11 @@ export default async function handler(req: Req, res: Res) {
   // tagged. There's no untagged path left.
   if (!tags.length) return res.status(400).json({ error: "At least one tag required" });
 
+  // "What happened?" is optional on the client (tags + screenshot + breadcrumbs
+  // are usually enough to act on), so it must be optional here too — this used
+  // to require 3+ chars and silently ate every tags-only report as a 400 that
+  // the client then reported to the user as "sent".
   const happened = clip(body.whatHappened);
-  if (happened.trim().length < 3) return res.status(400).json({ error: "Description required" });
 
   const expected = clip(body.whatExpected, 1000);
   const route = clip(body.route, 60) || "Home";
@@ -150,7 +153,7 @@ export default async function handler(req: Req, res: Res) {
         // opening anything. Colour comes from the first — the user's first pick
         // is the closest thing to a primary we have.
         title: tags.map((t) => t.label).join(" + "),
-        description: happened,
+        description: happened || "_no description given_",
         color: parseInt(tags[0].color.slice(1), 16),
         footer: { text: `#${id}` },
         timestamp: new Date().toISOString(),
@@ -167,7 +170,7 @@ export default async function handler(req: Req, res: Res) {
     // whitespace collapse matters too: a description starting with a newline
     // would otherwise produce a thread titled "[Suggestion]" and nothing else.
     const label = tags.map((t) => t.label).join(" + ");
-    payload.thread_name = `[${label}] ${happened.replace(/\s+/g, " ").trim()}`.slice(0, 100);
+    payload.thread_name = `[${label}] ${happened.replace(/\s+/g, " ").trim()}`.trim().slice(0, 100);
   }
 
   const form = new FormData();
