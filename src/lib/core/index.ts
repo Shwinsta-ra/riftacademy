@@ -3,6 +3,8 @@
 
 export * from "./schema";
 
+export { migrate, migrateToCurrent } from "./migrate";
+
 export { getCard, cardName, cardMight, cardKeywords, toCost, costOf, cardTruth } from "./cards";
 export type { CardJson } from "./cards";
 

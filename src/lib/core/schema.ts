@@ -114,10 +114,12 @@ export type KeywordGrant = {
 // ---------------------------------------------------------------------------
 
 // A card instance sitting in a zone that doesn't need full battle state
-// (hand, deck, discard, banished).
+// (hand, deck, discard, banished). `cardId: null` = identity unknown to the
+// perspective holding this instance (e.g. an opponent's hidden hand as
+// captured by RiftNotes) — resolved by a later "cardRevealed" event.
 export type ObjectInstance = {
   instanceId: string;
-  cardId: string;
+  cardId: string | null;
   privacy: Privacy;
   knownToOpponent: boolean;
 };
@@ -162,6 +164,12 @@ export type PlayerState = {
   // key off this, not live `points` — a mid-turn conquer must not retroactively
   // satisfy a threshold that was only reached after the turn started.
   pointsAtTurnStart: number;
+  // Game-setup state (§4 match-event schema deltas). Puzzles start mid-game
+  // and leave these empty; a captured full match populates them from the
+  // "gameStarted"/"mulligan" events.
+  legendCardId?: string;
+  champion?: UnitState;
+  runeDeck?: { count: number; byDomain?: Partial<Record<Domain, number>> };
 };
 
 export type Battlefield = {
@@ -246,7 +254,17 @@ export type ZoneRef = { zone: ZoneKind; battlefieldId?: string; player: PlayerId
 export type TurnPhase = "beginning" | "main" | "combat" | "end";
 
 export type GameEvent =
-  | { type: "cardPlayed"; player: PlayerId; cardInstanceId: string }
+  | {
+      type: "cardPlayed";
+      player: PlayerId;
+      cardInstanceId: string;
+      // Capture/reconstruction extensions (§4 match-event schema deltas) —
+      // all optional, so a bare 2-field "cardPlayed" still folds unchanged.
+      targets?: string[];
+      battlefieldId?: string;
+      fromZone?: ZoneKind;
+      costPaid?: Cost;
+    }
   | { type: "unitEntered"; handInstanceId: string; unit: UnitState }
   | { type: "damageDealt"; targetInstanceId: string; amount: number }
   | { type: "mightModApplied"; targetInstanceId: string; mod: MightMod }
@@ -261,7 +279,13 @@ export type GameEvent =
   | { type: "runeRecycled"; instanceId: string }
   | { type: "spellCountered"; chainItemId: string }
   | ({ type: "pointScored" } & ScoreEvent)
-  | { type: "phaseChange"; player: PlayerId; phase: TurnPhase };
+  | { type: "phaseChange"; player: PlayerId; phase: TurnPhase }
+  // The belief-state primitive (restored — see §3 G1 of the match-event
+  // schema doc): records when a hidden card became known to whom.
+  | { type: "cardRevealed"; cardInstanceId: string; cardId: string; toPlayer: PlayerId; source: string }
+  | { type: "gameStarted"; firstPlayer: PlayerId }
+  | { type: "mulligan"; player: PlayerId; returnedInstanceIds: string[] }
+  | { type: "runeChanneled"; player: PlayerId; instanceId: string; domain: Domain };
 
 // ---------------------------------------------------------------------------
 // E1 envelope (deferred, optional, unpopulated) — §2 deltas
@@ -275,6 +299,35 @@ export type MatchStateSnapshot = {
   provenance?: {
     source: "authored" | "field" | "player" | "selfplay";
     fidelity?: number;
+  };
+};
+
+// ---------------------------------------------------------------------------
+// CapturedMatch — versioned container for a persisted match (§4, §7 of
+// docs/design/RiftCore_Match_Event_Schema.md). RiftNotes produces this;
+// every consumer keys migrations off `schemaVersion` (see ./migrate.ts).
+// ---------------------------------------------------------------------------
+
+// Bump on every schema change; migrations in ./migrate.ts chain off this.
+export const CURRENT_SCHEMA_VERSION = 1;
+
+export type CapturedMatch = {
+  schemaVersion: number;
+  initialState: GameState;
+  events: GameEvent[];
+  meta?: { source: "field" | "player" | "selfplay"; capturedAt?: string; perspective?: PlayerId };
+  // Capture-layer annotations — NOT game facts, so they stay OUT of
+  // GameEvent[]. A real lossy capture carries misplay flags ("!") and
+  // uncertainty ("?") that must travel with the match without polluting the
+  // canonical event stream (validated 2026-07-30, see
+  // docs/design/RiftNotes_v04_Validation_2026-07-30.md). RiftNotes
+  // populates; RiftCoach reads flags (coaching signal), RiftEngine reads
+  // uncertainty (reconstruction priors).
+  captureMeta?: {
+    tier?: "live-personal" | "digital-personal" | "field-digital";
+    lossy?: boolean;
+    flags?: { eventIndex: number; flag: "!" | "?"; note?: string }[];
+    uncertain?: { eventIndex: number; candidates?: string[]; note?: string }[];
   };
 };
 

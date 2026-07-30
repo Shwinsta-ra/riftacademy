@@ -362,6 +362,30 @@ function findHandOwner(state: GameState, instanceId: string): PlayerId | null {
   return null;
 }
 
+const OBJECT_ZONES = ["hand", "deck", "discard", "banished"] as const;
+
+// Finds an ObjectInstance across any of a player's non-battlefield zones
+// (both players) and applies `fn`. Used by "cardRevealed" to resolve a
+// cardId:null placeholder once its identity becomes known.
+function mapObject(
+  state: GameState,
+  instanceId: string,
+  fn: (o: ObjectInstance, owner: PlayerId) => ObjectInstance
+): GameState {
+  for (const pid of Object.keys(state.players) as PlayerId[]) {
+    const p = state.players[pid];
+    for (const zoneKey of OBJECT_ZONES) {
+      const idx = p[zoneKey].findIndex((o) => o.instanceId === instanceId);
+      if (idx !== -1) {
+        const zone = [...p[zoneKey]];
+        zone[idx] = fn(zone[idx], pid);
+        return { ...state, players: { ...state.players, [pid]: { ...p, [zoneKey]: zone } } };
+      }
+    }
+  }
+  return state;
+}
+
 export function applyEvent(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
     case "cardPlayed": {
@@ -475,9 +499,41 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
         players: { ...state.players, [event.player]: { ...p, pointsAtTurnStart: p.points } },
       };
     }
+    case "cardRevealed":
+      return mapObject(state, event.cardInstanceId, (o, owner) => ({
+        ...o,
+        cardId: event.cardId,
+        knownToOpponent: owner !== event.toPlayer ? true : o.knownToOpponent,
+      }));
+    case "gameStarted":
+      return { ...state, activePlayer: event.firstPlayer };
+    case "mulligan": {
+      const p = state.players[event.player];
+      const returned = p.hand.filter((o) => event.returnedInstanceIds.includes(o.instanceId));
+      const hand = p.hand.filter((o) => !event.returnedInstanceIds.includes(o.instanceId));
+      // Shuffle semantics are a no-op placeholder here (returned cards land
+      // at the back of the deck, unshuffled) — a real shuffle isn't needed
+      // for folding to a coherent snapshot.
+      return {
+        ...state,
+        players: { ...state.players, [event.player]: { ...p, hand, deck: [...p.deck, ...returned] } },
+      };
+    }
+    case "runeChanneled": {
+      const p = state.players[event.player];
+      const rune: RuneState = { instanceId: event.instanceId, domain: event.domain, tapped: false };
+      return { ...state, players: { ...state.players, [event.player]: { ...p, runes: [...p.runes, rune] } } };
+    }
     default: {
+      // Exhaustiveness check for known variants — TS errors here if a new
+      // GameEvent variant is added without a case above. At runtime, an
+      // event type outside the known union (e.g. a future schema version
+      // read by an older build) is tolerated rather than thrown: fold
+      // treats it as "didn't happen" and returns state unchanged (§7 of
+      // docs/design/RiftCore_Match_Event_Schema.md).
       const _exhaustive: never = event;
-      return _exhaustive;
+      void _exhaustive;
+      return state;
     }
   }
 }
@@ -491,8 +547,11 @@ export function isCounterableBy(play: Play, counterCardId: string, state: GameSt
   const owner = findHandOwner(state, play.cardInstanceId);
   if (!owner) return false;
   const handCard = state.players[owner].hand.find((o) => o.instanceId === play.cardInstanceId);
-  if (!handCard) return false;
-  const card = getCard(handCard.cardId);
+  // A card in a player's own hand always has a known identity — cardId is
+  // only ever null for an opponent's hidden hand as captured by RiftNotes.
+  if (!handCard || handCard.cardId === null) return false;
+  const cardId = handCard.cardId;
+  const card = getCard(cardId);
   if (card.type !== "Spell") return false;
 
   const entry = getEffectEntry(counterCardId);
@@ -501,7 +560,7 @@ export function isCounterableBy(play: Play, counterCardId: string, state: GameSt
   if (!counterPrimitive) return false;
 
   if (counterPrimitive.maxCost === undefined) return true;
-  const cost = costOf(handCard.cardId);
+  const cost = costOf(cardId);
   return cost.energy + cost.powerCount <= counterPrimitive.maxCost;
 }
 
@@ -534,13 +593,18 @@ function applyOnePlay(state: GameState, play: Play): PlayResult {
       const owner = findHandOwner(state, play.cardInstanceId);
       if (!owner) return illegal(state, "card not in hand");
       const handCard = state.players[owner].hand.find((o) => o.instanceId === play.cardInstanceId)!;
-      const card = getCard(handCard.cardId);
+      // A card in a player's own hand always has a known identity — cardId
+      // is only ever null for an opponent's hidden hand as captured by
+      // RiftNotes, which never reaches applyPlay directly.
+      if (handCard.cardId === null) return illegal(state, "card identity unknown");
+      const cardId = handCard.cardId;
+      const card = getCard(cardId);
 
       if (card.speed === "Action" && state.activePlayer !== owner) {
         return illegal(state, "wrong speed: Action requires your turn");
       }
 
-      const baseCost = costOf(handCard.cardId);
+      const baseCost = costOf(cardId);
       const cost: Cost = play.repeat
         ? {
             energy: baseCost.energy * 2,
@@ -552,7 +616,7 @@ function applyOnePlay(state: GameState, play: Play): PlayResult {
       const payment = pickPaymentRunes(cost, state.players[owner].runes);
       if (!payment) return illegal(state, "unaffordable");
 
-      const entry = getEffectEntry(handCard.cardId);
+      const entry = getEffectEntry(cardId);
       const target = play.targets[0];
 
       if (entry?.kind === "program") {
@@ -608,16 +672,20 @@ function applyOnePlay(state: GameState, play: Play): PlayResult {
       if (!owner) return illegal(state, "card not in hand");
       if (state.activePlayer !== owner) return illegal(state, "wrong speed: units require your turn");
       const handCard = state.players[owner].hand.find((o) => o.instanceId === play.cardInstanceId)!;
-      const card = getCard(handCard.cardId);
+      // See castSpell above: a player's own hand card always has a known
+      // identity by the time it reaches applyPlay.
+      if (handCard.cardId === null) return illegal(state, "card identity unknown");
+      const cardId = handCard.cardId;
+      const card = getCard(cardId);
 
-      const cost = costOf(handCard.cardId);
+      const cost = costOf(cardId);
       const payment = pickPaymentRunes(cost, state.players[owner].runes);
       if (!payment) return illegal(state, "unaffordable");
 
-      const entry = getEffectEntry(handCard.cardId);
+      const entry = getEffectEntry(cardId);
       const unit: UnitState = {
         instanceId: play.cardInstanceId,
-        cardId: handCard.cardId,
+        cardId,
         controller: owner,
         might: card.might ?? 0,
         mightMods: [],
