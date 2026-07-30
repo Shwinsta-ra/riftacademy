@@ -4,6 +4,7 @@ import { NavigationContainer, DefaultTheme, useNavigation } from "@react-navigat
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Analytics } from "@vercel/analytics/react";
 
 import WelcomeScreen from "./src/screens/WelcomeScreen";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -170,6 +171,7 @@ export default function App() {
           </FeedbackProvider>
         </TutorialProvider>
       </FiltersProvider>
+      {Platform.OS === "web" && <Analytics />}
     </SafeAreaProvider>
   );
 }
