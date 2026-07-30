@@ -85,6 +85,25 @@ Any fragment asserting a verification (e.g. "confirmed merged," "verified workin
 - Terminal commands handed to Ashwin must be bare, with **no inline `#` comments** — they break copy-paste into his terminal. Put explanations in prose before/after the code block, never inside it.
 - Instructions should be granular and exact: full paths, explicit commands, no assumed context.
 
+## Printed-reference style (adopted 2026-07-25)
+Applies to any artifact Ashwin prints, fills in by hand, or reads at a table under a clock — build guides, capture instruments, cheat-sheets, one-pagers. The reference implementation is `docs/riftcoach/build_guide.py`'s output; when in doubt, open it and match it.
+
+1. **Say it once, in the place it's used.** Cross-reference by page number rather than repeating a target. A steps section is a sequence and a box to write the time in — not a summary of the detail printed below it.
+2. **Generate from the source of truth.** Card tables come from `cards.json` or the inventory CSV via script. Hand-typed tables drift.
+3. **Encode, don't describe.** `1O`, `2PP`, `(A)`, `(R)`, `†`, tier digits 1–4. One legend line, then symbols.
+4. **One job per page, and fill it.** Below roughly 85% vertical fill the page is carrying too little and should absorb something or be merged. Above 100% it silently spills — check the page count.
+5. **Blank space, never underscores.** Left-justify everything. Underscores fight handwriting; centred columns break the eye's scan down a page.
+6. **Instructions must not contradict the form.** A line reading "mark C or A, don't write" sitting directly above a write-in column confused the user once — read every instruction against the thing it labels.
+7. **PDF for anything printed.** Not Google Docs — its formatting is not reliable enough to specify against, and this cost a rebuild.
+8. **Verify by measuring, not by assuming.** Page count, vertical fill percentage, and right-margin overflow are all checkable programmatically (`pdfplumber`: `extract_words()`, then compare `max(x1)` against the frame width). A card name silently overhung the page edge through two passes and only measurement caught it. Render to image and look as well, but do not rely on eyes alone.
+9. **Let the visual design carry the meaning.** Colour-coded headers, column position, and a single digit beat a paragraph of explanation. Prose is the fallback, not the default.
+
+## Reporting format preferences
+Adopted 2026-07-28, from Finance/ROI EOD, to apply everywhere:
+- Tables over prose blocks, always, for reference/reporting content.
+- Card lists: domain first, then alphabetical (for searching/locating) or energy cost (for deckbuilding/gameplay).
+- Large lists always get pivot-style summary stats (counts/breakdowns) alongside the raw data.
+
 ## Deliverable consolidation
 Any substantial response ends with two sections, in this order — (1) "Decisions needed from you": every question/confirmation/decision raised anywhere in the message, even if already inline; (2) "Action items for you": every task you need to do, even if already inline. Inline mentions stay in the body.
 
