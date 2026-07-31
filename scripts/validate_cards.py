@@ -1,9 +1,9 @@
 """
 Cross-checks Ashwin's curated Master Card Inventory CSV against
 src/data/cards.json and warns on any energy/might/speed/keyword divergence,
-WITHOUT writing anything. Run this before merge_sheet.py to catch a bad
-sheet edit before it silently overwrites cards.json, or any time you want
-to confirm the two sources agree without doing a merge.
+WITHOUT writing anything. merge_sheet.py now prints this same check inline
+as part of every real merge (2026-07-30) -- use this script when you want
+the read-only check on its own, without running a merge.
 
 Usage:
     python3 scripts/validate_cards.py path/to/exported_sheet.csv
