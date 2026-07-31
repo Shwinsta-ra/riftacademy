@@ -69,7 +69,8 @@ export function isNonBoardZone(zone: Zone): boolean {
 export function changeZone(state: GameState, objectId: ObjectId, to: Zone, newObjectId?: ObjectId): GameState {
   const object = state.objects[objectId];
   if (!object) return state;
-  const crossesNonBoard = isNonBoardZone(object.zone) !== isNonBoardZone(to) || isNonBoardZone(to);
+  // "to or from a Non-Board Zone" — i.e. every transition EXCEPT board-to-board.
+  const crossesNonBoard = isNonBoardZone(object.zone) || isNonBoardZone(to);
 
   if (!crossesNonBoard) {
     return withObject(state, objectId, (o) => ({ ...o, zone: to }));
