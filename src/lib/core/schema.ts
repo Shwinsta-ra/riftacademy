@@ -74,21 +74,32 @@ export type CardCategory = "unit" | "gear" | "spell" | "rune" | "battlefield" | 
 /** CR 133.7 */
 export type Supertype = "champion" | "signature";
 
-/** CR 124.2 — non-exhaustive per CR; extend additively. */
-export type ObjectStatus =
-  | "attached"
-  | "attacker"
-  | "defender"
-  | "buffed"
-  | "controlled"
-  | "empowered"
-  | "equipped"
-  | "exhausted"
-  | "facedown"
-  | "ready"
-  | "replaced"
-  | "revealed"
-  | "stunned";
+/**
+ * CR 124.2 — non-exhaustive per CR; extend additively.
+ *
+ * Declared as a runtime list so the audit in `predicates.test.ts` can assert
+ * what is NOT here. In particular **Contested must never be an ObjectStatus**:
+ * CR 190.3.d says Game Effects cannot reference Contested, and every member of
+ * this union is reachable by an effect through `{op:"hasStatus"}`. Contested
+ * lives on `GameState.contestedBattlefields` as kernel-internal bookkeeping.
+ */
+export const OBJECT_STATUSES = [
+  "attached",
+  "attacker",
+  "defender",
+  "buffed",
+  "controlled",
+  "empowered",
+  "equipped",
+  "exhausted",
+  "facedown",
+  "ready",
+  "replaced",
+  "revealed",
+  "stunned",
+] as const;
+
+export type ObjectStatus = (typeof OBJECT_STATUSES)[number];
 
 /** How long a temporary modification/grant lasts. CR 801.3.a.3 — default = while it stays in its current zone. */
 export type Duration = "thisTurn" | "thisCombat" | "whileInZone" | "permanent" | { untilCleanupTag: string };
@@ -114,6 +125,17 @@ export interface GameObject {
   privacy: Privacy;
   statuses: Set<ObjectStatus>;
   printedMight: number | null; // units only; non-board zones use printed Might (CR 711)
+  /**
+   * CR 801 — the card's PRINTED keywords, carried on the object so the kernel
+   * never has to reach into the card catalog. Keyword resolution is printed
+   * union granted (see predicates.ts `resolveKeywords`); reading only the
+   * granted list was a legacy defect that made printed keywords invisible.
+   * `value` carries the X of a valued keyword (Assault 3); absent means the
+   * CR default of 1 for valued keywords (807/809/814/823).
+   */
+  printedKeywords: { keyword: Keyword; value?: number }[];
+  /** CR 134.2 — the card's domains, mirrored onto the object for the same catalog-free reason. */
+  domains: Domain[];
   damage: number; // CR 417 — units only
   buffCount: 0 | 1; // CR 702.3 — hard cap of one
   counters: Record<string, number>; // CR 741-749 (no controller)
@@ -208,17 +230,81 @@ export const KEYWORD_DEFS: Record<Keyword, KeywordDef> = {
 
 export type AbilityKind = "passive" | "replacement" | "activated" | "triggered" | "reflexive" | "delayed" | "linked";
 
-// Predicate/EventPredicate/Selector/Instruction are left as callable shapes
-// rather than data — interpreting raw card text into these is Phase 4 work
-// (against the Supabase inventory, explicitly out of scope here per Part 7
-// §12); the v2 kernel only needs to know how to *evaluate* an already-built
-// one. Phase 4 (or a test fixture) constructs the closures.
-/** A predicate over game state (e.g. a passive ability's "while" condition, CR 363-366). */
-export type Predicate = (state: GameState) => boolean;
-/** A predicate over a GameEvent in context (e.g. a replacement effect's appliesTo, CR 367-375). */
-export type EventPredicate = (event: GameEvent, state: GameState) => boolean;
+// Predicate / EventPredicate / Selector are DATA, not closures.
+//
+// Phase 4 loads ability definitions from Supabase, and functions cannot
+// round-trip through a database — closures would make abilities
+// unpersistable. Beyond serialization, data buys three things closures
+// can't: abilities become INSPECTABLE (RiftIQ can explain *why* a line is
+// legal, not just that it is), DIFFABLE (RiftEngine can compare a
+// reconstructed ability against the catalog), and COVERAGE-VISIBLE (a card
+// that can't be expressed fails loudly against the vocabulary instead of
+// being silently papered over with a lambda).
+//
+// The vocabulary below is expected to be INCOMPLETE. Phase 4 will find cards
+// needing ops that aren't here; that is by design — the unions are additive.
+// When a card can't be expressed, extend the union and file a schema-gap
+// fragment per docs/design/RiftCore_Schema_Change_Protocol.md. There is
+// deliberately NO escape hatch (no `{ op:"custom"; fn:... }`) — that would
+// reintroduce exactly the un-serializable, invisible-gap problem this shape
+// removes.
+//
+// These are interpreted in exactly one place: ./predicates.ts.
+
+/** Refers to a player without naming one, so an ability is reusable across controllers. */
+export type PlayerRef =
+  | { kind: "sourceController" }
+  | { kind: "turnPlayer" }
+  | { kind: "opponentOf"; of: PlayerRef }
+  | { kind: "explicit"; player: PlayerId };
+
 /** Resolves the object(s) a Layer/targeted effect applies to (CR 355.6-.10, 477). */
-export type Selector = (state: GameState) => ObjectId[];
+export type Selector =
+  | { kind: "self" }
+  | { kind: "target"; index: number } // CR 355.6 — chosen at the choices step
+  | { kind: "unitsAtLocation"; location: Location }
+  | { kind: "unitsControlledBy"; player: PlayerRef }
+  | { kind: "objectsInZone"; zone: Zone["kind"]; player?: PlayerRef }
+  | { kind: "attachedTo" } // CR 716-719 — TopMostCard
+  | { kind: "sourceController" }
+  | { kind: "filter"; from: Selector; where: Predicate };
+
+/** A predicate over game state (e.g. a passive ability's "while" condition, CR 363-366). */
+export type Predicate =
+  // object properties
+  | { op: "hasKeyword"; keyword: Keyword } // CR 801 — printed AND granted; see predicates.ts
+  | { op: "hasStatus"; status: ObjectStatus }
+  | { op: "isCategory"; category: CardCategory }
+  | { op: "hasSupertype"; supertype: Supertype }
+  | { op: "hasTag"; tag: string }
+  | { op: "hasDomain"; domain: Domain }
+  | { op: "nameIs"; name: string } // CR 132.4 — the full "Name, Subtitle" form IS the name
+  | { op: "mightAtLeast"; value: number }
+  | { op: "mightAtMost"; value: number }
+  | { op: "isMighty" } // CR 708 — derived (>= 5), NOT a keyword
+  | { op: "isAtLocation"; location: Location }
+  | { op: "controlledBy"; player: PlayerRef }
+  | { op: "hasDesignation"; designation: "attacker" | "defender" } // CR 464.2.c
+  // player / game properties
+  | { op: "xpAtLeast"; player: PlayerRef; value: number } // CR 824 Level
+  | { op: "playedCardThisTurn"; player: PlayerRef } // CR 812 Legion
+  | { op: "countAtLeast"; from: Selector; value: number }
+  // composition
+  | { op: "and"; terms: Predicate[] }
+  | { op: "or"; terms: Predicate[] }
+  | { op: "not"; term: Predicate };
+
+/** CR 367-375 — what a replacement effect intercedes on. */
+export type EventPredicate =
+  | { on: "deal"; to?: Predicate; from?: Predicate } // CR 417
+  | { on: "kill"; object?: Predicate } // CR 428
+  | { on: "draw"; player?: PlayerRef } // CR 413
+  | { on: "enterZone"; zone: Zone["kind"]; object?: Predicate }
+  | { on: "becomeStatus"; status: ObjectStatus; object?: Predicate } // CR 441.2.a, 709
+  | { on: "score"; method: ScoreMethod; player?: PlayerRef } // CR 469
+  | { on: "burnOut"; player?: PlayerRef } // CR 431
+  | { on: "turnProcedure"; phase: Phase; step?: Step }; // CR 443 Skip
+
 /** One step of an ability's effect (CR 135.2.b — game action + complement); opaque to the kernel. */
 export type Instruction = { description: string };
 /** A resolved set of "as I am played" choices (CR 355) — opaque payload keyed by choice id. */
@@ -361,6 +447,8 @@ export interface LayerEffect {
   layer: LayerNumber;
   sourceObjectId: ObjectId;
   targetSelector: Selector;
+  /** Targets chosen at the choices step, resolved for a `{kind:"target"}` selector (CR 355.6). */
+  targets?: ObjectId[];
   op: TraitOp | AbilityOp | ArithmeticOp;
   fromPassive: boolean; // CR 477.3.b — passives do NOT snapshot
   snapshotted?: number; // resolved limited value, remembered for the duration
@@ -395,7 +483,9 @@ export interface FormatContext {
   victoryScore: number;
   battlefieldCount: number;
   mainDeckMin: number; // 40 constructed / 25 sealed / 20 draft
-  championCountsInMain: boolean; // TR 402.1 constructed = true (sealed: Part 3 §12 item 5)
+  /** TR 402.1 — constructed is EXACTLY 40, so min === max. null = no upper bound (limited formats). */
+  mainDeckMax: number | null;
+  championCountsInMain: boolean; // TR 402.1 constructed = true
   uniqueApplies: boolean; // TR 602.4.a.6.a — false in sealed/draft
   copyLimitApplies: boolean;
   legality: (cardId: CardId) => "legal" | "banned";
@@ -450,6 +540,8 @@ export interface GameState {
   activeLayerEffects: LayerEffect[];
   abilities: Record<string, Ability>;
   format: FormatContext;
+  /** CR 812 — cards played per player this turn; Legion keys off "played another card this turn". */
+  cardsPlayedThisTurn: Record<PlayerId, number>;
   /** Monotonic counter — LayerEffect.timestamp / same-layer default ordering (CR 480). */
   nextTimestamp: number;
 }

@@ -196,7 +196,8 @@ describe("runCleanup — the seven-step order (CR 323)", () => {
         {
           layer: 3,
           sourceObjectId: "src",
-          targetSelector: () => ["u1"],
+          targetSelector: { kind: "target", index: 0 },
+          targets: ["u1"],
           op: { attr: "might", delta: 2 },
           fromPassive: false,
           duration: "thisTurn",
@@ -205,7 +206,8 @@ describe("runCleanup — the seven-step order (CR 323)", () => {
         {
           layer: 3,
           sourceObjectId: "src",
-          targetSelector: () => ["u1"],
+          targetSelector: { kind: "target", index: 0 },
+          targets: ["u1"],
           op: { attr: "might", delta: 1 },
           fromPassive: false,
           duration: "permanent",

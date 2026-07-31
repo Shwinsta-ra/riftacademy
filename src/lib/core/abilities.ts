@@ -8,6 +8,7 @@
 // are a first-class subsystem with their own event semantics and ordering
 // rules that Vendetta combat (465.2.c.5) directly depends on.
 
+import { evaluatePredicate, matchesEvent } from "./predicates";
 import type {
   Ability,
   ActivatedAbility,
@@ -56,7 +57,9 @@ export function canActivate(
  */
 export function shouldTrigger(state: GameState, ability: TriggeredAbility): boolean {
   if (!isAbilityActive(state, ability)) return false;
-  return ability.condition(state);
+  return evaluatePredicate(state, ability.condition, ability.sourceObjectId, {
+    sourceObjectId: ability.sourceObjectId,
+  });
 }
 
 /**
@@ -137,7 +140,9 @@ export function applyReplacements(
     replaceWith: (effect: ReplacementEffect, event: GameEvent) => GameEvent[];
   }
 ): ReplacementOutcome {
-  const applicable = candidates.filter((e) => e.appliesTo(event, state)).filter((e) => isUsable(e, usage));
+  const applicable = candidates
+    .filter((e) => matchesEvent(state, e.appliesTo, event, { sourceObjectId: e.sourceObjectId }))
+    .filter((e) => isUsable(e, usage));
   const ordered = orderReplacements(applicable, options.chooseOrder);
 
   let events: GameEvent[] = [event];
@@ -149,7 +154,7 @@ export function applyReplacements(
     const next: GameEvent[] = [];
     let matchedAny = false;
     for (const current of events) {
-      if (effect.appliesTo(current, state)) {
+      if (matchesEvent(state, effect.appliesTo, current, { sourceObjectId: effect.sourceObjectId })) {
         matchedAny = true;
         next.push(...options.replaceWith(effect, current));
       } else {

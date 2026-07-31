@@ -483,6 +483,8 @@ export function create(
     privacy: "public",
     statuses: new Set(),
     printedMight: spec.printedMight ?? null,
+    printedKeywords: [],
+    domains: [],
     damage: 0,
     buffCount: 0,
     counters: {},

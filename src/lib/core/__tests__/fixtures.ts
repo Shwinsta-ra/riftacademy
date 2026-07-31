@@ -35,6 +35,8 @@ export function makeObject(overrides: Partial<GameObject> = {}): GameObject {
     privacy: "public",
     statuses: new Set(),
     printedMight: null,
+    printedKeywords: [],
+    domains: [],
     damage: 0,
     buffCount: 0,
     counters: {},
@@ -115,6 +117,7 @@ export function makeState(overrides: Partial<GameState> = {}): GameState {
     activeLayerEffects: [],
     abilities: {},
     format: makeFormatContext(),
+    cardsPlayedThisTurn: {},
     nextTimestamp: 1,
     ...overrides,
   };
@@ -143,7 +146,8 @@ export function arithmeticEffect(
   return {
     layer: 3,
     sourceObjectId: "src",
-    targetSelector: () => [targetId],
+    targetSelector: { kind: "target", index: 0 },
+    targets: [targetId],
     op: { attr: "might", delta, minimum: options.minimum, maximum: options.maximum },
     fromPassive: options.fromPassive ?? false,
     duration: options.duration ?? "thisTurn",
@@ -156,7 +160,8 @@ export function setMightEffect(targetId: ObjectId, value: number, timestamp = 1)
   return {
     layer: 1,
     sourceObjectId: "src",
-    targetSelector: () => [targetId],
+    targetSelector: { kind: "target", index: 0 },
+    targets: [targetId],
     op: { set: "might", value },
     fromPassive: false,
     duration: "thisTurn",
@@ -169,7 +174,8 @@ export function grantKeywordEffect(targetId: ObjectId, keyword: Keyword, timesta
   return {
     layer: 2,
     sourceObjectId: "src",
-    targetSelector: () => [targetId],
+    targetSelector: { kind: "target", index: 0 },
+    targets: [targetId],
     op: { grantKeyword: keyword },
     fromPassive: false,
     duration: "thisTurn",

@@ -16,16 +16,13 @@
 // answer — callers (RiftIQ's validation, RiftLab's sim) need the whole space.
 
 import { currentMight } from "./layers";
-import type { DamageAssignment, GameObject, GameState, Keyword, ObjectId, PlayerId } from "./schema";
+import { hasKeyword, sumKeywordValue } from "./predicates";
+import type { DamageAssignment, GameObject, GameState, ObjectId, PlayerId } from "./schema";
 
-/** CR 807/814 — Assault (attacker-only) and Shield (defender-only) both SUM (807.2, 814.2). */
-export function sumKeywordValue(object: GameObject, keyword: Keyword): number {
-  return object.grantedKeywords.filter((g) => g.keyword === keyword).reduce((sum, g) => sum + (g.value ?? 0), 0);
-}
-
-export function hasKeyword(object: GameObject, keyword: Keyword): boolean {
-  return object.grantedKeywords.some((g) => g.keyword === keyword);
-}
+// Keyword resolution lives in predicates.ts (printed union granted, minus
+// Layer-2 removals — CR 477.2/801.3). Combat re-exports it so callers reading
+// combat rules don't have to know where it lives.
+export { hasKeyword, sumKeywordValue } from "./predicates";
 
 export type CombatRole = "attacker" | "defender";
 
@@ -33,7 +30,8 @@ export type CombatRole = "attacker" | "defender";
 export function combatMight(state: GameState, objectId: ObjectId, role: CombatRole): number {
   const object = state.objects[objectId];
   if (!object) return 0;
-  const bonus = role === "attacker" ? sumKeywordValue(object, "Assault") : sumKeywordValue(object, "Shield");
+  const bonus =
+    role === "attacker" ? sumKeywordValue(state, objectId, "Assault") : sumKeywordValue(state, objectId, "Shield");
   return currentMight(state, objectId) + bonus;
 }
 
@@ -78,9 +76,9 @@ export type AssignmentTier = "tank" | "ordinary" | "backline";
  * requirements; the ASSIGNING player picks one to satisfy, never something in
  * between, resolved per-unit. `tiebreak` expresses that choice.
  */
-export function tierOf(object: GameObject, tiebreak: "tank" | "backline" = "tank"): AssignmentTier {
-  const tank = hasKeyword(object, "Tank");
-  const backline = hasKeyword(object, "Backline");
+export function tierOf(state: GameState, objectId: ObjectId, tiebreak: "tank" | "backline" = "tank"): AssignmentTier {
+  const tank = hasKeyword(state, objectId, "Tank");
+  const backline = hasKeyword(state, objectId, "Backline");
   if (tank && backline) return tiebreak; // 465.2.c.8
   if (tank) return "tank"; // 815
   if (backline) return "backline"; // 826
@@ -123,7 +121,7 @@ export function legalDamageAssignments(
 
   function tierFor(id: ObjectId): AssignmentTier {
     const entry = targets.find((t) => t.id === id);
-    return entry ? tierOf(entry.object, tiebreaks[id] ?? "tank") : "ordinary";
+    return entry ? tierOf(state, id, tiebreaks[id] ?? "tank") : "ordinary";
   }
 
   function lethalFor(id: ObjectId): number | "unkillable" {

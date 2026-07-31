@@ -26,6 +26,18 @@ export type { CardEffectEntry } from "./effects";
 // --- Layers (CR 473-480) ---
 export { applyLayers, currentMight, isMighty, activeGrantedKeywords } from "./layers";
 
+// --- Predicate / Selector / EventPredicate evaluation (the ONLY interpreter) ---
+export {
+  evaluatePredicate,
+  resolveSelector,
+  matchesEvent,
+  resolvePlayerRef,
+  resolveKeywords,
+  hasKeyword,
+  sumKeywordValue,
+} from "./predicates";
+export type { EvalContext } from "./predicates";
+
 // --- Turn / states / Priority / Focus (CR 300-317) ---
 export {
   PHASE_ORDER,
@@ -134,9 +146,9 @@ export {
 } from "./actions";
 
 // --- Combat (CR 459-466) ---
+// hasKeyword / sumKeywordValue are exported from the predicates block above —
+// keyword resolution is a Layers concern (CR 477.2), not a combat one.
 export {
-  sumKeywordValue,
-  hasKeyword,
   combatMight,
   damageContributed,
   isKilled,
@@ -152,9 +164,9 @@ export type { CombatRole, AssignmentTier } from "./combat";
 // --- Scoring (CR 467-472) ---
 export { canScore, resolveScore, scoredEveryBattlefield, checkWin, clearScoredThisTurn, recordScore } from "./scoring";
 
-// --- Format context (TR 104.1 / 601-603) ---
-export { BAN_LIST, cardLegality, makeFormatContext, teamTurnOrder } from "./format";
-export type { FormatLegality } from "./format";
+// --- Format context + deck construction (TR 104.1 / 402.1 / 601-603) ---
+export { BAN_LIST, cardLegality, makeFormatContext, teamTurnOrder, validateDeck } from "./format";
+export type { FormatLegality, CardFacts, DeckList, DeckValidation } from "./format";
 
 // --- Kernel orchestration + match pipeline ---
 export {

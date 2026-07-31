@@ -20,6 +20,7 @@
 // re-checking conditions) — applyLayers itself is a deterministic pass plus
 // snapshot-freezing over whatever effect list it's handed.
 
+import { resolveSelector } from "./predicates";
 import type { ArithmeticOp, GameState, Keyword, LayerEffect, ObjectId, TraitOp, Zone } from "./schema";
 
 const BOARD_ZONE_KINDS: ReadonlySet<Zone["kind"]> = new Set(["base", "battlefield", "facedownZone", "legendZone"]);
@@ -28,10 +29,15 @@ function isBoardZone(zone: Zone): boolean {
   return BOARD_ZONE_KINDS.has(zone.kind);
 }
 
+/** The objects a LayerEffect currently applies to (its Selector, resolved against `state`). */
+function targetsOf(state: GameState, effect: LayerEffect): ObjectId[] {
+  return resolveSelector(state, effect.targetSelector, { sourceObjectId: effect.sourceObjectId, targets: effect.targets });
+}
+
 function effectsTargeting(state: GameState, objectId: ObjectId, layer: 1 | 2 | 3): LayerEffect[] {
   return state.activeLayerEffects
     .filter((e) => e.layer === layer)
-    .filter((e) => e.targetSelector(state).includes(objectId))
+    .filter((e) => targetsOf(state, e).includes(objectId))
     .sort((a, b) => a.timestamp - b.timestamp); // CR 480 — default order when no dependency is modeled
 }
 
@@ -66,7 +72,7 @@ export function applyLayers(state: GameState): GameState {
     // Freeze against the Might this effect would see applied first-in-layer
     // (i.e. only earlier-timestamped Layer-3 effects on the same object/attr
     // already folded in). This mirrors currentMight's own fold order.
-    const targets = effect.targetSelector(state);
+    const targets = targetsOf(state, effect);
     const objectId = targets[0];
     if (objectId === undefined) return effect;
     const base = baseBeforeArithmetic(state, objectId, op.attr, effect.timestamp);

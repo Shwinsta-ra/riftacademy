@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { cardLegality, makeFormatContext, teamTurnOrder } from "../format";
+import { cardLegality, makeFormatContext, teamTurnOrder, validateDeck } from "../format";
+import type { CardFacts, DeckList } from "../format";
 
 describe("per-format legality (TR 601.2 / 602.1.b)", () => {
   // The legacy schema had a single `banned1v1` boolean and therefore could
@@ -58,5 +59,132 @@ describe("format context defaults (TR 402.1 / 602.4)", () => {
 describe("2v2 turn order (TR 603.7.a)", () => {
   it("alternates teams: TeamA-P1 -> TeamB-P1 -> TeamA-P2 -> TeamB-P2", () => {
     expect(teamTurnOrder(["a1", "a2"], ["b1", "b2"])).toEqual(["a1", "b1", "a2", "b2"]);
+  });
+});
+
+describe("validateDeck — constructed (CR 101-103, TR 402.1)", () => {
+  const constructed = makeFormatContext("1v1", "constructed");
+
+  // A tiny synthetic catalog. "champ" is the Chosen Champion; filler cards are
+  // named f0..fN so the 3-copies-per-name limit isn't tripped incidentally.
+  const facts = (cardId: string): CardFacts => {
+    if (cardId === "legend") {
+      return { name: "Test Legend", domains: ["Mind"], isChampion: false, isSignature: false, championTag: "yi", isUnique: false };
+    }
+    if (cardId === "champ") {
+      return { name: "Test Champion, Chosen", domains: ["Mind"], isChampion: true, isSignature: false, championTag: "yi", isUnique: false };
+    }
+    if (cardId.startsWith("bf")) {
+      return { name: `Battlefield ${cardId}`, domains: [], isChampion: false, isSignature: false, championTag: null, isUnique: false };
+    }
+    if (cardId.startsWith("rune")) {
+      return { name: "Mind Rune", domains: ["Mind"], isChampion: false, isSignature: false, championTag: null, isUnique: false };
+    }
+    if (cardId === "offDomain") {
+      return { name: "Off Domain Card", domains: ["Fury"], isChampion: false, isSignature: false, championTag: null, isUnique: false };
+    }
+    if (cardId === "multiDomain") {
+      return { name: "Multi Domain Card", domains: ["Mind", "Fury"], isChampion: false, isSignature: false, championTag: null, isUnique: false };
+    }
+    return { name: `Filler ${cardId}`, domains: ["Mind"], isChampion: false, isSignature: false, championTag: null, isUnique: false };
+  };
+
+  /** A legal 40-card constructed deck whose 40th card is the Chosen Champion. */
+  function baseDeck(fillerCount = 39): DeckList {
+    return {
+      mainDeck: [...Array.from({ length: fillerCount }, (_, i) => `f${i}`), "champ"],
+      chosenChampionCardId: "champ",
+      legendCardId: "legend",
+      runeDeck: Array.from({ length: 12 }, (_, i) => `rune${i}`),
+      battlefields: ["bf1", "bf2", "bf3"],
+    };
+  }
+
+  it("a 40-card deck whose 40th card is the Chosen Champion is LEGAL", () => {
+    const result = validateDeck(baseDeck(39), constructed, facts);
+    expect(result.errors).toEqual([]);
+    expect(result.legal).toBe(true);
+  });
+
+  it("41 cards INCLUDING the champion is ILLEGAL — the champion is not card 41", () => {
+    // This is the ruling: constructed is exactly 40 *including* the Chosen
+    // Champion, so 39 filler + champion is legal and 40 filler + champion is not.
+    const result = validateDeck(baseDeck(40), constructed, facts);
+    expect(result.legal).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/exactly 40/);
+  });
+
+  it("39 cards is ILLEGAL", () => {
+    expect(validateDeck(baseDeck(38), constructed, facts).legal).toBe(false);
+  });
+
+  it("the Chosen Champion must actually be in the main deck (CR 103.2)", () => {
+    const deck = { ...baseDeck(39), mainDeck: Array.from({ length: 40 }, (_, i) => `f${i}`) };
+    const result = validateDeck(deck, constructed, facts);
+    expect(result.legal).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/Chosen Champion must be one of the main deck/);
+  });
+
+  it("rejects more than 3 copies of a name (CR 103.2.b)", () => {
+    const deck = baseDeck(39);
+    deck.mainDeck = [...Array.from({ length: 4 }, () => "dupe"), ...Array.from({ length: 35 }, (_, i) => `f${i}`), "champ"];
+    const result = validateDeck(deck, constructed, facts);
+    expect(result.legal).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/limit 3 per name/);
+  });
+
+  it("allows exactly 3 copies of a name", () => {
+    const deck = baseDeck(39);
+    deck.mainDeck = [...Array.from({ length: 3 }, () => "dupe"), ...Array.from({ length: 36 }, (_, i) => `f${i}`), "champ"];
+    expect(validateDeck(deck, constructed, facts).legal).toBe(true);
+  });
+
+  it("requires exactly 12 runes (CR 103.3)", () => {
+    const deck = { ...baseDeck(39), runeDeck: Array.from({ length: 11 }, (_, i) => `rune${i}`) };
+    const result = validateDeck(deck, constructed, facts);
+    expect(result.legal).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/exactly 12 runes/);
+  });
+
+  it("rejects a card outside the Legend's domain identity (CR 103.1)", () => {
+    const deck = baseDeck(39);
+    deck.mainDeck = ["offDomain", ...Array.from({ length: 38 }, (_, i) => `f${i}`), "champ"];
+    const result = validateDeck(deck, constructed, facts);
+    expect(result.legal).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/Fury/);
+  });
+
+  it("a MULTI-DOMAIN card needs ALL its domains in identity, not just one (CR 103.1.b.4)", () => {
+    // The Legend is Mind-only; a Mind+Fury card shares Mind but is still illegal.
+    const deck = baseDeck(39);
+    deck.mainDeck = ["multiDomain", ...Array.from({ length: 38 }, (_, i) => `f${i}`), "champ"];
+    const result = validateDeck(deck, constructed, facts);
+    expect(result.legal).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/Multi Domain Card/);
+  });
+
+  it("rejects a banned card (TR 601.2)", () => {
+    const deck = baseDeck(39);
+    deck.mainDeck = ["ogn-177-298", ...Array.from({ length: 38 }, (_, i) => `f${i}`), "champ"];
+    const result = validateDeck(deck, constructed, facts);
+    expect(result.legal).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/banned/);
+  });
+
+  it("requires the format's battlefield count, with unique names (CR 103.4.c)", () => {
+    const tooFew = { ...baseDeck(39), battlefields: ["bf1", "bf2"] };
+    expect(validateDeck(tooFew, constructed, facts).legal).toBe(false);
+
+    const duplicated = { ...baseDeck(39), battlefields: ["bf1", "bf1", "bf2"] };
+    const result = validateDeck(duplicated, constructed, facts);
+    expect(result.legal).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/unique names/);
+  });
+
+  it("sealed and draft construction is DEFERRED — validation passes rather than guessing", () => {
+    // TR 602.4 rules are not implemented; that format is not live yet, and
+    // whether sealed's 25-card minimum includes the champion is unresolved.
+    const sealed = makeFormatContext("1v1", "sealed");
+    expect(validateDeck(baseDeck(10), sealed, facts).legal).toBe(true);
   });
 });

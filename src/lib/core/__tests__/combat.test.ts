@@ -87,15 +87,32 @@ describe("minimumLethal computed THROUGH replacement effects (CR 465.2.c.4.a, .c
 
 describe("assignment tiers (CR 815 / 826 / 465.2.c.8)", () => {
   it("classifies Tank, ordinary and Backline as three distinct tiers", () => {
-    expect(tierOf(makeUnit({ printedMight: 1, grantedKeywords: [grant("Tank")] }))).toBe("tank");
-    expect(tierOf(makeUnit({ printedMight: 1 }))).toBe("ordinary");
-    expect(tierOf(makeUnit({ printedMight: 1, grantedKeywords: [grant("Backline")] }))).toBe("backline");
+    const tank = makeUnit({ objectId: "tank", printedMight: 1, grantedKeywords: [grant("Tank")] });
+    const ordinary = makeUnit({ objectId: "ord", printedMight: 1 });
+    const backline = makeUnit({ objectId: "back", printedMight: 1, grantedKeywords: [grant("Backline")] });
+    const state = stateWithObjects([tank, ordinary, backline]);
+
+    expect(tierOf(state, "tank")).toBe("tank");
+    expect(tierOf(state, "ord")).toBe("ordinary");
+    expect(tierOf(state, "back")).toBe("backline");
+  });
+
+  it("classifies a PRINTED keyword, not just a granted one (CR 801 / 477.2)", () => {
+    // The legacy hasKeyword read only the granted list, so a printed Tank was
+    // invisible to assignment ordering. Phase 2 diff §1 flagged this.
+    const printedTank = makeUnit({ objectId: "pt", printedMight: 1, printedKeywords: [{ keyword: "Tank" }] });
+    expect(tierOf(stateWithObjects([printedTank]), "pt")).toBe("tank");
   });
 
   it("a Tank+Backline unit resolves to whichever the ASSIGNER picks, never in between (465.2.c.8)", () => {
-    const both = makeUnit({ printedMight: 1, grantedKeywords: [grant("Tank"), grant("Backline")] });
-    expect(tierOf(both, "tank")).toBe("tank");
-    expect(tierOf(both, "backline")).toBe("backline");
+    const both = makeUnit({
+      objectId: "both",
+      printedMight: 1,
+      grantedKeywords: [grant("Tank"), grant("Backline")],
+    });
+    const state = stateWithObjects([both]);
+    expect(tierOf(state, "both", "tank")).toBe("tank");
+    expect(tierOf(state, "both", "backline")).toBe("backline");
   });
 });
 
