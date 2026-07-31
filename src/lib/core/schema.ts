@@ -316,11 +316,38 @@ export type MatchStateSnapshot = {
 // Bump on every schema change; migrations in ./migrate.ts chain off this.
 export const CURRENT_SCHEMA_VERSION = 1;
 
+// Orthogonal capture tags (replaces the old captureMeta.tier enum). Extensible:
+// add a member when a genuinely new capture characteristic appears.
+export type CaptureTag =
+  | "physical"
+  | "digital" // medium
+  | "first-person"
+  | "third-person" // perspective
+  | "fog-of-war"
+  | "partial" // hidden-state visibility
+  | "reExaminable"
+  | "not-reExaminable"; // is the source machine/human re-checkable?
+
 export type CapturedMatch = {
   schemaVersion: number;
+  // Groups all artifacts of the SAME game, enabling cross-artifact diff.
+  gameId: string;
+  // Who produced THIS artifact ("ashwin" | "code" | "n8n" | …). Together with
+  // gameId, two CapturedMatch objects sharing a gameId with different
+  // reviewerId are two independent reviews of one game (multi-pass
+  // calibration, docs/design/RiftCore_Defect_Measurement_Contract.md §5).
+  reviewerId: string;
+  // The orthogonal capture tags; supersedes captureMeta.tier below.
+  captureProfile: CaptureTag[];
   initialState: GameState;
   events: GameEvent[];
-  meta?: { source: "field" | "player" | "selfplay"; capturedAt?: string; perspective?: PlayerId };
+  // Match-level pointer to the source artifact, when one exists.
+  sourceRef?: { kind: "vod" | "screenshots" | "actionlog" | "none"; url?: string };
+  // Per-turn "go look again" pointer (turn number -> timestamp/screenshot
+  // pointer) for re-examinable sources; the ingestion pipeline and future
+  // automated capture use this.
+  turnSourceRefs?: Record<number, string>;
+  meta?: { source?: "field" | "player" | "selfplay"; capturedAt?: string; perspective?: PlayerId };
   // Capture-layer annotations — NOT game facts, so they stay OUT of
   // GameEvent[]. A real lossy capture carries misplay flags ("!") and
   // uncertainty ("?") that must travel with the match without polluting the
@@ -329,7 +356,6 @@ export type CapturedMatch = {
   // populates; RiftCoach reads flags (coaching signal), RiftEngine reads
   // uncertainty (reconstruction priors).
   captureMeta?: {
-    tier?: "live-personal" | "digital-personal" | "field-digital";
     lossy?: boolean;
     flags?: { eventIndex: number; flag: "!" | "?"; note?: string }[];
     uncertain?: { eventIndex: number; candidates?: string[]; note?: string }[];
