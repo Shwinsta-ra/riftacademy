@@ -27,6 +27,12 @@ Card-name matching rule: match on EXACT name or collector number, never on
 substring. Substring matching on "Poro" once excluded Punching Poro along with
 Ol' Poro and produced a wrong turn-1 count that was reported to Ashwin as a
 regression. See BARRED_FROM_TURN1 in pool_workbook.py.
+
+BUG FIXED 2026-07-30 (repo-wide audit): find() below carried the same
+substring risk via a startswith() fallback, used to resolve every V7
+tier-list and signature-card lookup -- not yet triggered by today's data, but
+the same class of bug. Removed; find() now falls back only to whole-word
+token overlap (>=2 shared words), never substring/prefix matching.
 """
 
 import csv, re
@@ -94,9 +100,6 @@ def find(name):
     n = norm(name)
     if n in BY:
         return BY[n]
-    for k, v in BY.items():
-        if k.startswith(n) or n.startswith(k):
-            return v
     toks = set(n.split())
     best, sc = None, 0
     for k, v in BY.items():

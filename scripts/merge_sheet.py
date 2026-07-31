@@ -356,6 +356,7 @@ def main():
     by_code = {row["Card Code"].strip().lower(): row for row in rows}
 
     direct_matched, alt_matched, truly_missing, name_mismatches = [], [], [], []
+    field_mismatches = []
     matched_codes = set()
 
     for cid in ids:
@@ -381,24 +382,45 @@ def main():
             name_mismatches.append((cid, card["name"], csv_name))
             continue
 
+        # Data-authority cross-check (docs/riftcoach/build_guide.py's own
+        # docstring is the canonical statement of this rule): cards.json is
+        # authoritative for energy/might/speed/keywords between merges, so a
+        # divergence here means the CSV has an unreconciled edit that's about
+        # to become the new baseline -- worth a MISMATCH line before it does,
+        # same pattern build_guide.py already used (VEN-only, ad hoc). This
+        # runs for every set on every merge instead of only inside that one
+        # guide script.
+        new_energy = parse_num(row["Energy"])
+        new_might = parse_num(row["Might"])
+        new_speed = row["Speed"].strip() if row["Speed"].strip() not in ("", "None") else None
+        new_keywords = parse_list(row["Keywords"])
+        for field, old_val, new_val in (
+            ("energy", card.get("energy"), new_energy),
+            ("might", card.get("might"), new_might),
+            ("speed", card.get("speed"), new_speed),
+            ("keywords", sorted(card.get("keywords") or []), sorted(new_keywords)),
+        ):
+            if old_val != new_val:
+                field_mismatches.append((cid, card["name"], field, old_val, new_val))
+
         domain = parse_domain(row["Domain(s)"])
         if domain:
             card["domain"] = domain
-        card["energy"] = parse_num(row["Energy"])
+        card["energy"] = new_energy
         power_raw = row["Power"].strip()
         if power_raw and power_raw.lower() != "none":
             card["recycleCost"] = [d.strip() for d in re.split(r"[,/]", power_raw) if d.strip()]
         else:
             card["recycleCost"] = []
-        card["might"] = parse_num(row["Might"])
+        card["might"] = new_might
         rarity = row["Rarity"].strip()
         if rarity:
             card["rarity"] = rarity
         text = row["Card Text"].strip()
         if text:
             card["text"] = text
-        card["keywords"] = parse_list(row["Keywords"])
-        card["speed"] = row["Speed"].strip() if row["Speed"].strip() not in ("", "None") else None
+        card["keywords"] = new_keywords
+        card["speed"] = new_speed
         card["tags"] = parse_list(row["Tags"])
         shorthand = row.get("Shorthand", "").strip()
         card["shorthand"] = shorthand if shorthand else None
@@ -484,6 +506,11 @@ def main():
     print("name mismatches (skipped, needs manual review):", len(name_mismatches))
     for m in name_mismatches:
         print("  MISMATCH:", m)
+    print()
+    print("=== Energy/might/speed/keyword divergences (cards.json vs incoming CSV) ===")
+    print("divergences:", len(field_mismatches))
+    for cid, name, field, old_val, new_val in field_mismatches:
+        print(f"  MISMATCH {cid} ({name}) [{field}]: cards.json={old_val!r} vs csv={new_val!r}")
     print()
     print("=== New cards inserted ===")
     print("count:", len(new_cards))
