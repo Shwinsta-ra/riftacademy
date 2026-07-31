@@ -1,5 +1,17 @@
-// RiftCore schema (v1). Pure types — no imports beyond TS. See
-// docs/design/RiftCore_Spec.md §2, §5, §8 for the source spec.
+// RiftCore schema (v2). Pure types — no imports beyond TS.
+//
+// Clean-room rebuild against Riftbound Core Rules RUP4 (2026-07-16) +
+// Tournament Rules RUP4. See docs/design/riftcore-v2/RiftCore_v2_Canonical_Model_Part1..7.md
+// for the full derivation and docs/design/riftcore-v2/RiftCore_v2_Phase2_Diff.md
+// for what changed vs the legacy (v1) model.
+//
+// Naming charter (binding — Part 7 §0):
+//  1. CR nouns/verbs only.
+//  2. "Play" only as the CR uses it (349-353, 419) — a candidate move at a
+//     decision point is CandidateAction, never Play.
+//  3. The 32 Game Actions (413-444) are the only effect verbs.
+//  4. Every exported symbol cites its rule.
+//  5. Where the CR distinguishes, the code distinguishes (Move != Recall, etc).
 //
 // This file is the shared contract every other Riftbound module (RiftEngine,
 // RiftLab, RiftCoach, RiftIQ) imports. It intentionally has zero dependency
@@ -7,297 +19,476 @@
 // types) so it can be lifted into a standalone package.
 
 // ---------------------------------------------------------------------------
-// Card-level enums (mirror src/data/cards.json's actual value set)
+// 1. Identity & primitives (Part 7 §1)
 // ---------------------------------------------------------------------------
 
-export type Domain =
-  | "Fury"
-  | "Calm"
-  | "Body"
-  | "Mind"
-  | "Order"
-  | "Chaos"
-  | "Colorless";
+/** CR 134.2 — color-canonical, not first-letter. */
+export type Domain = "Fury" | "Calm" | "Mind" | "Body" | "Chaos" | "Order";
 
-export type CardType = "Unit" | "Spell" | "Gear" | "Battlefield" | "Legend" | "Rune";
+/** CR 163, 805.1.a — symbolic; never pre-resolve [C]/[A] (Part 6 §4). */
+export type PowerSymbol =
+  | { kind: "domain"; domain: Domain }
+  | { kind: "selfDomain" } // [C]
+  | { kind: "any" }; // [A]
 
-export type CardSubtype =
-  | "Champion"
-  | "Equipment"
-  | "Combat Trick"
-  | "Removal"
-  | "Counterspell"
-  | "Utility"
-  | null;
+export type Cost = { energy: number; power: PowerSymbol[] };
 
-export type Speed = "Action" | "Reaction" | "Normal";
-
-export type Keyword =
-  | "Accelerate"
-  | "Ambush"
-  | "Assault"
-  | "Backline"
-  | "Buff"
-  | "Burn"
-  | "Deathknell"
-  | "Deflect"
-  | "Empower"
-  | "Equip"
-  | "Flow"
-  | "Ganking"
-  | "Hidden"
-  | "Hunt"
-  | "Legion"
-  | "Level"
-  | "Mighty"
-  | "Predict"
-  | "Quick-Draw"
-  | "Repeat"
-  | "Shield"
-  | "Stun"
-  | "Tank"
-  | "Temporary"
-  | "Unique"
-  | "Vision"
-  | "Weaponmaster";
-
-// Physical locations a card/unit instance can occupy.
-export type ZoneKind = "hand" | "deck" | "discard" | "banished" | "base" | "battlefield";
-
-// Info-state of an object instance — faceDown ("hidden") vs face up.
-export type Privacy = "public" | "hidden";
-
-export type CombatRole = "attacker" | "defender";
-
-export type PlayerId = "A" | "B";
-
-// How long a temporary modification/grant lasts.
-export type Duration = "thisCombat" | "thisTurn" | "permanent";
+export type PlayerId = string;
+/** CR 124 — a NEW ObjectId is minted whenever an object crosses to/from a Non-Board Zone. */
+export type ObjectId = string;
+/** Catalog identity (cards.json / Supabase). */
+export type CardId = string;
 
 // ---------------------------------------------------------------------------
-// Cost
+// 2. Zones & locations (Part 7 §2; CR 105-108, 197)
 // ---------------------------------------------------------------------------
 
-export type PowerPip = { domain: Domain; count: number };
+export type BoardZone =
+  | { kind: "base"; player: PlayerId } // CR 107.1 — a Location
+  | { kind: "battlefield"; battlefieldId: ObjectId } // CR 107.2 — a Location
+  | { kind: "facedownZone"; battlefieldId: ObjectId } // CR 107.3 — NOT a Location
+  | { kind: "legendZone"; player: PlayerId }; // CR 107.4 — NOT a Location
 
-export type Cost = {
-  energy: number;
-  powerCount: number; // total recycles required
-  powerPips: PowerPip[]; // Σcount ≤ powerCount; remainder = "Any" recycles
-};
+export type NonBoardZone =
+  | { kind: "chain" } // CR 108.1
+  | { kind: "trash"; player: PlayerId } // CR 108.2 (unordered, public)
+  | { kind: "championZone"; player: PlayerId } // CR 108.3
+  | { kind: "mainDeck"; player: PlayerId } // CR 108.4 (order Secret)
+  | { kind: "runeDeck"; player: PlayerId } // CR 108.5 (order Secret)
+  | { kind: "banishment"; player: PlayerId } // CR 108.6
+  | { kind: "hand"; player: PlayerId }; // CR 108.7 (contents Private, COUNT public)
+
+export type Zone = BoardZone | NonBoardZone;
+/** CR 197 — only these are Locations (Move Origins/Destinations). */
+export type Location = Extract<BoardZone, { kind: "base" | "battlefield" }>;
+
+/** CR 128 */
+export type Privacy = "secret" | "private" | "public";
 
 // ---------------------------------------------------------------------------
-// Might chain
+// 3. Game Objects (Part 7 §3; CR 119-127, 178, 185)
 // ---------------------------------------------------------------------------
 
-// A single Might modification in a resolution chain. `floor` — when present —
-// clamps the running total no lower than `floor` at the moment THIS mod is
-// applied; later mods in the chain may still push the result below that
-// floor. This is what makes chain order observable (see rulesKernel.test.ts).
-export type MightMod = {
-  amount: number;
-  floor?: number;
-  duration?: Duration;
-  source?: string;
-};
+/** CR 133 */
+export type CardCategory = "unit" | "gear" | "spell" | "rune" | "battlefield" | "legend";
+/** CR 133.7 */
+export type Supertype = "champion" | "signature";
 
-// A temporary or permanent keyword grant (e.g. Cleave granting Assault 3).
-export type KeywordGrant = {
+/** CR 124.2 — non-exhaustive per CR; extend additively. */
+export type ObjectStatus =
+  | "attached"
+  | "attacker"
+  | "defender"
+  | "buffed"
+  | "controlled"
+  | "empowered"
+  | "equipped"
+  | "exhausted"
+  | "facedown"
+  | "ready"
+  | "replaced"
+  | "revealed"
+  | "stunned";
+
+/** How long a temporary modification/grant lasts. CR 801.3.a.3 — default = while it stays in its current zone. */
+export type Duration = "thisTurn" | "thisCombat" | "whileInZone" | "permanent" | { untilCleanupTag: string };
+
+/** CR 801.3 (duration-bearing keyword grant). */
+export interface GrantedKeyword {
   keyword: Keyword;
   value?: number;
   duration: Duration;
-  source?: string;
-};
+  sourceObjectId: ObjectId;
+}
 
-// ---------------------------------------------------------------------------
-// Object / unit / rune instances
-// ---------------------------------------------------------------------------
-
-// A card instance sitting in a zone that doesn't need full battle state
-// (hand, deck, discard, banished). `cardId: null` = identity unknown to the
-// perspective holding this instance (e.g. an opponent's hidden hand as
-// captured by RiftNotes) — resolved by a later "cardRevealed" event.
-export type ObjectInstance = {
-  instanceId: string;
-  cardId: string | null;
+export interface GameObject {
+  objectId: ObjectId;
+  cardId: CardId | null; // null = identity unknown from this perspective
+  owner: PlayerId; // CR 127
+  controller: PlayerId | null; // CR 188; null only for uncontrolled battlefields
+  isToken: boolean; // CR 185.1 — immutable nature
+  categories: CardCategory[]; // CR 178 — multi-type objects hold ALL type properties
+  supertypes: Supertype[];
+  tags: string[]; // CR 133.8 — no innate meaning
+  zone: Zone;
   privacy: Privacy;
-  knownToOpponent: boolean;
+  statuses: Set<ObjectStatus>;
+  printedMight: number | null; // units only; non-board zones use printed Might (CR 711)
+  damage: number; // CR 417 — units only
+  buffCount: 0 | 1; // CR 702.3 — hard cap of one
+  counters: Record<string, number>; // CR 741-749 (no controller)
+  attachedTo: ObjectId | null; // CR 716-719
+  attachments: ObjectId[]; // this object as TopMostCard
+  preventValue: number | "all" | null; // CR 437 — decrementing tracked value
+  grantedKeywords: GrantedKeyword[]; // CR 801.3
+}
+
+// ---------------------------------------------------------------------------
+// 4. Keywords (Part 7 §4; CR 800-829)
+// ---------------------------------------------------------------------------
+
+export type Keyword =
+  | "Accelerate"
+  | "Action"
+  | "Assault"
+  | "Deathknell"
+  | "Deflect"
+  | "Ganking"
+  | "Hidden"
+  | "Legion"
+  | "Reaction"
+  | "Shield"
+  | "Tank"
+  | "Temporary"
+  | "Vision"
+  | "Equip"
+  | "QuickDraw"
+  | "Repeat"
+  | "Weaponmaster"
+  | "Ambush"
+  | "Hunt"
+  | "Level"
+  | "Unique"
+  | "Backline"
+  | "Empower"
+  | "Empowered"
+  | "Flow";
+
+/** Part 5 §1 — every keyword carries its ability class + stacking rule. */
+export type KeywordClass =
+  | "passive"
+  | "triggered"
+  | "activated"
+  | "permissive"
+  | "dependent"
+  | "optionalAdditionalCost"
+  | "deckConstraint"
+  | "prerequisite";
+export type KeywordStacking = "sums" | "redundant" | "separateInstances" | "multipleAbilities" | "na";
+export interface KeywordDef {
+  keyword: Keyword;
+  class: KeywordClass;
+  stacking: KeywordStacking;
+  valued: boolean;
+  cr: string;
+}
+
+/** Canonical keyword table — Part 5 §2, stacking rules per §1. */
+export const KEYWORD_DEFS: Record<Keyword, KeywordDef> = {
+  Accelerate: { keyword: "Accelerate", class: "optionalAdditionalCost", stacking: "redundant", valued: false, cr: "805" },
+  Action: { keyword: "Action", class: "permissive", stacking: "na", valued: false, cr: "806" },
+  Assault: { keyword: "Assault", class: "passive", stacking: "sums", valued: true, cr: "807" },
+  Deathknell: { keyword: "Deathknell", class: "triggered", stacking: "separateInstances", valued: false, cr: "808" },
+  Deflect: { keyword: "Deflect", class: "passive", stacking: "sums", valued: true, cr: "809" },
+  Ganking: { keyword: "Ganking", class: "passive", stacking: "redundant", valued: false, cr: "810" },
+  Hidden: { keyword: "Hidden", class: "prerequisite", stacking: "redundant", valued: false, cr: "811" },
+  Legion: { keyword: "Legion", class: "dependent", stacking: "na", valued: false, cr: "812" },
+  Reaction: { keyword: "Reaction", class: "permissive", stacking: "na", valued: false, cr: "813" },
+  Shield: { keyword: "Shield", class: "passive", stacking: "sums", valued: true, cr: "814" },
+  Tank: { keyword: "Tank", class: "passive", stacking: "redundant", valued: false, cr: "815" },
+  Temporary: { keyword: "Temporary", class: "triggered", stacking: "redundant", valued: false, cr: "816" },
+  Vision: { keyword: "Vision", class: "triggered", stacking: "separateInstances", valued: false, cr: "817" },
+  Equip: { keyword: "Equip", class: "activated", stacking: "multipleAbilities", valued: true, cr: "818" },
+  QuickDraw: { keyword: "QuickDraw", class: "triggered", stacking: "redundant", valued: false, cr: "819" },
+  Repeat: { keyword: "Repeat", class: "optionalAdditionalCost", stacking: "separateInstances", valued: true, cr: "820" },
+  Weaponmaster: { keyword: "Weaponmaster", class: "triggered", stacking: "separateInstances", valued: false, cr: "821" },
+  Ambush: { keyword: "Ambush", class: "passive", stacking: "redundant", valued: false, cr: "822" },
+  Hunt: { keyword: "Hunt", class: "triggered", stacking: "sums", valued: true, cr: "823" },
+  Level: { keyword: "Level", class: "dependent", stacking: "na", valued: true, cr: "824" },
+  Unique: { keyword: "Unique", class: "deckConstraint", stacking: "na", valued: false, cr: "825" },
+  Backline: { keyword: "Backline", class: "passive", stacking: "redundant", valued: false, cr: "826" },
+  Empower: { keyword: "Empower", class: "activated", stacking: "multipleAbilities", valued: false, cr: "827" },
+  Empowered: { keyword: "Empowered", class: "dependent", stacking: "na", valued: false, cr: "828" },
+  Flow: { keyword: "Flow", class: "passive", stacking: "na", valued: false, cr: "829" },
 };
 
-// A unit instance in play (at base or a battlefield).
-export type UnitState = {
-  instanceId: string;
-  cardId: string;
+// ---------------------------------------------------------------------------
+// 5. Abilities (Part 7 §5; CR 360-406)
+// ---------------------------------------------------------------------------
+
+export type AbilityKind = "passive" | "replacement" | "activated" | "triggered" | "reflexive" | "delayed" | "linked";
+
+// Predicate/EventPredicate/Selector/Instruction are left as callable shapes
+// rather than data — interpreting raw card text into these is Phase 4 work
+// (against the Supabase inventory, explicitly out of scope here per Part 7
+// §12); the v2 kernel only needs to know how to *evaluate* an already-built
+// one. Phase 4 (or a test fixture) constructs the closures.
+/** A predicate over game state (e.g. a passive ability's "while" condition, CR 363-366). */
+export type Predicate = (state: GameState) => boolean;
+/** A predicate over a GameEvent in context (e.g. a replacement effect's appliesTo, CR 367-375). */
+export type EventPredicate = (event: GameEvent, state: GameState) => boolean;
+/** Resolves the object(s) a Layer/targeted effect applies to (CR 355.6-.10, 477). */
+export type Selector = (state: GameState) => ObjectId[];
+/** One step of an ability's effect (CR 135.2.b — game action + complement); opaque to the kernel. */
+export type Instruction = { description: string };
+/** A resolved set of "as I am played" choices (CR 355) — opaque payload keyed by choice id. */
+export type ResolvedChoices = Record<string, unknown>;
+
+/** CR 366/385 — self-describing active zones for off-Board abilities. */
+export interface AbilityBase {
+  abilityId: string;
+  kind: AbilityKind;
+  sourceObjectId: ObjectId;
+  activeZones: Zone["kind"][];
+}
+
+export interface PassiveAbility extends AbilityBase {
+  kind: "passive";
+  condition?: Predicate;
+  layerEffects: LayerEffect[];
+}
+export interface ActivatedAbility extends AbilityBase {
+  kind: "activated";
+  cost: Cost;
+  effect: Instruction[];
+  /** CR 381 — own turn + Open State only, unless Action/Reaction granted. */
+  timing: TimingPermission;
+}
+export interface TriggeredAbility extends AbilityBase {
+  kind: "triggered";
+  /** CR 383.2.a.1 — the adjacent if-clause belongs to the CONDITION, not the effect. */
+  condition: Predicate;
+  effect: Instruction[];
+  optionalAtChoiceStep: boolean; // CR 402.1
+}
+export interface ReplacementEffect extends AbilityBase {
+  kind: "replacement";
+  appliesTo: EventPredicate;
+  replacement: Instruction[];
+  usageLimit?: { perTurn: number }; // CR 371
+  optional: boolean;
+}
+export interface ReflexiveTrigger extends AbilityBase {
+  kind: "reflexive";
+  condition?: Predicate;
+  instances: number; // CR 387
+}
+export interface DelayedAbility extends AbilityBase {
+  kind: "delayed";
+  window: Duration; // CR 389-392
+  inner: Ability;
+}
+export interface LinkedAbility extends AbilityBase {
+  kind: "linked";
+  componentIds: string[]; // CR 393-397
+}
+
+export type Ability =
+  | PassiveAbility
+  | ActivatedAbility
+  | TriggeredAbility
+  | ReplacementEffect
+  | ReflexiveTrigger
+  | DelayedAbility
+  | LinkedAbility;
+
+/** CR 806/813 */
+export type TimingPermission = { openStateOwnTurnOnly: boolean; action: boolean; reaction: boolean };
+
+// ---------------------------------------------------------------------------
+// 6. Turn, states, Priority/Focus (Part 7 §6; CR 300-317)
+// ---------------------------------------------------------------------------
+
+export type Phase = "awaken" | "beginning" | "channel" | "draw" | "main" | "ending"; // CR 315-317
+export type Step = "beginningStep" | "scoringStep" | "endingStep" | "expirationStep"; // CR 315.2, 317
+export type ShowdownState = "neutral" | "showdown"; // CR 308
+export type OpenState = "open" | "closed"; // CR 309
+
+export interface TurnState {
+  turnPlayer: PlayerId; // CR 304
+  turnOrder: PlayerId[]; // CR 115.1 (looping queue)
+  additionalTurns: PlayerId[]; // CR 734-738 (queue-inserted, order unchanged)
+  phase: Phase;
+  step?: Step;
+  showdownState: ShowdownState;
+  openState: OpenState; // CR 310 — the four states
+  priority: PlayerId | null; // CR 312
+  focus: PlayerId | null; // CR 313 (null in Neutral, 313.5)
+}
+
+// ---------------------------------------------------------------------------
+// 7. Chain, Tasks, HOT FEPR (Part 7 §7; CR 325-348)
+// ---------------------------------------------------------------------------
+
+export interface PendingChainItem {
+  itemId: string;
+  objectId: ObjectId | null;
   controller: PlayerId;
-  might: number; // current base Might (post-permanent mods, pre-combat)
-  mightMods: MightMod[]; // active chain-style mods, in LIFO-resolution order
-  keywordGrants: KeywordGrant[]; // dynamic grants; printed keywords come from the card itself
-  damage: number; // damage marked on this unit
-  stunned: boolean;
-  tapped: boolean;
-  zone: "base" | "battlefield";
-  battlefieldId?: string;
-  role?: CombatRole; // set while this unit is participating in combat
-};
+  kind: "card" | "ability";
+  addedSeq: number;
+}
+export interface FinalizedChainItem {
+  itemId: string;
+  objectId: ObjectId | null;
+  controller: PlayerId;
+  choices: ResolvedChoices;
+  totalCost: Cost;
+  finalizedSeq: number;
+}
 
-export type RuneState = {
-  instanceId: string;
-  domain: Domain;
-  tapped: boolean;
-};
+export interface Chain {
+  pending: PendingChainItem[];
+  finalized: FinalizedChainItem[];
+} // CR 328-330
+// FIFO finalize (337.1.b) = min addedSeq; LIFO resolve (340.1) = max finalizedSeq
+
+export type OutstandingTask =
+  | { kind: "cleanup"; special?: "combat" | "ending" } // CR 318-324
+  | { kind: "phaseTask"; phase: Phase; step?: Step }
+  | { kind: "combatStep"; step: 1 | 2 | 3 } // CR 463-466
+  | { kind: "triggerToChain"; abilityId: string; controller: PlayerId };
+
+export interface ChainEngineState {
+  tasks: OutstandingTask[];
+  chain: Chain;
+  showdown: ShowdownContext | null;
+}
+export interface ShowdownContext {
+  battlefieldId: ObjectId;
+  isCombat: boolean;
+  attacker?: PlayerId;
+  defender?: PlayerId;
+  openedBy: "trigger" | "add" | "play";
+} // CR 346.1
 
 // ---------------------------------------------------------------------------
-// Player / battlefield / game state
+// 8. Layers (Part 7 §8; CR 473-480)
 // ---------------------------------------------------------------------------
 
-export type PlayerState = {
-  id: PlayerId;
-  hand: ObjectInstance[];
-  deck: ObjectInstance[];
-  discard: ObjectInstance[];
-  banished: ObjectInstance[];
-  base: UnitState[];
-  runes: RuneState[];
+export type LayerNumber = 1 | 2 | 3; // 1 Trait-Altering, 2 Ability-Altering, 3 Arithmetic
+
+export interface LayerEffect {
+  layer: LayerNumber;
+  sourceObjectId: ObjectId;
+  targetSelector: Selector;
+  op: TraitOp | AbilityOp | ArithmeticOp;
+  fromPassive: boolean; // CR 477.3.b — passives do NOT snapshot
+  snapshotted?: number; // resolved limited value, remembered for the duration
+  duration: Duration;
+  timestamp: number;
+}
+export type ArithmeticOp = { attr: "might" | "energyCost" | "powerCost"; delta: number; minimum?: number; maximum?: number };
+export type TraitOp =
+  | { set: "might" | "name" | "type" | "tags" | "controller" | "cost" | "domain"; value: unknown }
+  | { copyFrom: ObjectId };
+export type AbilityOp = { grantKeyword?: Keyword; removeKeyword?: Keyword; appendText?: string; removeText?: string };
+
+// ---------------------------------------------------------------------------
+// 9. Players & format context (Part 7 §9)
+// ---------------------------------------------------------------------------
+
+export interface PlayerState {
+  playerId: PlayerId;
   points: number;
-  // Snapshot of `points` taken at this player's most recent Beginning Phase
-  // (see applyEvent's "phaseChange" case). The battlefield-based WinningLines
-  // key off this, not live `points` — a mid-turn conquer must not retroactively
-  // satisfy a threshold that was only reached after the turn started.
-  pointsAtTurnStart: number;
-  // Game-setup state (§4 match-event schema deltas). Puzzles start mid-game
-  // and leave these empty; a captured full match populates them from the
-  // "gameStarted"/"mulligan" events.
-  legendCardId?: string;
-  champion?: UnitState;
-  runeDeck?: { count: number; byDomain?: Partial<Record<Domain, number>> };
-};
+  xp: number; // CR 728-733 (public, uncapped, not a Game Object)
+  runePool: { energy: number; power: { domain: Domain; universal: boolean }[] }; // CR 165-167
+  handCount: number; // CR 108.7.e — public even when contents are private
+  legendObjectId: ObjectId;
+  chosenChampionCardId: CardId; // CR 103.2.a.3 — name-based status
+  scoredBattlefieldsThisTurn: Set<ObjectId>; // CR 470 — once per BF per turn, both methods
+}
 
-export type Battlefield = {
-  battlefieldId: string;
-  cardId?: string;
-  units: UnitState[];
-};
+/** TR 104.1 — tournament rules override CR in competition; kernel takes a context. */
+export interface FormatContext {
+  mode: "1v1" | "2v2" | "ffa3" | "ffa4"; // CR 481-488
+  format: "constructed" | "sealed" | "draft";
+  victoryScore: number;
+  battlefieldCount: number;
+  mainDeckMin: number; // 40 constructed / 25 sealed / 20 draft
+  championCountsInMain: boolean; // TR 402.1 constructed = true (sealed: Part 3 §12 item 5)
+  uniqueApplies: boolean; // TR 602.4.a.6.a — false in sealed/draft
+  copyLimitApplies: boolean;
+  legality: (cardId: CardId) => "legal" | "banned";
+}
 
-// An item queued on the resolution chain. `mightMod`, when present, is what
-// resolveMightChain folds — LIFO order is a property of how the chain is
-// built (most-recently-added item resolves first), not of this type itself.
-export type ChainItem = {
-  id: string;
-  controller: PlayerId;
-  sourceCardInstanceId: string;
-  targets: string[];
-  mightMod?: MightMod;
-};
+// ---------------------------------------------------------------------------
+// 10. Combat & scoring (Part 7 §10; CR 459-472)
+// ---------------------------------------------------------------------------
 
-export type GameState = {
+export interface CombatState {
+  // CR 459-466
+  battlefieldId: ObjectId;
+  attacker: PlayerId; // CR 464.2.c.1 — the CONTEST APPLIER
+  defender: PlayerId;
+  step: 1 | 2 | 3;
+}
+export interface DamageAssignment {
+  fromPlayer: PlayerId;
+  assignments: { targetObjectId: ObjectId; amount: number }[];
+}
+
+export type ScoreMethod = "conquer" | "hold";
+
+// ---------------------------------------------------------------------------
+// 11. GameState — the aggregate root
+// ---------------------------------------------------------------------------
+// Not explicitly assembled in Part 7 (its kernel signatures thread `state:
+// GameState` through every function but the type itself is left implicit).
+// Constructed here from what §3/§6/§7/§8/§9/§10 require it to hold: every
+// Game Object (board and non-board) keyed by id, per-player aggregate state,
+// deck/rune-deck ORDER (Zone alone can't express "top of deck" — Secret zones
+// still need a real order for Draw/Recycle/Predict/Channel/Burn to operate
+// on), turn/chain/layer/ability state, and the active format.
+
+export interface GameState {
+  objects: Record<ObjectId, GameObject>;
   players: Record<PlayerId, PlayerState>;
-  battlefields: Battlefield[];
-  chain: ChainItem[];
-  turn: number;
-  activePlayer: PlayerId;
-  pendingDirectPoints: Record<PlayerId, number>;
-  // Points required to win. Format-dependent (1v1 vs 2v2) — callers set this
-  // per match; never assume a fixed value here.
-  pointsToWin: number;
-};
+  /** Ordered battlefield objectIds (CR 103.4.c — unique names, set order at setup). */
+  battlefieldIds: ObjectId[];
+  /** CR 108.4/108.5 — order is Secret in-fiction but the engine must track it; index 0 = top. */
+  deckOrder: Record<PlayerId, ObjectId[]>;
+  runeDeckOrder: Record<PlayerId, ObjectId[]>;
+  turn: TurnState;
+  chainEngine: ChainEngineState;
+  /** CR 323.7 — battlefields marked Showdown Staged by Cleanup task 6 (persists while Contested + contester present). */
+  stagedShowdowns: ObjectId[];
+  /** CR 323.8 / 461 — battlefields marked Combat Staged by Cleanup task 7 (persists while both sides present). */
+  stagedCombats: ObjectId[];
+  /** CR 190.3 — battlefields currently Contested. Kernel-internal: Game Effects cannot reference Contested (190.3.d). */
+  contestedBattlefields: ObjectId[];
+  /** Effects awaiting the next Layers fixed-point pass (CR 473-480). */
+  activeLayerEffects: LayerEffect[];
+  abilities: Record<string, Ability>;
+  format: FormatContext;
+  /** Monotonic counter — LayerEffect.timestamp / same-layer default ordering (CR 480). */
+  nextTimestamp: number;
+}
 
 // ---------------------------------------------------------------------------
-// Winning lines / scoring
+// 12. CandidateAction & decision points — RiftIQ-facing (Part 7 §0.2)
 // ---------------------------------------------------------------------------
+// The legacy `Play` type is retired per the naming charter (item 2): "Play"
+// is reserved for the CR's own sense (349-353, 419). A candidate move at a
+// decision point is a CandidateAction. Kept deliberately close to the legacy
+// `Play` shape (updated to ObjectId/Location) — redesigning RiftIQ's puzzle
+// surface is out of scope for this PR (Phase 3 §5: "do NOT notify or adapt
+// for other modules").
 
-// The winning lines that end a match (RiftCore_Spec §5). Names reflect the
-// standard 8-point (1v1) match — "AtSeven"/"AtSix" name the points a player
-// holds at the *start* of the winning turn (state.players[p].pointsAtTurnStart),
-// not the winning total itself, and scale with pointsToWin (e.g. a 2v2 match
-// at pointsToWin=11 checks pointsAtTurnStart against 10/9, not 7/6):
-//   - holdAtSeven: pointsAtTurnStart === pointsToWin - 1, holding >=1 BF
-//   - conquerBothAtSix: pointsAtTurnStart === pointsToWin - 2, conquering
-//     both BFs this turn (the two conquer points need not land simultaneously
-//     — see canScoreWinningPoint's comment on what this check can and can't see)
-//   - holdOneConquerOneAtSix: pointsAtTurnStart === pointsToWin - 2, holding
-//     one BF and conquering the other
-// plus three non-battlefield win paths that bypass the point race entirely.
-export type WinningLine =
-  | "holdAtSeven"
-  | "conquerBothAtSix"
-  | "holdOneConquerOneAtSix"
-  | "cardEffect"
-  | "deckDepletion"
-  | "altWin";
+export type CandidateAction =
+  | { kind: "play"; objectId: ObjectId; targets: ObjectId[]; location?: Location; repeat?: boolean }
+  | { kind: "activate"; abilityId: string; targets: ObjectId[]; repeat?: boolean }
+  | { kind: "standardMove"; objectId: ObjectId; to: Location }
+  | { kind: "attack"; attackerObjectIds: ObjectId[]; battlefieldId: ObjectId }
+  | { kind: "pass" };
 
-// The source of a single scored point (distinct from WinningLine — a
-// WinningLine is the match-ending pattern; a PointSource is what caused one
-// point along the way).
-export type PointSource = "conquer" | "holdIntoBeginning" | "cardEffect" | "deckDepletion" | "altWin";
+export interface Candidate {
+  id: string;
+  action: CandidateAction | CandidateAction[];
+  isCorrect: boolean;
+}
 
-export type ScoreEvent = {
-  player: PlayerId;
-  amount: number;
-  source: PointSource;
-  isWinningPoint: boolean;
-  // Which battlefield this point came from. Present iff source is "conquer"
-  // or "holdIntoBeginning" — cardEffect/deckDepletion/altWin points aren't
-  // tied to a battlefield.
-  battlefieldId?: string;
-};
+export interface DecisionPoint {
+  snapshot: MatchStateSnapshot;
+  goal?: string;
+  candidates: Candidate[];
+}
 
 // ---------------------------------------------------------------------------
-// Game events — the event-sourced substrate. A GameState snapshot is a fold
-// of a GameEvent[] via applyEvent.
-// ---------------------------------------------------------------------------
-
-export type ZoneRef = { zone: ZoneKind; battlefieldId?: string; player: PlayerId };
-
-// Only "beginning" currently drives kernel logic (applyEvent snapshots
-// pointsAtTurnStart on it) — the rest are named for a conventional turn
-// structure but aren't modeled/consumed anywhere yet.
-export type TurnPhase = "beginning" | "main" | "combat" | "end";
-
-export type GameEvent =
-  | {
-      type: "cardPlayed";
-      player: PlayerId;
-      cardInstanceId: string;
-      // Capture/reconstruction extensions (§4 match-event schema deltas) —
-      // all optional, so a bare 2-field "cardPlayed" still folds unchanged.
-      targets?: string[];
-      battlefieldId?: string;
-      fromZone?: ZoneKind;
-      costPaid?: Cost;
-    }
-  | { type: "unitEntered"; handInstanceId: string; unit: UnitState }
-  | { type: "damageDealt"; targetInstanceId: string; amount: number }
-  | { type: "mightModApplied"; targetInstanceId: string; mod: MightMod }
-  | { type: "mightSet"; targetInstanceId: string; value: number; duration: Duration }
-  | { type: "keywordGranted"; targetInstanceId: string; grant: KeywordGrant }
-  | { type: "unitStunned"; targetInstanceId: string }
-  | { type: "unitKilled"; targetInstanceId: string }
-  | { type: "unitMoved"; unitInstanceId: string; to: ZoneRef }
-  | { type: "unitReturnedToHand"; unitInstanceId: string }
-  | { type: "cardDrawn"; player: PlayerId; count: number }
-  | { type: "runeExhausted"; instanceId: string }
-  | { type: "runeRecycled"; instanceId: string }
-  | { type: "spellCountered"; chainItemId: string }
-  | ({ type: "pointScored" } & ScoreEvent)
-  | { type: "phaseChange"; player: PlayerId; phase: TurnPhase }
-  // The belief-state primitive (restored — see §3 G1 of the match-event
-  // schema doc): records when a hidden card became known to whom.
-  | { type: "cardRevealed"; cardInstanceId: string; cardId: string; toPlayer: PlayerId; source: string }
-  | { type: "gameStarted"; firstPlayer: PlayerId }
-  | { type: "mulligan"; player: PlayerId; returnedInstanceIds: string[] }
-  | { type: "runeChanneled"; player: PlayerId; instanceId: string; domain: Domain };
-
-// ---------------------------------------------------------------------------
-// E1 envelope (deferred, optional, unpopulated) — §2 deltas
+// 13. Match snapshot envelope
 // ---------------------------------------------------------------------------
 
 export type MatchStateSnapshot = {
   state: GameState;
-  // Optional (widened from required — no existing consumer set this field;
-  // see docs/design/RiftCore_Match_Pipeline_Contract.md §8): an authored
-  // puzzle snapshot is inherently one player's view and sets this, but a
-  // materialized snapshot from foldEvents/materialize is the omniscient
-  // fold result and has no single perspective to name.
   perspective?: PlayerId;
   completeness?: "full" | "partial";
   confidence?: number;
@@ -308,16 +499,76 @@ export type MatchStateSnapshot = {
 };
 
 // ---------------------------------------------------------------------------
-// CapturedMatch — versioned container for a persisted match (§4, §7 of
-// docs/design/RiftCore_Match_Event_Schema.md). RiftNotes produces this;
-// every consumer keys migrations off `schemaVersion` (see ./migrate.ts).
+// 14. GameEvent — the event-sourced substrate (rewritten for the GameObject
+// model). A GameState snapshot is a fold of a GameEvent[] via applyEvent.
+// Every variant maps to one of the 32 Game Actions (413-444) plus the
+// minimal structural events (turn/chain/priority) needed to replay a real
+// captured match. See docs/design/riftcore-v2/RiftCore_v2_Canonical_Model_Part4.md §5.
+// ---------------------------------------------------------------------------
+
+export type GameEvent =
+  /** CR 124 — an object enters existence, or crosses to/from a Non-Board Zone (new ObjectId). */
+  | { type: "objectCreated"; objectId: ObjectId; cardId: CardId | null; owner: PlayerId; controller: PlayerId | null; zone: Zone }
+  | { type: "objectMoved"; objectId: ObjectId; to: Zone; newObjectId?: ObjectId }
+  | { type: "drew"; player: PlayerId; objectIds: ObjectId[] } // Draw 413
+  | { type: "exhausted"; objectId: ObjectId } // Exhaust 414
+  | { type: "readied"; objectId: ObjectId } // Ready 415
+  | { type: "recycled"; objectId: ObjectId; to: "mainDeck" | "runeDeck" } // Recycle 416
+  | { type: "dealt"; sourceObjectId: ObjectId | null; targetObjectId: ObjectId; amount: number } // Deal 417
+  | { type: "healed"; objectId: ObjectId; amount: number } // Heal 418
+  | {
+      type: "played";
+      objectId: ObjectId;
+      player: PlayerId;
+      targets?: ObjectId[];
+      battlefieldId?: ObjectId;
+      fromZone?: Zone;
+      costPaid?: Cost;
+    } // Play 419
+  | { type: "unitMoved"; objectId: ObjectId; to: Location } // Move 420
+  | { type: "hidden"; objectId: ObjectId; battlefieldId: ObjectId } // Hide 421
+  | { type: "discarded"; objectId: ObjectId } // Discard 422
+  | { type: "stunned"; objectId: ObjectId } // Stun 423
+  | { type: "revealed"; objectId: ObjectId; cardId: CardId; toPlayer: PlayerId; source: string } // Reveal 424 (+ belief-state, G1)
+  | { type: "countered"; objectId: ObjectId } // Counter 425
+  | { type: "buffed"; objectId: ObjectId; applied: boolean } // Buff 426 (426.1.c — applied:false = already-buffed no-op)
+  | { type: "banished"; objectId: ObjectId } // Banish 427
+  | { type: "killed"; objectId: ObjectId } // Kill 428
+  | { type: "added"; player: PlayerId; energy: number; power: PowerSymbol[] } // Add 429
+  | { type: "channeled"; objectId: ObjectId; player: PlayerId } // Channel 430
+  | { type: "burnedOut"; player: PlayerId; opponentAwarded: PlayerId } // Burn Out 431
+  | { type: "doubled"; objectId: ObjectId; attr: "might" | "energyCost" | "powerCost" } // Double 432
+  | { type: "swapped"; objectIdA: ObjectId; objectIdB: ObjectId; attr: "might" } // Swap 433
+  | { type: "attached"; objectId: ObjectId; hostObjectId: ObjectId } // Attach 434
+  | { type: "detached"; objectId: ObjectId } // Detach 435
+  | { type: "predicted"; player: PlayerId; recycled: ObjectId[]; kept: ObjectId[] } // Predict 436
+  | { type: "prevented"; objectId: ObjectId; value: number | "all" } // Prevent 437
+  | { type: "replaced"; objectId: ObjectId; tokenObjectId: ObjectId } // Replace 438
+  | { type: "burned"; player: PlayerId; objectIds: ObjectId[] } // Burn 440
+  | { type: "empowered"; objectId: ObjectId } // Empower 441
+  | { type: "disempowered"; objectId: ObjectId } // Disempower 442
+  | { type: "skipped"; description: string } // Skip 443
+  | { type: "paid"; player: PlayerId; cost: Cost } // Pay 444
+  | { type: "pointScored"; player: PlayerId; method: ScoreMethod; battlefieldId?: ObjectId; drewCardInstead: boolean } // Scoring 471
+  | { type: "gameWon"; player: PlayerId } // CR 472
+  | { type: "phaseChanged"; player: PlayerId; phase: Phase; step?: Step }
+  | { type: "priorityChanged"; player: PlayerId | null }
+  | { type: "focusChanged"; player: PlayerId | null }
+  | { type: "cleanupRan"; special?: "combat" | "ending" }
+  | { type: "gameStarted"; firstPlayer: PlayerId }
+  | { type: "mulligan"; player: PlayerId; setAsideObjectIds: ObjectId[] };
+
+// ---------------------------------------------------------------------------
+// 15. CapturedMatch — versioned container for a persisted match. RiftNotes
+// produces this; every consumer keys migrations off `schemaVersion` (see
+// ./migrate.ts). See docs/design/RiftCore_Match_Event_Schema.md.
 // ---------------------------------------------------------------------------
 
 // Bump on every schema change; migrations in ./migrate.ts chain off this.
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 
-// Orthogonal capture tags (replaces the old captureMeta.tier enum). Extensible:
-// add a member when a genuinely new capture characteristic appears.
+// Orthogonal capture tags. Extensible: add a member when a genuinely new
+// capture characteristic appears.
 export type CaptureTag =
   | "physical"
   | "digital" // medium
@@ -330,31 +581,14 @@ export type CaptureTag =
 
 export type CapturedMatch = {
   schemaVersion: number;
-  // Groups all artifacts of the SAME game, enabling cross-artifact diff.
   gameId: string;
-  // Who produced THIS artifact ("ashwin" | "code" | "n8n" | …). Together with
-  // gameId, two CapturedMatch objects sharing a gameId with different
-  // reviewerId are two independent reviews of one game (multi-pass
-  // calibration, docs/design/RiftCore_Defect_Measurement_Contract.md §5).
   reviewerId: string;
-  // The orthogonal capture tags; supersedes captureMeta.tier below.
   captureProfile: CaptureTag[];
   initialState: GameState;
   events: GameEvent[];
-  // Match-level pointer to the source artifact, when one exists.
   sourceRef?: { kind: "vod" | "screenshots" | "actionlog" | "none"; url?: string };
-  // Per-turn "go look again" pointer (turn number -> timestamp/screenshot
-  // pointer) for re-examinable sources; the ingestion pipeline and future
-  // automated capture use this.
   turnSourceRefs?: Record<number, string>;
   meta?: { source?: "field" | "player" | "selfplay"; capturedAt?: string; perspective?: PlayerId };
-  // Capture-layer annotations — NOT game facts, so they stay OUT of
-  // GameEvent[]. A real lossy capture carries misplay flags ("!") and
-  // uncertainty ("?") that must travel with the match without polluting the
-  // canonical event stream (validated 2026-07-30, see
-  // docs/design/RiftNotes_v04_Validation_2026-07-30.md). RiftNotes
-  // populates; RiftCoach reads flags (coaching signal), RiftEngine reads
-  // uncertainty (reconstruction priors).
   captureMeta?: {
     lossy?: boolean;
     flags?: { eventIndex: number; flag: "!" | "?"; note?: string }[];
@@ -363,17 +597,12 @@ export type CapturedMatch = {
 };
 
 // ---------------------------------------------------------------------------
-// Match pipeline — writer/parser/reader roles (see
-// docs/design/RiftCore_Match_Pipeline_Contract.md). RiftCore defines these
+// 16. Match pipeline — writer/parser/reader roles. RiftCore defines these
 // primitives; RiftEngine (M2) is the only role that produces a
 // ReconstructedMatch or resolves an UnrecognizedEvent — see rulesKernel.ts's
 // foldEvents/materialize/checkClean/readSnapshot.
 // ---------------------------------------------------------------------------
 
-// An event whose `type` isn't a known GameEvent variant at the fold's
-// schemaVersion — recorded, never skipped or corrupted. Distinct from
-// migrate(): a known type whose *meaning* changed across versions is a
-// migration concern; an unknown type is an UnrecognizedEvent.
 export type UnrecognizedEvent = {
   index: number;
   rawEvent: unknown;
@@ -383,24 +612,17 @@ export type UnrecognizedEvent = {
 
 export type StreamStatus = "raw" | "reconstructed" | "verified";
 
-// RiftEngine's output; what a reader's readSnapshot() accepts as input.
 export type ReconstructedMatch = {
   schemaVersion: number;
-  events: GameEvent[]; // the cleaned stream (Engine's product)
-  snapshots: MatchStateSnapshot[]; // materialized; what readers consume
+  events: GameEvent[];
+  snapshots: MatchStateSnapshot[];
   status: StreamStatus;
-  unresolved: UnrecognizedEvent[]; // must be empty to pass the gate
-  deductiveConfidence?: number; // 0..1, computed by Engine (field only here)
-  // Retained tier-1 reconstruction from BEFORE human review, so
-  // deductive-vs-human divergence is computable later (calibration,
-  // contract §4b). RiftCore only retains this field; Engine populates it.
+  unresolved: UnrecognizedEvent[];
+  deductiveConfidence?: number;
   deductiveEvents?: GameEvent[];
   gate?: GateResult;
 };
 
-// The four deductive clean-stream gate checks (contract §3). Pure — no
-// inference; RiftCore's checkClean() computes this over an already-built
-// ReconstructedMatch.
 export type GateResult = {
   pass: boolean;
   foldable: boolean;
@@ -408,33 +630,4 @@ export type GateResult = {
   allLegal: boolean;
   outcomeConsistent: boolean;
   failures: string[];
-};
-
-// ---------------------------------------------------------------------------
-// Play (§5) — one candidate move at a decision point
-// ---------------------------------------------------------------------------
-
-export type Play =
-  | { kind: "castSpell"; cardInstanceId: string; targets: string[]; repeat?: boolean }
-  | { kind: "playUnit"; cardInstanceId: string; battlefieldId?: string; targets?: string[] }
-  | { kind: "activateAbility"; sourceInstanceId: string; targets: string[]; repeat?: boolean }
-  | { kind: "moveUnit"; unitInstanceId: string; to: ZoneRef }
-  | { kind: "attack"; attackerInstanceIds: string[]; battlefieldId: string }
-  | { kind: "block"; blockerInstanceIds: string[]; battlefieldId: string }
-  | { kind: "pass" };
-
-// ---------------------------------------------------------------------------
-// Decision point (§8) — RiftCore-owned; RiftIQ's Puzzle wraps this
-// ---------------------------------------------------------------------------
-
-export type Candidate = {
-  id: string;
-  play: Play | Play[];
-  isCorrect: boolean;
-};
-
-export type DecisionPoint = {
-  snapshot: MatchStateSnapshot;
-  goal?: string;
-  candidates: Candidate[];
 };
