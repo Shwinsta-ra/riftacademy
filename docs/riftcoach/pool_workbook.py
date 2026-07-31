@@ -12,6 +12,11 @@ exclude Ol' Poro and silently excluded Punching Poro too, undercounting turn-1
 units in both the python summary and the delivered spreadsheet formula. Now an
 exact-name set, BARRED_FROM_TURN1. Match card names on exact name or collector
 number, never substring.
+
+BUG FIXED 2026-07-30 (repo-wide audit): find() carried the same substring risk
+as a general startswith() fallback used to resolve every pool/deck lookup, not
+just the turn-1 counter -- same class of bug, just not yet triggered by
+today's data. Removed; find() is now exact-name-only.
 """
 
 import csv, re
@@ -80,12 +85,7 @@ BY = {norm(r["Card Name"]): r for r in inv}
 
 def find(n):
     k = norm(n)
-    if k in BY:
-        return BY[k]
-    for kk, v in BY.items():
-        if kk.startswith(k) or k.startswith(kk):
-            return v
-    return None
+    return BY.get(k)
 
 
 V7 = {
