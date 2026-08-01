@@ -494,8 +494,14 @@ function expireThisTurnEffects(state: GameState): GameState {
   return { ...state, activeLayerEffects: remaining };
 }
 
-/** CR 167 — Rune Pools empty at the start of each Main Phase AND at the end of each turn. */
-function emptyRunePools(state: GameState): GameState {
+/**
+ * CR 167 — Rune Pools empty at the start of each Main Phase AND at the end of
+ * each turn; any unspent Energy or Power is lost (167.1). The turn-end half
+ * runs from the Ending Special Cleanup above; the Main-Phase half is applied
+ * by the `phaseChanged` reducer in rulesKernel.ts, which is why this is
+ * exported rather than private.
+ */
+export function emptyRunePools(state: GameState): GameState {
   const players = { ...state.players };
   let changed = false;
   for (const [playerId, player] of Object.entries(players)) {

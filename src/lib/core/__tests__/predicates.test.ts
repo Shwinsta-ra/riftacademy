@@ -9,6 +9,7 @@ import {
   resolveSelector,
   sumKeywordValue,
 } from "../predicates";
+import { isMighty } from "../layers";
 import { emptyPlayerState, grant, grantKeywordEffect, makeTurnState, makeUnit, stateWithObjects } from "./fixtures";
 import { OBJECT_STATUSES } from "../schema";
 import type { EventPredicate, GameEvent, Predicate, Selector } from "../schema";
@@ -305,6 +306,57 @@ describe("name-based identity (CR 132.4, 103.2.a.3, 760-763)", () => {
       players: { A: emptyPlayerState("A", { chosenChampionName: "Jinx, Rebel" }), B: emptyPlayerState("B") },
     });
     expect(isChosenChampion(withSpell, "s1", "A")).toBe(false);
+  });
+});
+
+describe("keyword stacking and Mighty (CR 708-711, 807/814/823)", () => {
+  // GOLDEN — CR 814.2. "Stalwart Poro has Shield. It is chosen as the target
+  // of Block, which says 'Give a unit [Shield 3] and [Tank] this turn.' After
+  // Block resolves, Stalwart Poro has Shield 4 this turn."
+  // Expected value is from the CR text. Do not adjust to match the code.
+  it("CR 814.2 — printed Shield plus a granted Shield 3 sums to Shield 4", () => {
+    const poro = makeUnit({
+      objectId: "poro",
+      printedMight: 2,
+      printedKeywords: [{ keyword: "Shield" }], // valued keyword, no X -> CR default 1
+      grantedKeywords: [grant("Shield", 3), grant("Tank")],
+    });
+    const state = stateWithObjects([poro]);
+    expect(sumKeywordValue(state, "poro", "Shield")).toBe(4);
+    expect(hasKeyword(state, "poro", "Tank")).toBe(true);
+  });
+
+  it("CR 815/826 — redundant keywords do not stack into a value", () => {
+    const unit = makeUnit({
+      objectId: "u1",
+      printedMight: 2,
+      printedKeywords: [{ keyword: "Tank" }],
+      grantedKeywords: [grant("Tank"), grant("Tank")],
+    });
+    // Tank is binary: having it three times is still just having it.
+    expect(hasKeyword(stateWithObjects([unit]), "u1", "Tank")).toBe(true);
+  });
+
+  // GOLDEN — CR 709. "A Unit with Might 4 that gets +1 [M] becomes Mighty.
+  // A Unit with Might 5 that gets +1 [M] does NOT become Mighty, because it
+  // was already Mighty." Expected values are from the CR text.
+  it("CR 709 — 'becomes Mighty' fires on the 4->5 transition, not on 5->6", () => {
+    const becomesMighty = (before: number, after: number) => {
+      const at = (might: number) => stateWithObjects([makeUnit({ objectId: "u1", printedMight: might })]);
+      return !isMighty(at(before), "u1") && isMighty(at(after), "u1");
+    };
+    expect(becomesMighty(4, 5)).toBe(true);
+    expect(becomesMighty(5, 6)).toBe(false); // already Mighty
+  });
+
+  it("CR 711 — a unit in the trash is Mighty on PRINTED Might, ignoring board effects", () => {
+    const inTrash = makeUnit({
+      objectId: "u1",
+      printedMight: 5,
+      zone: { kind: "trash", player: "A" },
+    });
+    const state = stateWithObjects([inTrash], { activeLayerEffects: [grantKeywordEffect("u1", "Tank")] });
+    expect(isMighty(state, "u1")).toBe(true);
   });
 });
 

@@ -289,6 +289,19 @@ describe("object identity on zone change (CR 124)", () => {
     expect(next.objects.u1).toBeUndefined();
   });
 
+  it("NEGATIVE: damage does NOT survive a board -> hand -> board round trip (CR 124)", () => {
+    const unit = makeUnit({ objectId: "u1", printedMight: 5, damage: 3, counters: { charge: 1 } });
+    const toHand = changeZone(stateWithObjects([unit]), "u1", { kind: "hand", player: "A" }, "u1-hand");
+    const backToBoard = changeZone(toHand, "u1-hand", { kind: "base", player: "A" }, "u1-board");
+
+    const returned = backToBoard.objects["u1-board"];
+    expect(returned.damage).toBe(0);
+    expect(returned.counters).toEqual({});
+    // And the earlier identities are gone — each crossing is a new object.
+    expect(backToBoard.objects.u1).toBeUndefined();
+    expect(backToBoard.objects["u1-hand"]).toBeUndefined();
+  });
+
   it("preserves state for a board-to-board move (CR 458 — Recall is state-preserving)", () => {
     const unit = makeUnit({ objectId: "u1", printedMight: 3, damage: 2, zone: { kind: "battlefield", battlefieldId: "bf1" } });
     const next = changeZone(stateWithObjects([unit]), "u1", { kind: "base", player: "A" });

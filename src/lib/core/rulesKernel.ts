@@ -13,6 +13,7 @@
 // legality entry points.
 
 import * as actions from "./actions";
+import { emptyRunePools } from "./chain";
 import { combatMight, isKilled } from "./combat";
 import { currentMight } from "./layers";
 import { checkWin } from "./scoring";
@@ -316,8 +317,14 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     }
     case "gameWon":
       return state; // terminal marker; no state mutation
-    case "phaseChanged":
-      return { ...state, turn: { ...state.turn, phase: event.phase, step: event.step } };
+    case "phaseChanged": {
+      const next = { ...state, turn: { ...state.turn, phase: event.phase, step: event.step } };
+      // CR 167 — every player's Rune Pool empties at the START of each Main
+      // Phase, not only at end of turn; unspent Energy and Power are lost
+      // (167.1). Only the turn-end half was implemented, so resources floated
+      // across the Channel/Draw boundary into Main.
+      return event.phase === "main" ? emptyRunePools(next) : next;
+    }
     case "priorityChanged":
       return { ...state, turn: { ...state.turn, priority: event.player } };
     case "focusChanged":

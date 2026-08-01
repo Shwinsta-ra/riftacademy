@@ -7,6 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 import { runCleanup } from "../chain";
+import { applyEvent } from "../rulesKernel";
 import { checkWin } from "../scoring";
 import { currentMight } from "../layers";
 import {
@@ -243,6 +244,31 @@ describe("Cleanup convergence (CR 322)", () => {
       stateWithObjects([battlefield, ...units], { battlefieldIds: ["bf1"], turn: makeTurnState({ openState: "open" }) })
     );
     for (let i = 0; i < 8; i++) expect(after.objects[`u${i}`].zone.kind).toBe("trash");
+  });
+});
+
+describe("Rune Pools empty at BOTH points in CR 167", () => {
+  const withPools = () =>
+    stateWithObjects([], {
+      players: {
+        A: emptyPlayerState("A", { runePool: { energy: 2, power: [{ domain: "Fury", universal: false }] } }),
+        B: emptyPlayerState("B", { runePool: { energy: 1, power: [] } }),
+      },
+      turn: makeTurnState({ phase: "draw" }),
+    });
+
+  it("CR 167 — every player's Rune Pool empties at the START of the Main Phase", () => {
+    // REGRESSION: only the turn-end half was implemented, so unspent Energy
+    // and Power floated across the Channel/Draw boundary into Main.
+    const after = applyEvent(withPools(), { type: "phaseChanged", player: "A", phase: "main", step: undefined });
+    expect(after.players.A.runePool).toEqual({ energy: 0, power: [] });
+    expect(after.players.B.runePool).toEqual({ energy: 0, power: [] });
+  });
+
+  it("CR 167.1 — entering any OTHER phase leaves the pools alone", () => {
+    const after = applyEvent(withPools(), { type: "phaseChanged", player: "A", phase: "channel", step: undefined });
+    expect(after.players.A.runePool.energy).toBe(2);
+    expect(after.players.A.runePool.power).toHaveLength(1);
   });
 });
 
