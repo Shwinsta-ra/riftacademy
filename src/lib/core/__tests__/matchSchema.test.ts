@@ -1,187 +1,152 @@
 import { describe, expect, it } from "vitest";
-import { applyEvent } from "../rulesKernel";
 import { migrate } from "../migrate";
-import type { GameEvent, ObjectInstance } from "../schema";
-import { emptyPlayerState, makeObject, makeState } from "./fixtures";
+import { applyEvent } from "../rulesKernel";
+import type { GameEvent } from "../schema";
+import { emptyPlayerState, makeState, makeUnit, stateWithObjects } from "./fixtures";
 
-describe("cardRevealed — the belief-state primitive (G1)", () => {
+describe("revealed — the belief-state primitive (G1)", () => {
   it("resolves a null cardId to the revealed identity", () => {
-    const hidden = makeObject({ instanceId: "obj-1", cardId: null, knownToOpponent: false });
-    const state = makeState({
-      players: {
-        A: emptyPlayerState("A", { hand: [hidden] }),
-        B: emptyPlayerState("B"),
-      },
-    });
+    const hidden = makeUnit({ objectId: "obj-1", printedMight: 2, cardId: null, zone: { kind: "hand", player: "A" } });
+    const state = stateWithObjects([hidden]);
 
     const event: GameEvent = {
-      type: "cardRevealed",
-      cardInstanceId: "obj-1",
+      type: "revealed",
+      objectId: "obj-1",
       cardId: "ven-001-166",
       toPlayer: "B",
       source: "combat",
     };
 
     const next = applyEvent(state, event);
-    const revealed = next.players.A.hand.find((o) => o.instanceId === "obj-1") as ObjectInstance;
-    expect(revealed.cardId).toBe("ven-001-166");
-    expect(revealed.knownToOpponent).toBe(true);
-  });
-
-  it("leaves knownToOpponent unchanged when revealed to the owner themself", () => {
-    const hidden = makeObject({ instanceId: "obj-2", cardId: null, knownToOpponent: false });
-    const state = makeState({
-      players: {
-        A: emptyPlayerState("A", { hand: [hidden] }),
-        B: emptyPlayerState("B"),
-      },
-    });
-
-    const next = applyEvent(state, {
-      type: "cardRevealed",
-      cardInstanceId: "obj-2",
-      cardId: "ven-002-166",
-      toPlayer: "A",
-      source: "mulligan-peek",
-    });
-
-    const revealed = next.players.A.hand.find((o) => o.instanceId === "obj-2") as ObjectInstance;
-    expect(revealed.cardId).toBe("ven-002-166");
-    expect(revealed.knownToOpponent).toBe(false);
+    expect(next.objects["obj-1"].cardId).toBe("ven-001-166");
+    expect(next.objects["obj-1"].statuses.has("revealed")).toBe(true);
   });
 });
 
-describe("cardPlayed — enriched (G3)", () => {
-  function stateWithHandCard() {
-    const card = makeObject({ instanceId: "hand-1", cardId: "ven-010-166" });
-    return makeState({
-      players: {
-        A: emptyPlayerState("A", { hand: [card] }),
-        B: emptyPlayerState("B"),
-      },
-    });
-  }
-
+describe("played — enriched (G3)", () => {
   it("folds with targets/battlefieldId/fromZone/costPaid present", () => {
-    const state = stateWithHandCard();
+    const card = makeUnit({ objectId: "hand-1", printedMight: 2, zone: { kind: "hand", player: "A" } });
+    const state = stateWithObjects([card]);
+
     const next = applyEvent(state, {
-      type: "cardPlayed",
+      type: "played",
+      objectId: "hand-1",
       player: "A",
-      cardInstanceId: "hand-1",
       targets: ["some-unit"],
       battlefieldId: "BF1",
-      fromZone: "hand",
-      costPaid: { energy: 1, powerCount: 1, powerPips: [] },
+      fromZone: { kind: "hand", player: "A" },
+      costPaid: { energy: 1, power: [{ kind: "any" }] },
     });
-    expect(next.players.A.hand).toHaveLength(0);
-    expect(next.players.A.discard.map((o) => o.instanceId)).toEqual(["hand-1"]);
+
+    expect(next.chainEngine.chain.pending).toHaveLength(1);
+    expect(next.turn.openState).toBe("closed"); // CR 354 — moving to the Chain Closes the State
   });
 
-  it("still folds as a bare 2-field event (back-compat)", () => {
-    const state = stateWithHandCard();
-    const next = applyEvent(state, { type: "cardPlayed", player: "A", cardInstanceId: "hand-1" });
-    expect(next.players.A.hand).toHaveLength(0);
-    expect(next.players.A.discard.map((o) => o.instanceId)).toEqual(["hand-1"]);
+  it("still folds as a bare event (back-compat)", () => {
+    const card = makeUnit({ objectId: "hand-1", printedMight: 2, zone: { kind: "hand", player: "A" } });
+    const state = stateWithObjects([card]);
+    const next = applyEvent(state, { type: "played", objectId: "hand-1", player: "A" });
+    expect(next.chainEngine.chain.pending).toHaveLength(1);
   });
 });
 
 describe("setup + rune events (G4/G5)", () => {
-  it("gameStarted sets the first player as active", () => {
-    const state = makeState({ activePlayer: "A" });
-    const next = applyEvent(state, { type: "gameStarted", firstPlayer: "B" });
-    expect(next.activePlayer).toBe("B");
+  it("gameStarted sets the first player as the Turn Player", () => {
+    const next = applyEvent(makeState(), { type: "gameStarted", firstPlayer: "B" });
+    expect(next.turn.turnPlayer).toBe("B");
   });
 
-  it("mulligan returns named hand cards to the deck", () => {
-    const keep = makeObject({ instanceId: "keep-1" });
-    const toss = makeObject({ instanceId: "toss-1" });
-    const state = makeState({
-      players: {
-        A: emptyPlayerState("A", { hand: [keep, toss], deck: [] }),
-        B: emptyPlayerState("B"),
-      },
+  it("mulligan draws replacements FIRST, then recycles the set-asides to the deck bottom (CR 117)", () => {
+    // The legacy model shuffled them back, which is not the rule: CR 117 is
+    // set aside -> draw that many -> THEN recycle the set-asides. No shuffle.
+    const keep = makeUnit({ objectId: "keep-1", printedMight: 1, zone: { kind: "hand", player: "A" } });
+    const toss = makeUnit({ objectId: "toss-1", printedMight: 1, zone: { kind: "hand", player: "A" } });
+    const fresh = makeUnit({ objectId: "fresh-1", printedMight: 1, zone: { kind: "mainDeck", player: "A" } });
+    const state = stateWithObjects([keep, toss, fresh], {
+      deckOrder: { A: ["fresh-1"], B: [] },
+      players: { A: emptyPlayerState("A", { handCount: 2 }), B: emptyPlayerState("B") },
     });
 
-    const next = applyEvent(state, { type: "mulligan", player: "A", returnedInstanceIds: ["toss-1"] });
-    expect(next.players.A.hand.map((o) => o.instanceId)).toEqual(["keep-1"]);
-    expect(next.players.A.deck.map((o) => o.instanceId)).toEqual(["toss-1"]);
+    const next = applyEvent(state, { type: "mulligan", player: "A", setAsideObjectIds: ["toss-1"] });
+
+    expect(next.objects["fresh-1"].zone).toEqual({ kind: "hand", player: "A" }); // drawn first
+    expect(next.deckOrder.A).toEqual(["toss-1"]); // set-aside recycled to the bottom after
   });
 
-  it("runeChanneled adds a rune to the player's pool", () => {
-    const state = makeState({
-      players: {
-        A: emptyPlayerState("A", { runes: [] }),
-        B: emptyPlayerState("B"),
-      },
+  it("channeled moves a rune from the Rune Deck to the board", () => {
+    const rune = makeUnit({
+      objectId: "rune-1",
+      printedMight: null,
+      categories: ["rune"],
+      zone: { kind: "runeDeck", player: "A" },
     });
+    const state = stateWithObjects([rune], { runeDeckOrder: { A: ["rune-1"], B: [] } });
 
-    const next = applyEvent(state, { type: "runeChanneled", player: "A", instanceId: "rune-1", domain: "Fury" });
-    expect(next.players.A.runes).toEqual([{ instanceId: "rune-1", domain: "Fury", tapped: false }]);
+    const next = applyEvent(state, { type: "channeled", objectId: "rune-1", player: "A" });
+    expect(next.objects["rune-1"].zone).toEqual({ kind: "base", player: "A" });
   });
 });
 
-describe("unknown event types (superseded by docs/design/RiftCore_Match_Pipeline_Contract.md §5)", () => {
-  // Silent tolerance turned out to be the wrong contract — it fabricates
-  // "nothing happened" with no record of what was skipped. That's now
-  // foldEvents' job (see matchPipeline.test.ts): it routes an unknown type
-  // to an UnrecognizedEvent instead of calling applyEvent at all.
-  // applyEvent itself now throws if it's ever reached with an unknown type,
-  // as a defensive invariant for callers that bypass foldEvents.
-  it("applyEvent throws (defensively) for an unrecognized event type reaching it directly", () => {
-    const state = makeState();
+describe("pointScored (CR 471)", () => {
+  it("records the point and the battlefield scored this turn", () => {
+    const next = applyEvent(makeState(), {
+      type: "pointScored",
+      player: "A",
+      method: "conquer",
+      battlefieldId: "BF1",
+      drewCardInstead: false,
+    });
+    expect(next.players.A.points).toBe(1);
+    expect(next.players.A.scoredBattlefieldsThisTurn.has("BF1")).toBe(true);
+  });
+
+  it("draws a card INSTEAD when the final-point condition failed (471.1.b.1)", () => {
+    const card = makeUnit({ objectId: "c1", printedMight: 1, zone: { kind: "mainDeck", player: "A" } });
+    const state = stateWithObjects([card], {
+      deckOrder: { A: ["c1"], B: [] },
+      players: { A: emptyPlayerState("A", { points: 7 }), B: emptyPlayerState("B") },
+    });
+
+    const next = applyEvent(state, {
+      type: "pointScored",
+      player: "A",
+      method: "conquer",
+      battlefieldId: "BF1",
+      drewCardInstead: true,
+    });
+
+    expect(next.players.A.points).toBe(7); // no point landed
+    expect(next.objects.c1.zone).toEqual({ kind: "hand", player: "A" }); // drew instead
+  });
+});
+
+describe("buffed — the already-buffed no-op (CR 426.1.c)", () => {
+  it("applied:false records that the buff DID NOT happen", () => {
+    const unit = makeUnit({ objectId: "u1", printedMight: 3, buffCount: 1 });
+    const next = applyEvent(stateWithObjects([unit]), { type: "buffed", objectId: "u1", applied: false });
+    expect(next.objects.u1.buffCount).toBe(1); // unchanged
+  });
+});
+
+describe("unknown event types", () => {
+  // Silent tolerance is the wrong contract — it fabricates "nothing happened"
+  // with no record of what was skipped. That's foldEvents' job (see
+  // matchPipeline.test.ts): it routes unknown types to an UnrecognizedEvent
+  // rather than calling applyEvent at all. applyEvent throws defensively if
+  // it's ever reached with one.
+  it("applyEvent throws for an unrecognized event type reaching it directly", () => {
     const futureEvent = { type: "someFutureEventNotYetDefined", foo: "bar" } as unknown as GameEvent;
-    expect(() => applyEvent(state, futureEvent)).toThrow(/unreachable/);
-  });
-});
-
-describe("round-trip — Game-A-style event stream", () => {
-  it("folds a short representative capture to a coherent snapshot", () => {
-    const unitCard = makeObject({ instanceId: "A-u1", cardId: "ven-020-166" });
-    const initial = makeState({
-      players: {
-        A: emptyPlayerState("A", { hand: [unitCard] }),
-        B: emptyPlayerState("B"),
-      },
-      battlefields: [{ battlefieldId: "BF2", units: [] }],
-      pointsToWin: 8,
-    });
-
-    const events: GameEvent[] = [
-      { type: "gameStarted", firstPlayer: "A" },
-      { type: "cardPlayed", player: "A", cardInstanceId: "A-u1", fromZone: "hand" },
-      {
-        type: "unitEntered",
-        handInstanceId: "A-u1",
-        unit: {
-          instanceId: "A-u1",
-          cardId: "ven-020-166",
-          controller: "A",
-          might: 3,
-          mightMods: [],
-          keywordGrants: [],
-          damage: 0,
-          stunned: false,
-          tapped: false,
-          zone: "battlefield",
-          battlefieldId: "BF2",
-        },
-      },
-      { type: "pointScored", player: "A", amount: 1, source: "conquer", isWinningPoint: false, battlefieldId: "BF2" },
-    ];
-
-    const final = events.reduce(applyEvent, initial);
-    expect(final.activePlayer).toBe("A");
-    expect(final.players.A.hand).toHaveLength(0);
-    expect(final.battlefields.find((bf) => bf.battlefieldId === "BF2")?.units.map((u) => u.instanceId)).toEqual([
-      "A-u1",
-    ]);
-    expect(final.players.A.points).toBe(1);
+    expect(() => applyEvent(makeState(), futureEvent)).toThrow(/unreachable/);
   });
 });
 
 describe("migrate", () => {
-  it("is an identity pass from v1 to v1", () => {
+  it("is an identity pass from v2 to v2", () => {
     const events: GameEvent[] = [{ type: "gameStarted", firstPlayer: "A" }];
-    expect(migrate(events, 1, 1)).toEqual(events);
+    expect(migrate(events, 2, 2)).toEqual(events);
+  });
+
+  it("refuses to fabricate a v1 -> v2 lift (the rules model was replaced wholesale)", () => {
+    expect(() => migrate([], 1, 2)).toThrow(/no migration registered/);
   });
 });
