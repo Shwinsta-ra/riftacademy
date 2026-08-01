@@ -3,6 +3,11 @@ import { CURRENT_SCHEMA_VERSION } from "../schema";
 import type { CapturedMatch, CaptureTag } from "../schema";
 import { makeState } from "./fixtures";
 
+// GameState now carries Sets (statuses, scoredBattlefieldsThisTurn) and a
+// function (format.legality), so a raw JSON round-trip is no longer the right
+// serialization check for the capture envelope. These tests target the
+// capture-provenance FIELDS, which are all plain data.
+
 function makeCapturedMatch(overrides: Partial<CapturedMatch> = {}): CapturedMatch {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
@@ -24,7 +29,8 @@ describe("CapturedMatch — capture-provenance fields", () => {
       turnSourceRefs: { 1: "00:01:23", 2: "00:04:56" },
     });
 
-    const serialized = JSON.parse(JSON.stringify(match)) as CapturedMatch;
+    const { initialState: _initialState, ...provenance } = match;
+    const serialized = JSON.parse(JSON.stringify(provenance)) as Omit<CapturedMatch, "initialState">;
 
     expect(serialized.gameId).toBe("game-1");
     expect(serialized.reviewerId).toBe("ashwin");
