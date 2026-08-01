@@ -41,6 +41,28 @@ function effectsTargeting(state: GameState, objectId: ObjectId, layer: 1 | 2 | 3
     .sort((a, b) => a.timestamp - b.timestamp); // CR 480 — default order when no dependency is modeled
 }
 
+/**
+ * CR 477.3.e — Layer 3 has two SUBLAYERS: every increase applies first
+ * (477.3.e.1.a), every decrease last (477.3.e.2.a). Timestamp orders within a
+ * sublayer, not across them — CR 480.3 orders "within each Layer and Sublayer".
+ *
+ * Sorting by timestamp alone was wrong, and visibly so: a 2-Might unit under
+ * "-4 to a min of 1" (ts 1) and "+3" (ts 2) folded to 4, because the decrease
+ * clamped against 2 before the increase was seen. Increases first gives
+ * 2+3=5, then clamp(5-4, min 1)=1 — the unit ends at 1.
+ *
+ * The sign of `delta` is the sublayer key. That is exact so long as callers
+ * honour 477.3.c (an increase computing a negative amount increases by 0
+ * instead), which the model cannot currently enforce — see the escalation
+ * note in layers.test.ts for CR 477.3.c.
+ */
+function orderedArithmetic(state: GameState, objectId: ObjectId, attr: ArithmeticOp["attr"]): LayerEffect[] {
+  const sublayer = (e: LayerEffect) => ((e.op as ArithmeticOp).delta < 0 ? 1 : 0);
+  return effectsTargeting(state, objectId, 3)
+    .filter((e) => (e.op as ArithmeticOp).attr === attr)
+    .sort((a, b) => sublayer(a) - sublayer(b) || a.timestamp - b.timestamp);
+}
+
 /** CR 477.3.b — the effective delta an arithmetic effect contributes, snapshotting on first application. */
 function effectiveDelta(effect: LayerEffect, op: ArithmeticOp, baseBeforeThisEffect: number): number {
   if (effect.fromPassive) {
@@ -75,7 +97,7 @@ export function applyLayers(state: GameState): GameState {
     const targets = targetsOf(state, effect);
     const objectId = targets[0];
     if (objectId === undefined) return effect;
-    const base = baseBeforeArithmetic(state, objectId, op.attr, effect.timestamp);
+    const base = baseBeforeArithmetic(state, objectId, op.attr, effect);
     const delta = effectiveDelta(effect, op, base);
     changed = true;
     return { ...effect, snapshotted: delta };
@@ -84,12 +106,15 @@ export function applyLayers(state: GameState): GameState {
   return { ...state, activeLayerEffects: nextEffects };
 }
 
-function baseBeforeArithmetic(state: GameState, objectId: ObjectId, attr: ArithmeticOp["attr"], beforeTimestamp: number): number {
+/** The value `effect` sees when it applies: everything ordered before it in Layer 3, already folded in. */
+function baseBeforeArithmetic(state: GameState, objectId: ObjectId, attr: ArithmeticOp["attr"], effect: LayerEffect): number {
   const object = state.objects[objectId];
   const printed = attr === "might" ? object?.printedMight ?? 0 : 0;
   const traited = attr === "might" ? applyTraitLayer(state, objectId, printed) : printed;
   const withBuffs = attr === "might" ? traited + (object?.buffCount ?? 0) : traited;
-  const earlier = effectsTargeting(state, objectId, 3).filter((e) => e.timestamp < beforeTimestamp && (e.op as ArithmeticOp).attr === attr);
+  const ordered = orderedArithmetic(state, objectId, attr);
+  const index = ordered.findIndex((e) => e === effect);
+  const earlier = index === -1 ? ordered : ordered.slice(0, index);
   return earlier.reduce((acc, e) => acc + effectiveDelta(e, e.op as ArithmeticOp, acc), withBuffs);
 }
 
@@ -119,7 +144,7 @@ export function currentMight(state: GameState, objectId: ObjectId): number {
   const afterTrait = applyTraitLayer(state, objectId, printed);
   const withBuffs = afterTrait + object.buffCount;
 
-  const arithmeticEffects = effectsTargeting(state, objectId, 3).filter((e) => (e.op as ArithmeticOp).attr === "might");
+  const arithmeticEffects = orderedArithmetic(state, objectId, "might");
   return arithmeticEffects.reduce((value, effect) => {
     const delta = effectiveDelta(effect, effect.op as ArithmeticOp, value);
     return value + delta;
