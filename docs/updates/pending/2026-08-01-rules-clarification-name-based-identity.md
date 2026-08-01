@@ -42,7 +42,33 @@ The kernel still imports no catalog — `name` is mirrored onto the object by th
 
 **Branch-prefix exception (worth folding into CLAUDE.md).** The handoff specified branch `rules-clarification/name-based-identity`. That prefix **cannot work**: `.github/workflows/enforce-branch-flow.yml:17` allows only `^(feature/.*|fix/.*|hotfix/.*)$` into `integration`, and `ci.yml:7` only runs `typecheck` on those three prefixes — so the branch would have failed `check-source-branch` *and* never run typecheck. Shipped as `fix/rules-clarification-name-based-identity` instead, keeping the PR *title* as specified. **Any future "Rules Clarification" PR must use a `fix/rules-clarification-*` branch and carry the class in the title, not the branch prefix** — unless someone deliberately adds the prefix to both workflow files.
 
+---
+
+## Second task on this branch: mechanics-layer test suite
+
+Test plan committed at `docs/design/riftcore-v2/RiftCore_v2_Mechanics_Test_Plan.md`. Suite grew from 256 to 338 passing (+6 skipped escalations), across Layers, damage assignment, Cleanup, scoring/win, and the §5 subsystems. Card-interaction tests remain out of scope until `CARD_EFFECT_REGISTRY` exists in Phase 4.
+
+**Four real defects found and fixed**, each caught by a CR worked example rather than by our own reading:
+
+| CR | Defect | Fix |
+|---|---|---|
+| 477.3.e | Layer 3 sorted by timestamp alone, ignoring the increase/decrease sublayer split | `orderedArithmetic` in `layers.ts` |
+| 142.4.b | Cleanup's kill sweep measured lethal damage against `printedMight` | `currentMight` in `chain.ts` |
+| 167 | Rune Pools emptied only at turn end, not at Main-Phase start | `phaseChanged` reducer in `rulesKernel.ts` |
+| 480.3 | Timestamp ordering applied across sublayers rather than within them | same fix as 477.3.e |
+
+The 142.4.b one is worth knowing about: it also put Cleanup out of step with combat, where `isKilled` already used `currentMight`. The same board could be lethal in one subsystem and not the other.
+
+**Six Tier A goldens escalated, not fixed** — each needs a model-shape change, so per the golden-test protocol they are reported rather than patched. They sit as `describe.skip` blocks carrying the CR text, the measured kernel behaviour, and the reason, in `layers.test.ts` and `combat.test.ts`. Summary in the PR. Nobody should treat these as passing.
+
+**One earlier escalation retracted.** CR 477.3.c (increase-by-negative) was first reported as blocked on `ArithmeticOp` lacking a direction field. That was too broad — the CR's example is Last Stand, i.e. the Double action, and `actions.ts double` already implements it (`double(-2) === -2`). Now a passing golden.
+
+**Standing convention confirmed:** `fix/rules-clarification-<topic>` with the class in the PR title. Do NOT add `rules-clarification/*` to the workflow files.
+
 **Anything another thread working today should know before touching related code:**
+
+Beyond the two type changes below — `layers.ts`, `chain.ts` and `rulesKernel.ts` all changed behaviour, not just signatures. If your branch depends on Might folding order, on when a unit dies in Cleanup, or on Rune Pool contents during the Main Phase, re-check it against the new behaviour rather than assuming.
+
 
 Two breaking changes to core types, so any in-flight branch constructing these will fail typecheck:
 - Every `GameObject` literal now needs `name: string`. Test fixtures get it free — `makeObject` in `src/lib/core/__tests__/fixtures.ts` defaults to `"Test Card, Fixture"`.
