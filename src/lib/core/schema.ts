@@ -115,6 +115,20 @@ export interface GrantedKeyword {
 export interface GameObject {
   objectId: ObjectId;
   cardId: CardId | null; // null = identity unknown from this perspective
+  /**
+   * CR 132.4 — the full "Name, Subtitle" comma form IS the card's name for all
+   * purposes. Carried on the object, like `printedKeywords` and `domains`, so
+   * the kernel never reaches into the card catalog.
+   *
+   * This is NOT derivable from `cardId`. Reprints share a name across sets with
+   * different ids (TR 601.2.a makes a card legal if it merely shares a name
+   * with one from a legal set — a rule that only exists because that happens),
+   * and our ids are set-prefixed. Every name-keyed rule — the 3-per-name copy
+   * limit (CR 103.2.b), name-based Chosen Champion status (CR 103.2.a.3),
+   * Unique (CR 825), and naming a card (CR 760-763) — is wrong under id
+   * comparison. Empty string for a nameless object (an anonymous token).
+   */
+  name: string;
   owner: PlayerId; // CR 127
   controller: PlayerId | null; // CR 188; null only for uncontrolled battlefields
   isToken: boolean; // CR 185.1 — immutable nature
@@ -278,7 +292,7 @@ export type Predicate =
   | { op: "hasSupertype"; supertype: Supertype }
   | { op: "hasTag"; tag: string }
   | { op: "hasDomain"; domain: Domain }
-  | { op: "nameIs"; name: string } // CR 132.4 — the full "Name, Subtitle" form IS the name
+  | { op: "nameIs"; name: string } // CR 132.4 — matches GameObject.name, NOT cardId (reprints share a name)
   | { op: "mightAtLeast"; value: number }
   | { op: "mightAtMost"; value: number }
   | { op: "isMighty" } // CR 708 — derived (>= 5), NOT a keyword
@@ -472,7 +486,13 @@ export interface PlayerState {
   runePool: { energy: number; power: { domain: Domain; universal: boolean }[] }; // CR 165-167
   handCount: number; // CR 108.7.e — public even when contents are private
   legendObjectId: ObjectId;
-  chosenChampionCardId: CardId; // CR 103.2.a.3 — name-based status
+  /**
+   * CR 103.2.a.3 — Chosen Champion status is NAME-based, not card-based: any
+   * Champion Unit sharing the chosen card's name is also your Chosen Champion,
+   * in any zone, for every rule and effect that cares. Stored as the name (not
+   * a CardId) so a reprint copy is recognized; see `GameObject.name`.
+   */
+  chosenChampionName: string;
   scoredBattlefieldsThisTurn: Set<ObjectId>; // CR 470 — once per BF per turn, both methods
 }
 

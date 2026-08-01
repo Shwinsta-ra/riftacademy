@@ -467,12 +467,21 @@ export function replace(state: GameState, objectId: ObjectId, tokenObjectId: Obj
 export function create(
   state: GameState,
   objectId: ObjectId,
-  spec: { cardId: CardId | null; owner: PlayerId; zone: Zone; categories: GameState["objects"][string]["categories"]; printedMight?: number | null }
+  spec: {
+    cardId: CardId | null;
+    /** CR 132.4 — mirrored from the catalog by the caller; "" for an anonymous token. */
+    name?: string;
+    owner: PlayerId;
+    zone: Zone;
+    categories: GameState["objects"][string]["categories"];
+    printedMight?: number | null;
+  }
 ): GameState {
   const isBattlefield = spec.categories.includes("battlefield");
   const object: GameState["objects"][string] = {
     objectId,
     cardId: spec.cardId,
+    name: spec.name ?? "",
     owner: spec.owner,
     controller: isBattlefield ? null : spec.owner, // 439.4.b
     isToken: true,

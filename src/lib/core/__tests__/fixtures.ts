@@ -25,6 +25,7 @@ export function makeObject(overrides: Partial<GameObject> = {}): GameObject {
   return {
     objectId: nextId("obj"),
     cardId: "test-card",
+    name: "Test Card, Fixture", // CR 132.4 — full "Name, Subtitle" form
     owner: "A",
     controller: "A",
     isToken: false,
@@ -81,7 +82,7 @@ export function emptyPlayerState(playerId: PlayerId, overrides: Partial<PlayerSt
     runePool: { energy: 0, power: [] },
     handCount: 0,
     legendObjectId: `${playerId}-legend`,
-    chosenChampionCardId: "test-champion",
+    chosenChampionName: "Test Champion, Fixture",
     scoredBattlefieldsThisTurn: new Set(),
     ...overrides,
   };

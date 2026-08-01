@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   evaluatePredicate,
   hasKeyword,
+  isChosenChampion,
   matchesEvent,
   resolveKeywords,
   resolvePlayerRef,
   resolveSelector,
   sumKeywordValue,
 } from "../predicates";
-import { grant, grantKeywordEffect, makeTurnState, makeUnit, stateWithObjects } from "./fixtures";
+import { emptyPlayerState, grant, grantKeywordEffect, makeTurnState, makeUnit, stateWithObjects } from "./fixtures";
 import { OBJECT_STATUSES } from "../schema";
 import type { EventPredicate, GameEvent, Predicate, Selector } from "../schema";
 
@@ -229,6 +230,81 @@ describe("Predicates", () => {
     expect(
       evaluatePredicate(state, { op: "or", terms: [{ op: "hasDomain", domain: "Fury" }, { op: "isMighty" }] }, "u1", ctx("u1"))
     ).toBe(true);
+  });
+});
+
+describe("name-based identity (CR 132.4, 103.2.a.3, 760-763)", () => {
+  // A reprint pair: identical name, different set-prefixed cardIds. Our ids are
+  // set-prefixed and Standard lists OGS separately from OGN, so this is the
+  // shape TR 601.2.a is written for.
+  const ognCopy = makeUnit({
+    objectId: "ogn1",
+    cardId: "ogn-042-298",
+    name: "Jinx, Rebel",
+    printedMight: 4,
+    supertypes: ["champion"],
+    controller: "A",
+    owner: "A",
+  });
+  const ogsCopy = makeUnit({
+    objectId: "ogs1",
+    cardId: "ogs-007-024",
+    name: "Jinx, Rebel",
+    printedMight: 4,
+    supertypes: ["champion"],
+    controller: "A",
+    owner: "A",
+    zone: { kind: "hand", player: "A" },
+  });
+  const otherSubtitle = makeUnit({
+    objectId: "other1",
+    cardId: "ogn-043-298",
+    name: "Jinx, Loose Cannon",
+    printedMight: 4,
+    supertypes: ["champion"],
+    controller: "A",
+    owner: "A",
+  });
+
+  const state = stateWithObjects([ognCopy, ogsCopy, otherSubtitle], {
+    players: {
+      A: emptyPlayerState("A", { chosenChampionName: "Jinx, Rebel" }),
+      B: emptyPlayerState("B"),
+    },
+  });
+
+  it("nameIs matches BOTH printings of a reprint — the id comparison matched neither", () => {
+    const predicate: Predicate = { op: "nameIs", name: "Jinx, Rebel" };
+    expect(evaluatePredicate(state, predicate, "ogn1", ctx("ogn1"))).toBe(true);
+    expect(evaluatePredicate(state, predicate, "ogs1", ctx("ogs1"))).toBe(true);
+  });
+
+  it("nameIs does NOT match a cardId — naming a card names a NAME (CR 760-763)", () => {
+    const predicate: Predicate = { op: "nameIs", name: "ogn-042-298" };
+    expect(evaluatePredicate(state, predicate, "ogn1", ctx("ogn1"))).toBe(false);
+  });
+
+  it("a different subtitle is a DIFFERENT name (CR 132.4)", () => {
+    const predicate: Predicate = { op: "nameIs", name: "Jinx, Rebel" };
+    expect(evaluatePredicate(state, predicate, "other1", ctx("other1"))).toBe(false);
+  });
+
+  it("every copy of the named card is the Chosen Champion, in any zone (CR 103.2.a.3)", () => {
+    expect(isChosenChampion(state, "ogn1", "A")).toBe(true);
+    // The reprint sits in hand — 103.2.a.3 names deck, hand, trash and board.
+    expect(isChosenChampion(state, "ogs1", "A")).toBe(true);
+  });
+
+  it("a same-short-name champion with a different subtitle is NOT the Chosen Champion", () => {
+    expect(isChosenChampion(state, "other1", "A")).toBe(false);
+  });
+
+  it("a non-champion sharing the name is not a Chosen Champion (CR 103.2.a)", () => {
+    const spell = makeUnit({ objectId: "s1", cardId: "ogn-900-298", name: "Jinx, Rebel", printedMight: null, supertypes: [] });
+    const withSpell = stateWithObjects([spell], {
+      players: { A: emptyPlayerState("A", { chosenChampionName: "Jinx, Rebel" }), B: emptyPlayerState("B") },
+    });
+    expect(isChosenChampion(withSpell, "s1", "A")).toBe(false);
   });
 });
 

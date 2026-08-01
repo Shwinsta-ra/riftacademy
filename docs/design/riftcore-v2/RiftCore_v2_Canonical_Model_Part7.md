@@ -72,6 +72,7 @@ type ObjectStatus =
 interface GameObject {
   objectId: ObjectId;
   cardId: CardId | null;          // null = identity unknown from this perspective
+  name: string;                   // CR 132.4 — "Name, Subtitle"; NOT derivable from cardId (reprints)
   owner: PlayerId;                // CR 127
   controller: PlayerId | null;    // CR 188; null only for uncontrolled battlefields
   isToken: boolean;               // CR 185.1 — immutable nature
@@ -198,7 +199,7 @@ interface PlayerState {
   runePool: { energy:number; power:{ domain:Domain; universal:boolean }[] };  // CR 165–167
   handCount: number;                           // CR 108.7.e — public even when contents are private
   legendObjectId: ObjectId;
-  chosenChampionCardId: CardId;                // CR 103.2.a.3 — name-based status
+  chosenChampionName: string;                  // CR 103.2.a.3 — name-based status, so stored as the NAME
   scoredBattlefieldsThisTurn: Set<ObjectId>;   // CR 470 — once per BF per turn, both methods
 }
 
