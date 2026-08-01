@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { double } from "../actions";
 import { applyLayers, currentMight, isMighty } from "../layers";
 import { arithmeticEffect, makeUnit, setMightEffect, stateWithObjects } from "./fixtures";
 
@@ -130,6 +131,31 @@ describe("layers — Layer 3 sublayers: increases before decreases (CR 477.3.e)"
     });
     // Both are decreases. ts 1 first: 10 - 4 = 6. Then ts 2: clamp(6-3, max 8) = 3.
     expect(currentMight(applyLayers(state), "u1")).toBe(3);
+  });
+
+  // GOLDEN — CR 477.3.c (L-A7). "A player plays Last Stand, which reads
+  // 'Double a friendly unit's Might this turn.'... When Last Stand resolves,
+  // the unit is -2 [M]. Last Stand instructs its controller to increase the
+  // unit's Might by its current amount, -2... This is not possible, so the
+  // unit's Might is increased by 0 instead."
+  //
+  // The rule is enforced where the CR puts it — in the Double action (CR 432,
+  // actions.ts `double`), which computes the RESULT rather than emitting a
+  // negative "increase". So the doubled Might of a -2 unit is -2, not -4.
+  //
+  // Caveat worth knowing: `ArithmeticOp` is {attr, delta, minimum?, maximum?}
+  // and records the amount but not the direction, so a caller that builds a
+  // LayerEffect with a negative delta directly is indistinguishable from a
+  // decrease and is NOT guarded by 477.3.c. That is also what the sublayer
+  // split above buckets on, so the split is exact only while callers honour
+  // 477.3.c at the action layer, as `double` does.
+  it("CR 477.3.c — doubling a -2 Might unit increases it by 0, leaving it at -2", () => {
+    const unit = makeUnit({ objectId: "u1", printedMight: 2 });
+    const eclipsed = stateWithObjects([unit], { activeLayerEffects: [arithmeticEffect("u1", -4, { timestamp: 1 })] });
+    expect(currentMight(eclipsed, "u1")).toBe(-2);
+
+    // Last Stand resolves against the CURRENT value (477.3.c's example).
+    expect(double(currentMight(eclipsed, "u1"))).toBe(-2);
   });
 
   it("a pure-increase stack is unaffected by the sublayer split", () => {
@@ -297,22 +323,6 @@ describe.skip("ESCALATED — layers goldens blocked on model shape", () => {
   // 6 Might with three keywords to 4 Might with no keywords."
   // Blocked on the same missing re-check.
   it("CR 476.3 — removing the buff cascades Layer 2 -> Layer 3 in the correct direction", () => {});
-
-  // GOLDEN — CR 477.3.c (L-A7): Last Stand "Double a friendly unit's Might
-  // this turn" on a unit at -2 Might. "Last Stand instructs its controller to
-  // increase the unit's Might by its current amount, -2... This is not
-  // possible, so the unit's Might is increased by 0 instead."
-  //
-  // KERNEL: `ArithmeticOp` is `{attr, delta, minimum?, maximum?}` — it records
-  // the AMOUNT but not the DIRECTION. An increase computing -2 is
-  // indistinguishable from a decrease of 2, so the kernel cannot apply the
-  // "increase by 0 instead" rule.
-  //
-  // WHY ESCALATED, not fixed: the type needs a new field (e.g.
-  // `kind: "increase" | "decrease"`). Note this also underpins the 477.3.e
-  // sublayer split above, which currently buckets on the sign of `delta` — a
-  // proxy that is exact only while callers honour 477.3.c themselves.
-  it("CR 477.3.c — doubling a -2 Might unit increases it by 0, never by -2", () => {});
 
   // CR 477.3.b, multi-target case. "Friendly units get -4 [M] to a minimum of
   // 1" over a 2-Might and a 9-Might unit should snapshot PER UNIT: -1 and -4
