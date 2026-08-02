@@ -65,6 +65,23 @@ The 142.4.b one is worth knowing about: it also put Cleanup out of step with com
 
 **Standing convention confirmed:** `fix/rules-clarification-<topic>` with the class in the PR title. Do NOT add `rules-clarification/*` to the workflow files.
 
+---
+
+## Third task on this branch: Model Corrections 001 implemented
+
+All five escalations were adjudicated (`docs/design/riftcore-v2/RiftCore_v2_Model_Corrections_001.md`) and **upheld as canonical-model errors, not code errors** — four confirmed Core faults. All four corrections are now implemented, all five goldens un-skipped and passing, and **no test in the repo is skipped**. Suite: 1293 passing.
+
+| Correction | CR | Change |
+|---|---|---|
+| Fixed point moved INTO Layers | 476 | `applyLayers` re-derives conditional passives each iteration; `LayerEffect.fromAbilityId` marks them |
+| Per-object snapshots | 477.3.b | `snapshotted` is now `Record<ObjectId, number>` |
+| Assignment-time replacements | 465.2.c.4.a/.c.5 | `preventValue` → `damageReplacements: DamageReplacement[]`, ordered |
+| 477.3.e recorded | 477.3.e | cited at `orderedArithmetic`; added to Part 7 |
+
+`RiftCore_v2_Canonical_Model_Part7.md` §3 and §8 updated to match.
+
+**Breaking for in-flight branches:** `GameObject.preventValue` is **gone** — use `damageReplacements`. `LayerEffect.snapshotted` is a map, not a number. New `actions.ts` exports: `multiplyDamage`, `orderDamageReplacements`.
+
 **Anything another thread working today should know before touching related code:**
 
 Beyond the two type changes below — `layers.ts`, `chain.ts` and `rulesKernel.ts` all changed behaviour, not just signatures. If your branch depends on Might folding order, on when a unit dies in Cleanup, or on Rune Pool contents during the Main Phase, re-check it against the new behaviour rather than assuming.
