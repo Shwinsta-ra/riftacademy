@@ -671,7 +671,18 @@ export type GameEvent =
   | { type: "exhausted"; objectId: ObjectId } // Exhaust 414
   | { type: "readied"; objectId: ObjectId } // Ready 415
   | { type: "recycled"; objectId: ObjectId; to: "mainDeck" | "runeDeck" } // Recycle 416
-  | { type: "dealt"; sourceObjectId: ObjectId | null; targetObjectId: ObjectId; amount: number } // Deal 417
+  /**
+   * CR 417 — Deal. `raw` is the instructed amount BEFORE the target's
+   * replacement chain, matching `actions.deal`'s parameter and the
+   * raw/assigned/dealt vocabulary (Model Corrections 001 Addendum A). Dealing
+   * raw 3 to a unit that doubles marks 6 damage.
+   *
+   * A capture-time observer sees DEALT damage rather than raw instruction, so
+   * an optional `dealt?` will likely be wanted once RiftNotes has a concrete
+   * need. That is purely additive and free under the schema-change protocol —
+   * deliberately not guessed at here.
+   */
+  | { type: "dealt"; sourceObjectId: ObjectId | null; targetObjectId: ObjectId; raw: number }
   | { type: "healed"; objectId: ObjectId; amount: number } // Heal 418
   | {
       type: "played";

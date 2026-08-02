@@ -376,7 +376,7 @@ describe("EventPredicates (CR 367-375)", () => {
   });
 
   it("matches a deal filtered by its target", () => {
-    const event: GameEvent = { type: "dealt", sourceObjectId: null, targetObjectId: "u1", amount: 2 };
+    const event: GameEvent = { type: "dealt", sourceObjectId: null, targetObjectId: "u1", raw: 2 };
     expect(matchesEvent(state, { on: "deal", to: { op: "mightAtLeast", value: 3 } }, event, ctx("u1"))).toBe(true);
     expect(matchesEvent(state, { on: "deal", to: { op: "mightAtLeast", value: 9 } }, event, ctx("u1"))).toBe(false);
   });

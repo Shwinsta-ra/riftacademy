@@ -82,9 +82,9 @@ All five escalations were adjudicated (`docs/design/riftcore-v2/RiftCore_v2_Mode
 
 **Breaking for in-flight branches:** `GameObject.preventValue` is **gone** — use `damageReplacements`. `LayerEffect.snapshotted` is a map, not a number. New `actions.ts` exports: `multiplyDamage`, `orderDamageReplacements`.
 
-### Addendum A — damage-quantity vocabulary (standing convention)
+### ⭐ Standing naming convention — `raw` / `assigned` / `dealt` (ALL modules)
 
-`assigned = prevented + dealt` was **confirmed** against all four CR 465.2.c worked examples (`RiftCore_v2_Model_Corrections_001_AddendumA.md`). Three quantities are now distinct and must be named verbatim in code and tests:
+`assigned = prevented + dealt` was **confirmed** against all four CR 465.2.c worked examples (`RiftCore_v2_Model_Corrections_001_AddendumA.md`). Three quantities are distinct and **must be named verbatim in every module** — RiftNotes, RiftEngine, RiftLab, RiftCoach, RiftIQ — not just in this PR:
 
 | Name | Meaning | Notes |
 |---|---|---|
@@ -92,7 +92,16 @@ All five escalations were adjudicated (`docs/design/riftcore-v2/RiftCore_v2_Mode
 | `assigned` | the CR's reported post-replacement figure | accounting only; **may exceed the pool** (raw 3 → 6 assigned) |
 | `dealt` | what lands and marks damage | **lethality is tested on this, never on `assigned`** |
 
-**Never call the raw pool spend "assigned"** — that overload is what made CR 465.2.c.5 ambiguous in the first place. `DamageAssignment.assignments[].amount` is renamed to `.raw` accordingly (another breaking change for in-flight branches). `minimumLethal` returns **raw**.
+**Never call the raw pool spend "assigned"** — that overload is what made CR 465.2.c.5 ambiguous in the first place, and it cost a round trip to resolve. Renamed accordingly (breaking for in-flight branches):
+
+- `DamageAssignment.assignments[].amount` → `.raw`
+- `GameEvent` `dealt.amount` → `dealt.raw`
+- `actions.deal(state, target, raw, bonus)`
+- `minimumLethal` returns **raw**
+
+`CURRENT_SCHEMA_VERSION` stays at **2** — this is pre-first-capture consolidation of the v1 event shape, not evolution of shipped data (same reasoning as the capture-profile change). `migrate.ts` registers no steps and nothing has ever been captured, so no migration is owed. **Note:** the constant is 2, not 1 — it was bumped by the v2 rebuild in PR #148, and a stale comment in `migrate.ts` claiming "still 1" has been corrected.
+
+**Anticipated additive change (not made now):** a capture-time observer sees *dealt* damage rather than raw instruction, so the `dealt` event will likely want an optional `dealt?` field. That is purely additive and free under `RiftCore_Schema_Change_Protocol.md`, and should be driven by RiftNotes' actual need rather than guessed at. Recorded here and in the schema comment; deliberately not implemented.
 
 **Anything another thread working today should know before touching related code:**
 

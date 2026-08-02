@@ -24,8 +24,10 @@ type MigrationStep = (events: GameEvent[]) => GameEvent[];
 const MIGRATIONS: Record<number, MigrationStep> = {};
 
 // Lifts `events` from `fromV` to `toV`, chaining through any intermediate
-// versions. Identity pass when fromV === toV (the common case today, since
-// CURRENT_SCHEMA_VERSION is still 1).
+// versions. Identity pass when fromV === toV — the common case today, since
+// CURRENT_SCHEMA_VERSION is 2 and nothing has ever been captured at v1, so no
+// stream in existence needs lifting. (This comment previously said the
+// constant was "still 1"; it was bumped to 2 by the v2 rebuild in PR #148.)
 export function migrate(events: GameEvent[], fromV: number, toV: number): GameEvent[] {
   let current = events;
   for (let v = fromV; v < toV; v++) {

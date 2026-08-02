@@ -225,7 +225,7 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
     case "recycled":
       return actions.recycle(state, [event.objectId], event.to);
     case "dealt":
-      return actions.deal(state, event.targetObjectId, event.amount);
+      return actions.deal(state, event.targetObjectId, event.raw);
     case "healed":
       return actions.heal(state, event.objectId, event.amount);
     case "played":
