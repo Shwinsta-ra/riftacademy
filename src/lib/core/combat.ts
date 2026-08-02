@@ -56,14 +56,20 @@ export function isKilled(damage: number, might: number): boolean {
  * CR 465.2.c.5 — resolve an assignment of `raw` damage through a unit's
  * ordered assignment-time replacements.
  *
- * Returns three distinct numbers the CR keeps distinct:
- *  - `dealt`: what actually lands on the unit;
- *  - `prevented`: what a Prevent absorbed (437.3);
- *  - `assigned`: what the unit is recorded as having been assigned, which the
- *    CR's own worked example makes clear is prevented + dealt. With prevent 2
- *    and a doubler on a 2-Might unit taking 3: prevent-first gives 2 prevented
- *    + 2 dealt = "4 damage assigned"; doubler-first gives 2 prevented + 4
- *    dealt = "6 damage assigned". Both figures are the CR's.
+ * Three quantities, deliberately distinct (Model Corrections 001 Addendum A —
+ * the CR overloads "assigned" for two of them in adjacent sentences, which is
+ * what made this ambiguous):
+ *  - `raw`: what the assigning player spends from their Might pool. The pool
+ *    is conserved in these units; a doubler does NOT let them spend more.
+ *  - `assigned`: the post-replacement figure the CR reports, = prevented +
+ *    dealt. An ACCOUNTING figure, not a budget — it may exceed the pool (raw
+ *    3 -> 6 assigned under double-then-prevent).
+ *  - `dealt`: what actually lands on the unit and marks damage.
+ *
+ * **Lethality is tested on `dealt`, never on `assigned`.** CR 465.2.c.5's
+ * first example settles it: a 2-Might unit "would need to be assigned 5
+ * damage" — if lethality tested `assigned >= might`, 2 would do. It takes raw
+ * 5 because that yields 2 dealt, and 2 dealt is lethal for a 2-Might unit.
  *
  * `next` is the replacement list with Prevent's residual decremented (437.3).
  */
@@ -97,15 +103,17 @@ export function resolveDamageThroughReplacements(
 }
 
 /**
- * CR 465.2.c.4.a / .c.5 + 437.5 — the minimum damage that must be ASSIGNED to
- * make this unit lethal, computed THROUGH its replacement effects in the
- * unit's controller's chosen order.
+ * CR 465.2.c.4.a / .c.5 + 437.5 — the minimum **raw** damage that must be
+ * spent on this unit to make it lethal, computed THROUGH its replacement
+ * effects in the unit's controller's chosen order.
  *
- * A "prevent 3" 2-Might unit needs 5 assigned. A 3-Might unit that doubles
- * incoming damage needs only 2 assigned (which becomes 4 dealt — the CR's
- * "minimum applied value such that the unit would take lethal damage"). CR
- * 437.5.b — "prevent All" is NEVER lethal, and neither is anything else the
- * chain cannot push to the required amount.
+ * Returns RAW, because that is what the assigner's pool is spent in and what
+ * 465.2.c.4's over-assignment cap is measured against — hence the 3-Might
+ * doubler's assignable set being exactly {1, 2}. A "prevent 3" 2-Might unit
+ * needs raw 5; a 3-Might unit that doubles incoming damage needs raw 2, which
+ * becomes 4 dealt (the CR's "minimum applied value such that the unit would
+ * take lethal damage"). CR 437.5.b — "prevent All" is NEVER lethal, and
+ * neither is anything else the chain cannot push to the required amount.
  */
 export function minimumLethal(state: GameState, objectId: ObjectId, role: CombatRole): number | "unkillable" {
   const object = state.objects[objectId];
@@ -173,7 +181,7 @@ export function legalDamageAssignments(
 ): DamageAssignment[] {
   if (pool <= 0 || targetIds.length === 0) return [{ fromPlayer, assignments: [] }];
 
-  const results: { targetObjectId: ObjectId; amount: number }[][] = [];
+  const results: { targetObjectId: ObjectId; raw: number }[][] = [];
 
   const targets = targetIds
     .map((id) => ({ id, object: state.objects[id] }))
@@ -189,7 +197,7 @@ export function legalDamageAssignments(
   }
 
   // Depth-first over "which unit receives lethal next", respecting tier gates.
-  function search(remaining: number, satisfied: ObjectId[], acc: { targetObjectId: ObjectId; amount: number }[]) {
+  function search(remaining: number, satisfied: ObjectId[], acc: { targetObjectId: ObjectId; raw: number }[]) {
     // The pool is spent — this is a complete, legal assignment regardless of
     // how many units remain unsatisfied (you assign what you have, no more).
     if (remaining <= 0) {
@@ -241,7 +249,7 @@ export function legalDamageAssignments(
       const lethal = lethalFor(candidate.id) as number;
       if (lethal > remaining) continue; // can't reach lethal — see partial handling below
       anyAffordable = true;
-      search(remaining - lethal, [...satisfied, candidate.id], [...acc, { targetObjectId: candidate.id, amount: lethal }]);
+      search(remaining - lethal, [...satisfied, candidate.id], [...acc, { targetObjectId: candidate.id, raw: lethal }]);
     }
 
     // CR 465.2.c.3 — if no unit in the active tier can be brought to lethal,
@@ -250,14 +258,14 @@ export function legalDamageAssignments(
     // insufficiency), and must not exceed that unit's minimum-lethal.
     if (!anyAffordable && remaining > 0) {
       for (const candidate of candidates) {
-        results.push([...acc, { targetObjectId: candidate.id, amount: remaining }]);
+        results.push([...acc, { targetObjectId: candidate.id, raw: remaining }]);
       }
     }
   }
 
   search(pool, [], []);
 
-  const unique = new Map<string, { targetObjectId: ObjectId; amount: number }[]>();
+  const unique = new Map<string, { targetObjectId: ObjectId; raw: number }[]>();
   for (const assignment of results) {
     const normalized = [...assignment].sort((a, b) => a.targetObjectId.localeCompare(b.targetObjectId));
     unique.set(JSON.stringify(normalized), normalized);
@@ -266,12 +274,12 @@ export function legalDamageAssignments(
 }
 
 function spillOnto(
-  acc: { targetObjectId: ObjectId; amount: number }[],
+  acc: { targetObjectId: ObjectId; raw: number }[],
   targetObjectId: ObjectId,
   extra: number
-): { targetObjectId: ObjectId; amount: number } {
+): { targetObjectId: ObjectId; raw: number } {
   const existing = acc.find((a) => a.targetObjectId === targetObjectId);
-  return { targetObjectId, amount: (existing?.amount ?? 0) + extra };
+  return { targetObjectId, raw: (existing?.raw ?? 0) + extra };
 }
 
 /**
@@ -285,11 +293,11 @@ export function resolveCombatDamage(
   roles: Record<ObjectId, CombatRole>
 ): { state: GameState; killed: ObjectId[] } {
   const objects = { ...state.objects };
-  const dealt = new Map<ObjectId, number>();
+  const rawByTarget = new Map<ObjectId, number>();
 
   for (const assignment of assignments) {
-    for (const { targetObjectId, amount } of assignment.assignments) {
-      dealt.set(targetObjectId, (dealt.get(targetObjectId) ?? 0) + amount);
+    for (const { targetObjectId, raw } of assignment.assignments) {
+      rawByTarget.set(targetObjectId, (rawByTarget.get(targetObjectId) ?? 0) + raw);
     }
   }
 
@@ -297,15 +305,15 @@ export function resolveCombatDamage(
   // doubling "doesn't get doubled again" when the damage is dealt. Running the
   // chain here is what makes assignment and dealing agree, and it carries
   // Prevent's decrement (437.3) forward onto the object.
-  for (const [objectId, rawAmount] of dealt) {
+  for (const [objectId, raw] of rawByTarget) {
     const object = objects[objectId];
     if (!object) continue;
-    const { dealt: landed, next } = resolveDamageThroughReplacements(object.damageReplacements, rawAmount);
-    objects[objectId] = { ...object, damage: object.damage + landed, damageReplacements: next };
+    const { dealt, next } = resolveDamageThroughReplacements(object.damageReplacements, raw);
+    objects[objectId] = { ...object, damage: object.damage + dealt, damageReplacements: next };
   }
 
   const killed: ObjectId[] = [];
-  for (const objectId of dealt.keys()) {
+  for (const objectId of rawByTarget.keys()) {
     const object = objects[objectId];
     if (!object) continue;
     const role = roles[objectId] ?? "defender";

@@ -561,7 +561,15 @@ export interface CombatState {
 }
 export interface DamageAssignment {
   fromPlayer: PlayerId;
-  assignments: { targetObjectId: ObjectId; amount: number }[];
+  /**
+   * `raw` is what the assigning player spends from their Might pool, and it is
+   * what the pool is conserved in — a doubler on the receiving unit does NOT
+   * let the assigner spend more. It is deliberately NOT the CR's "assigned"
+   * figure, which is post-replacement and can exceed the pool (raw 3 -> 6
+   * assigned under double-then-prevent). See Model Corrections 001 Addendum A;
+   * the CR overloads "assigned" for both, which is what made it ambiguous.
+   */
+  assignments: { targetObjectId: ObjectId; raw: number }[];
 }
 
 export type ScoreMethod = "conquer" | "hold";
