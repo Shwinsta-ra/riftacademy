@@ -236,9 +236,16 @@ interface CombatState {                        // CR 459–466
   defender: PlayerId;
   step: 1|2|3;
 }
-interface DamageAssignment { fromPlayer:PlayerId; assignments:{ targetObjectId:ObjectId; amount:number }[] }
+interface DamageAssignment { fromPlayer:PlayerId; assignments:{ targetObjectId:ObjectId; raw:number }[] }
 ```
 **Assignment constraints (465.2.c + 815/826):** lethal-first universal (c.3); **never exceed minimum-lethal while unassigned units remain** (c.4); replacement effects apply **at assignment**, minimum-lethal computed through them (c.5, c.4.a); Tank-first / Backline-last as validity gates; contradictory requirements → choose one (c.8).
+
+**Damage quantities are THREE distinct things** (Model Corrections 001 Addendum A) — the CR overloads "assigned" for two of them:
+| `raw` | the assigner's pool spend. **Conserved**; a doubler does not let them spend more. `minimumLethal` returns this. |
+| `assigned` | the CR's reported post-replacement figure, **= prevented + dealt**. Accounting only; may exceed the pool. |
+| `dealt` | what lands and marks damage. **Lethality is tested on this, never on `assigned`.** |
+
+Replacements are an ORDERED list on the unit, sequenced by that unit's **controller** (465.2.c.5); ordering changes both `assigned` and `dealt` (4/2 vs 6/4).
 
 **Scoring (467–472):**
 ```ts

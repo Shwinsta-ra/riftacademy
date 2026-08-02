@@ -82,6 +82,18 @@ All five escalations were adjudicated (`docs/design/riftcore-v2/RiftCore_v2_Mode
 
 **Breaking for in-flight branches:** `GameObject.preventValue` is **gone** — use `damageReplacements`. `LayerEffect.snapshotted` is a map, not a number. New `actions.ts` exports: `multiplyDamage`, `orderDamageReplacements`.
 
+### Addendum A — damage-quantity vocabulary (standing convention)
+
+`assigned = prevented + dealt` was **confirmed** against all four CR 465.2.c worked examples (`RiftCore_v2_Model_Corrections_001_AddendumA.md`). Three quantities are now distinct and must be named verbatim in code and tests:
+
+| Name | Meaning | Notes |
+|---|---|---|
+| `raw` | what the assigner spends from their Might pool | **conserved** — a doubler does not let them spend more |
+| `assigned` | the CR's reported post-replacement figure | accounting only; **may exceed the pool** (raw 3 → 6 assigned) |
+| `dealt` | what lands and marks damage | **lethality is tested on this, never on `assigned`** |
+
+**Never call the raw pool spend "assigned"** — that overload is what made CR 465.2.c.5 ambiguous in the first place. `DamageAssignment.assignments[].amount` is renamed to `.raw` accordingly (another breaking change for in-flight branches). `minimumLethal` returns **raw**.
+
 **Anything another thread working today should know before touching related code:**
 
 Beyond the two type changes below — `layers.ts`, `chain.ts` and `rulesKernel.ts` all changed behaviour, not just signatures. If your branch depends on Might folding order, on when a unit dies in Cleanup, or on Rune Pool contents during the Main Phase, re-check it against the new behaviour rather than assuming.
