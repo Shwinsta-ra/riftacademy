@@ -368,7 +368,7 @@ function noteDeathknellsThenKill(state: GameState): GameState {
       buffCount: 0,
       counters: {},
       grantedKeywords: [],
-      preventValue: null,
+      damageReplacements: [],
       statuses: new Set(),
     };
   }

@@ -93,20 +93,24 @@ describe("Deal / Heal (CR 417-418) and Prevent (CR 437)", () => {
   });
 
   it("Prevent absorbs and decrements; fully-prevented damage was never dealt (437.3-.4)", () => {
-    const unit = makeUnit({ objectId: "u1", printedMight: 5, preventValue: 3 });
+    const unit = makeUnit({ objectId: "u1", printedMight: 5, damageReplacements: [{ kind: "prevent", value: 3 }] });
     const next = deal(stateWithObjects([unit]), "u1", 2);
     expect(next.objects.u1.damage).toBe(0);
-    expect(next.objects.u1.preventValue).toBe(1);
+    expect(next.objects.u1.damageReplacements).toEqual([{ kind: "prevent", value: 1 }]); // 437.3 decrement
   });
 
   it("'prevent All' blocks damage entirely (437.5.b)", () => {
-    const unit = makeUnit({ objectId: "u1", printedMight: 5, preventValue: "all" });
+    const unit = makeUnit({ objectId: "u1", printedMight: 5, damageReplacements: [{ kind: "prevent", value: "all" }] });
     expect(deal(stateWithObjects([unit]), "u1", 99).objects.u1.damage).toBe(0);
   });
 
   it("prevent accumulates onto an existing value", () => {
-    const unit = makeUnit({ objectId: "u1", printedMight: 5, preventValue: 2 });
-    expect(prevent(stateWithObjects([unit]), "u1", 3).objects.u1.preventValue).toBe(5);
+    const unit = makeUnit({ objectId: "u1", printedMight: 5, damageReplacements: [{ kind: "prevent", value: 2 }] });
+    // CR 465.2.c.5 — replacements are an ordered LIST, not a summed scalar.
+    expect(prevent(stateWithObjects([unit]), "u1", 3).objects.u1.damageReplacements).toEqual([
+      { kind: "prevent", value: 2 },
+      { kind: "prevent", value: 3 },
+    ]);
   });
 
   it("Heal clears damage (418.1.a)", () => {
@@ -271,7 +275,7 @@ describe("object identity on zone change (CR 124)", () => {
       buffCount: 1,
       counters: { charge: 3 },
       statuses: new Set(["stunned", "exhausted"]),
-      preventValue: 2,
+      damageReplacements: [{ kind: "prevent", value: 2 }],
     });
     const next = changeZone(stateWithObjects([unit]), "u1", { kind: "hand", player: "A" });
 
@@ -279,7 +283,7 @@ describe("object identity on zone change (CR 124)", () => {
     expect(next.objects.u1.buffCount).toBe(0);
     expect(next.objects.u1.counters).toEqual({});
     expect(next.objects.u1.statuses.size).toBe(0);
-    expect(next.objects.u1.preventValue).toBeNull();
+    expect(next.objects.u1.damageReplacements).toEqual([]);
   });
 
   it("mints a NEW ObjectId when one is supplied", () => {

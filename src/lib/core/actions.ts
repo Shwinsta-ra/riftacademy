@@ -12,7 +12,20 @@
 // interactive (choices, targeting, ordering) take the already-made decision
 // as a parameter rather than prompting — the kernel never guesses a choice.
 
-import type { CardId, Cost, Domain, GameState, Location, ObjectId, ObjectStatus, PlayerId, PowerSymbol, Zone } from "./schema";
+import { resolveDamageThroughReplacements } from "./combat";
+import type {
+  CardId,
+  Cost,
+  DamageReplacement,
+  Domain,
+  GameState,
+  Location,
+  ObjectId,
+  ObjectStatus,
+  PlayerId,
+  PowerSymbol,
+  Zone,
+} from "./schema";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -87,7 +100,7 @@ export function changeZone(state: GameState, objectId: ObjectId, to: Zone, newOb
     buffCount: 0,
     counters: {},
     grantedKeywords: [],
-    preventValue: null,
+    damageReplacements: [],
     attachedTo: null,
     attachments: [],
     statuses: new Set(),
@@ -179,18 +192,11 @@ export function deal(state: GameState, targetObjectId: ObjectId, amount: number,
   const object = state.objects[targetObjectId];
   if (!object) return state;
 
-  // CR 437.3-.4 — Prevent absorbs first and decrements; fully-prevented damage was never dealt.
-  if (object.preventValue === "all") return state;
-  if (typeof object.preventValue === "number" && object.preventValue > 0) {
-    const absorbed = Math.min(object.preventValue, total);
-    const landed = total - absorbed;
-    return withObject(state, targetObjectId, (o) => ({
-      ...o,
-      damage: o.damage + landed,
-      preventValue: (typeof o.preventValue === "number" ? o.preventValue : 0) - absorbed,
-    }));
-  }
-  return withObject(state, targetObjectId, (o) => ({ ...o, damage: o.damage + total }));
+  // CR 437.3-.4 — the replacement chain absorbs and decrements; fully-prevented
+  // damage was never dealt. Outside combat there is no separate assignment
+  // step, so the chain runs here.
+  const { dealt, next } = resolveDamageThroughReplacements(object.damageReplacements, total);
+  return withObject(state, targetObjectId, (o) => ({ ...o, damage: o.damage + dealt, damageReplacements: next }));
 }
 
 /** CR 418 — Heal: any clearing of damage is Healing (418.1.a). */
@@ -437,13 +443,43 @@ export function predict(
   return recycled.length > 0 ? recycle(next, recycled, "mainDeck") : next; // 436.4.a — never triggers Burn Out
 }
 
-/** CR 437 — Prevent: a tracked, DECREMENTING value on the unit, not a flag. Dealt damage floors at 0 and the value decrements as it absorbs (437.3). "All" is NEVER lethal (437.5.b). */
+/**
+ * CR 437 — Prevent: a tracked, DECREMENTING value on the unit, not a flag.
+ * Dealt damage floors at 0 and the value decrements as it absorbs (437.3).
+ * "All" is NEVER lethal (437.5.b).
+ *
+ * Appended to the unit's ordered assignment-time replacement list (465.2.c.5).
+ * Order matters against a multiplier and belongs to the unit's controller, so
+ * use `orderDamageReplacements` to express that choice rather than relying on
+ * the order effects happened to arrive in.
+ */
 export function prevent(state: GameState, objectId: ObjectId, value: number | "all"): GameState {
-  return withObject(state, objectId, (o) => {
-    if (value === "all" || o.preventValue === "all") return { ...o, preventValue: "all" };
-    const current = typeof o.preventValue === "number" ? o.preventValue : 0;
-    return { ...o, preventValue: current + value };
-  });
+  return withObject(state, objectId, (o) => ({
+    ...o,
+    damageReplacements: [...o.damageReplacements, { kind: "prevent", value }],
+  }));
+}
+
+/** CR 465.2.c.4.a — "Double all damage that would be dealt to it": a multiplying assignment-time replacement. */
+export function multiplyDamage(state: GameState, objectId: ObjectId, factor: number): GameState {
+  return withObject(state, objectId, (o) => ({
+    ...o,
+    damageReplacements: [...o.damageReplacements, { kind: "multiply", factor }],
+  }));
+}
+
+/**
+ * CR 465.2.c.5 — "Both of these replacement effects apply to the assignment of
+ * damage, in the order of the controller of the [unit]'s choice." The choice
+ * is the unit's CONTROLLER's, not the assigning player's, and it changes the
+ * outcome, so it is surfaced as an explicit reordering rather than fixed.
+ */
+export function orderDamageReplacements(
+  state: GameState,
+  objectId: ObjectId,
+  chosenOrder: DamageReplacement[]
+): GameState {
+  return withObject(state, objectId, (o) => ({ ...o, damageReplacements: chosenOrder }));
 }
 
 /** CR 438 — Replace: create a token in place of a card/token, INHERITING all effects and statuses (438.1). The replaced card goes to Banishment but counts as Replaced, not Banished (438.5.a). */
@@ -499,7 +535,7 @@ export function create(
     counters: {},
     attachedTo: null,
     attachments: [],
-    preventValue: null,
+    damageReplacements: [],
     grantedKeywords: [],
   };
   return { ...state, objects: { ...state.objects, [objectId]: object } };

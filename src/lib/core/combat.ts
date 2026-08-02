@@ -17,7 +17,7 @@
 
 import { currentMight } from "./layers";
 import { hasKeyword, sumKeywordValue } from "./predicates";
-import type { DamageAssignment, GameObject, GameState, ObjectId, PlayerId } from "./schema";
+import type { DamageAssignment, DamageReplacement, GameObject, GameState, ObjectId, PlayerId } from "./schema";
 
 // Keyword resolution lives in predicates.ts (printed union granted, minus
 // Layer-2 removals — CR 477.2/801.3). Combat re-exports it so callers reading
@@ -53,19 +53,79 @@ export function isKilled(damage: number, might: number): boolean {
 }
 
 /**
- * CR 465.2.c.4.a / .c.5 + 437.5 — the minimum damage that must be ASSIGNED
- * to make this unit lethal, computed THROUGH its replacement effects.
- * Prevent absorbs before damage lands (437.3), so a "prevent 3" 2-Might unit
- * needs 5 assigned. CR 437.5.b — "prevent All" is NEVER lethal.
+ * CR 465.2.c.5 — resolve an assignment of `raw` damage through a unit's
+ * ordered assignment-time replacements.
+ *
+ * Returns three distinct numbers the CR keeps distinct:
+ *  - `dealt`: what actually lands on the unit;
+ *  - `prevented`: what a Prevent absorbed (437.3);
+ *  - `assigned`: what the unit is recorded as having been assigned, which the
+ *    CR's own worked example makes clear is prevented + dealt. With prevent 2
+ *    and a doubler on a 2-Might unit taking 3: prevent-first gives 2 prevented
+ *    + 2 dealt = "4 damage assigned"; doubler-first gives 2 prevented + 4
+ *    dealt = "6 damage assigned". Both figures are the CR's.
+ *
+ * `next` is the replacement list with Prevent's residual decremented (437.3).
+ */
+export function resolveDamageThroughReplacements(
+  replacements: DamageReplacement[],
+  raw: number
+): { dealt: number; prevented: number; assigned: number; next: DamageReplacement[] } {
+  let current = raw;
+  let prevented = 0;
+  const next: DamageReplacement[] = [];
+
+  for (const replacement of replacements) {
+    if (replacement.kind === "multiply") {
+      current = current * replacement.factor;
+      next.push(replacement);
+      continue;
+    }
+    if (replacement.value === "all") {
+      prevented += current;
+      current = 0;
+      next.push(replacement); // 437.5.b — "all" never decrements
+      continue;
+    }
+    const absorbed = Math.min(replacement.value, current);
+    current -= absorbed;
+    prevented += absorbed;
+    next.push({ kind: "prevent", value: replacement.value - absorbed }); // 437.3
+  }
+
+  return { dealt: current, prevented, assigned: prevented + current, next };
+}
+
+/**
+ * CR 465.2.c.4.a / .c.5 + 437.5 — the minimum damage that must be ASSIGNED to
+ * make this unit lethal, computed THROUGH its replacement effects in the
+ * unit's controller's chosen order.
+ *
+ * A "prevent 3" 2-Might unit needs 5 assigned. A 3-Might unit that doubles
+ * incoming damage needs only 2 assigned (which becomes 4 dealt — the CR's
+ * "minimum applied value such that the unit would take lethal damage"). CR
+ * 437.5.b — "prevent All" is NEVER lethal, and neither is anything else the
+ * chain cannot push to the required amount.
  */
 export function minimumLethal(state: GameState, objectId: ObjectId, role: CombatRole): number | "unkillable" {
   const object = state.objects[objectId];
   if (!object) return "unkillable";
-  if (object.preventValue === "all") return "unkillable"; // 437.5.b
+
   const might = combatMight(state, objectId, role);
   const needed = Math.max(1, might - object.damage); // marked damage counts (465.2.c.4)
-  const prevent = typeof object.preventValue === "number" ? object.preventValue : 0;
-  return needed + prevent;
+
+  // `dealt` is non-decreasing in `raw` for any chain of non-negative factors
+  // and prevents, so the first raw that reaches `needed` is the minimum. The
+  // bound is the worst case: every prevent absorbing in full at factor 1.
+  const totalPrevent = object.damageReplacements.reduce(
+    (sum, r) => (r.kind === "prevent" && r.value !== "all" ? sum + r.value : sum),
+    0
+  );
+  const bound = needed + totalPrevent;
+  for (let raw = 1; raw <= bound; raw++) {
+    if (resolveDamageThroughReplacements(object.damageReplacements, raw).dealt >= needed) return raw;
+  }
+  return "unkillable"; // 437.5.b and anything else that can never reach lethal
 }
 
 /** CR 815 / 826 — the three assignment tiers, in the order they must be satisfied. */
@@ -233,21 +293,15 @@ export function resolveCombatDamage(
     }
   }
 
-  // CR 437.3-.4 — Prevent absorbs first and decrements; fully-prevented
-  // damage was never dealt.
+  // CR 465.2.c.5 — the replacements already applied AT ASSIGNMENT, so the
+  // doubling "doesn't get doubled again" when the damage is dealt. Running the
+  // chain here is what makes assignment and dealing agree, and it carries
+  // Prevent's decrement (437.3) forward onto the object.
   for (const [objectId, rawAmount] of dealt) {
     const object = objects[objectId];
     if (!object) continue;
-    let amount = rawAmount;
-    let preventValue = object.preventValue;
-    if (preventValue === "all") {
-      amount = 0;
-    } else if (typeof preventValue === "number" && preventValue > 0) {
-      const absorbed = Math.min(preventValue, amount);
-      amount -= absorbed;
-      preventValue = preventValue - absorbed;
-    }
-    objects[objectId] = { ...object, damage: object.damage + amount, preventValue };
+    const { dealt: landed, next } = resolveDamageThroughReplacements(object.damageReplacements, rawAmount);
+    objects[objectId] = { ...object, damage: object.damage + landed, damageReplacements: next };
   }
 
   const killed: ObjectId[] = [];

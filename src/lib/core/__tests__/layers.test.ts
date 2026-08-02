@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { double } from "../actions";
+import { combatMight } from "../combat";
 import { applyLayers, currentMight, isMighty } from "../layers";
-import { arithmeticEffect, makeUnit, setMightEffect, stateWithObjects } from "./fixtures";
+import { hasKeyword } from "../predicates";
+import {
+  arithmeticEffect,
+  grantKeywordEffect,
+  makeAbility,
+  makeUnit,
+  setMightEffect,
+  stateWithObjects,
+} from "./fixtures";
+import type { LayerEffect } from "../schema";
 
 describe("layers — arithmetic (CR 477.3)", () => {
   it("negative Might is legal — a unit can sit below zero (477.3.c)", () => {
@@ -38,7 +48,7 @@ describe("layers — snapshotting (CR 477.3.b)", () => {
     });
 
     const snapshotted = applyLayers(state);
-    expect(snapshotted.activeLayerEffects[0].snapshotted).toBe(-1);
+    expect(snapshotted.activeLayerEffects[0].snapshotted).toEqual({ u1: -1 });
     expect(currentMight(snapshotted, "u1")).toBe(1);
   });
 
@@ -118,7 +128,7 @@ describe("layers — Layer 3 sublayers: increases before decreases (CR 477.3.e)"
     const snapshotted = applyLayers(state);
     expect(currentMight(snapshotted, "u1")).toBe(1);
     // The decrease snapshots the full -4, because it saw 5 when it applied.
-    expect(snapshotted.activeLayerEffects[0].snapshotted).toBe(-4);
+    expect(snapshotted.activeLayerEffects[0].snapshotted).toEqual({ u1: -4 });
   });
 
   it("CR 480.3 — timestamp still orders WITHIN a sublayer", () => {
@@ -194,7 +204,7 @@ describe("layers — systematic (CR 473-480)", () => {
         })
       );
     };
-    expect(build(false).activeLayerEffects[0].snapshotted).toBe(-1);
+    expect(build(false).activeLayerEffects[0].snapshotted).toEqual({ u1: -1 });
     expect(build(true).activeLayerEffects[0].snapshotted).toBeUndefined();
   });
 
@@ -286,57 +296,155 @@ describe("layers — adversarial (CR 473-480)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// ESCALATED — Tier A goldens blocked on the canonical model's SHAPE
+// CR 476 — the fixed point, and CR 476.3's Fiora examples
 // ---------------------------------------------------------------------------
 //
-// Per the golden-test failure protocol, these are NOT coding bugs to fix in
-// place: making them pass requires a type to gain a field, or an ordering
-// constraint to move between subsystems. That points at a possible Phase-1
-// reading error in Parts 1-7, and reinterpreting the canonical model
-// unilaterally is exactly what the clean-room build exists to prevent.
-//
-// Skipped rather than left red so the suite stays a signal. Un-skip as each
-// model question is adjudicated.
+// RESOLVED — Model Corrections 001, adjudications 1 and 2. These were skipped
+// escalations; `applyLayers` now owns the fixed point and re-derives
+// conditional passives on every iteration, and snapshots are per-object.
 
-describe.skip("ESCALATED — layers goldens blocked on model shape", () => {
-  // GOLDEN — CR 476.3 (L-A3/L-A4), the CR's flagship Layers example.
-  //
-  // "Fiora, Victorious has printed Might 4 and says 'While I'm Mighty, I have
-  // Deflect, Ganking, and Shield.' If a player places a buff on Fiora, her
-  // Might is increased in the Arithmetic layer, after the layer for
-  // Ability-Altering Effects. The Ability-Altering Effect layer is then
-  // re-checked and the abilities Deflect, Ganking, and Shield applied."
-  //
-  // KERNEL: no such re-check exists. CR 476 puts the repeat-until-stable loop
-  // INSIDE Layers; layers.ts:16-21 deliberately puts it OUTSIDE, delegating it
-  // to "whatever adds/removes the conditional passive's LayerEffects", and no
-  // such driver is implemented anywhere. `PassiveAbility.condition` and
-  // `.layerEffects` exist in the schema but nothing evaluates them.
-  //
-  // WHY ESCALATED, not fixed: this is an ordering constraint living in a
-  // different subsystem than the CR puts it in. Building the driver is a
-  // design decision about where the fixed point belongs, not a computation fix.
-  it("CR 476.3 — buffing Fiora re-checks Layer 2 and grants Deflect/Ganking/Shield at 5 Might", () => {});
+describe("layers — the fixed point re-checks conditional passives (CR 476)", () => {
+  /** Fiora: printed Might 4, "While I'm Mighty, I have Deflect, Ganking, and Shield." */
+  function fioraState(buffed: boolean) {
+    const fiora = makeUnit({
+      objectId: "fiora",
+      name: "Fiora, Victorious",
+      printedMight: 4,
+      buffCount: buffed ? 1 : 0,
+      controller: "A",
+      owner: "A",
+    });
+    const whileMighty = makeAbility({
+      kind: "passive",
+      abilityId: "fiora-mighty",
+      sourceObjectId: "fiora",
+      condition: { op: "isMighty" }, // CR 708
+      layerEffects: (["Deflect", "Ganking", "Shield"] as const).map((keyword) =>
+        grantKeywordEffect("fiora", keyword, 1)
+      ),
+    });
+    return stateWithObjects([fiora], { abilities: { "fiora-mighty": whileMighty } });
+  }
 
-  // GOLDEN — CR 476.3, second example (L-A4): "A buffed Fiora, Victorious is
-  // in combat as a defender when her buff is removed... She goes directly from
-  // 6 Might with three keywords to 4 Might with no keywords."
-  // Blocked on the same missing re-check.
-  it("CR 476.3 — removing the buff cascades Layer 2 -> Layer 3 in the correct direction", () => {});
+  // GOLDEN — CR 476.3, the CR's flagship Layers example. "If a player places a
+  // buff on Fiora, her Might is increased in the Arithmetic layer, after the
+  // layer for Ability-Altering Effects. The Ability-Altering Effect layer is
+  // then re-checked and the abilities Deflect, Ganking, and Shield applied.
+  // ...Fiora's characteristics are finalized as 5 Might with Deflect, Ganking,
+  // and Shield." Expected values are from the CR text. Do not adjust.
+  it("CR 476.3 — buffing Fiora re-checks Layer 2 and grants Deflect/Ganking/Shield at 5 Might", () => {
+    const unbuffed = applyLayers(fioraState(false));
+    expect(currentMight(unbuffed, "fiora")).toBe(4);
+    expect(hasKeyword(unbuffed, "fiora", "Deflect")).toBe(false); // not Mighty, no grant
 
-  // CR 477.3.b, multi-target case. "Friendly units get -4 [M] to a minimum of
-  // 1" over a 2-Might and a 9-Might unit should snapshot PER UNIT: -1 and -4
-  // respectively, leaving them at 1 and 5.
+    const buffed = applyLayers(fioraState(true));
+    expect(currentMight(buffed, "fiora")).toBe(5);
+    for (const keyword of ["Deflect", "Ganking", "Shield"] as const) {
+      expect(hasKeyword(buffed, "fiora", keyword)).toBe(true);
+    }
+  });
+
+  // GOLDEN — CR 476.3, continued: "While a buffed Fiora, Victorious is in
+  // combat as a defender, an additional +1 Might will be applied in the
+  // Arithmetic layer, giving her 6 Might and the 3 keywords."
+  it("CR 476.3 — a buffed Fiora defending is 6 Might with the three keywords", () => {
+    const buffed = applyLayers(fioraState(true));
+    // Shield's own bonus applies only while defending (814.1.c).
+    expect(combatMight(buffed, "fiora", "defender")).toBe(6);
+    expect(combatMight(buffed, "fiora", "attacker")).toBe(5);
+  });
+
+  // GOLDEN — CR 476.3, second example. "A buffed Fiora, Victorious is in
+  // combat as a defender when her buff is removed. Reevaluating the layers in
+  // sequence, she no longer gains Deflect, Ganking, and Shield during the
+  // Ability-Altering Effect layer, so when the Arithmetic layer is evaluated,
+  // neither the buff (which is gone) nor Shield (which she no longer has)
+  // apply. She goes directly from 6 Might with three keywords to 4 Might with
+  // no keywords." Expected values are from the CR text. Do not adjust.
+  it("CR 476.3 — removing the buff cascades Layer 2 -> Layer 3 in the correct direction", () => {
+    const buffed = applyLayers(fioraState(true));
+    expect(combatMight(buffed, "fiora", "defender")).toBe(6);
+
+    // Remove the buff and re-run: the grants must be WITHDRAWN, and Shield's
+    // Might bonus must go with them — 6 -> 4, not 6 -> 5.
+    const unbuffed = applyLayers({
+      ...buffed,
+      objects: { ...buffed.objects, fiora: { ...buffed.objects.fiora, buffCount: 0 } },
+    });
+    expect(currentMight(unbuffed, "fiora")).toBe(4);
+    expect(combatMight(unbuffed, "fiora", "defender")).toBe(4);
+    for (const keyword of ["Deflect", "Ganking", "Shield"] as const) {
+      expect(hasKeyword(unbuffed, "fiora", keyword)).toBe(false);
+    }
+  });
+
+  it("CR 476.1 — a passive whose source leaves its active zone withdraws its effects", () => {
+    const buffed = applyLayers(fioraState(true));
+    expect(hasKeyword(buffed, "fiora", "Deflect")).toBe(true);
+
+    const inHand = applyLayers({
+      ...buffed,
+      objects: { ...buffed.objects, fiora: { ...buffed.objects.fiora, zone: { kind: "hand", player: "A" } } },
+    });
+    expect(hasKeyword(inHand, "fiora", "Deflect")).toBe(false);
+  });
+
+  it("CR 476 — the fixed point terminates and is idempotent once stable", () => {
+    const once = applyLayers(fioraState(true));
+    expect(applyLayers(once)).toBe(once);
+  });
+});
+
+describe("layers — snapshots are PER OBJECT (CR 477.3.b)", () => {
+  // RESOLVED — Model Corrections 001, adjudication 2. The limitation is
+  // computed "at the time of its application", and an application is
+  // per-object: one "-4 [M] to a min of 1" over a 2-Might and a 9-Might unit
+  // remembers -1 for the first and -4 for the second.
   //
-  // KERNEL: `LayerEffect.snapshotted?: number` is a single scalar. The effect
-  // snapshots once against `targetsOf(...)[0]` (layers.ts) and applies that one
-  // delta to every target — measured: the 9-Might unit lands on 8, not 5.
-  //
-  // WHY ESCALATED, not fixed: `snapshotted` must become per-object (a
-  // Record<ObjectId, number>) — a field's type changing, not a computation.
-  // Not in the CR's worked examples, so Tier B rather than a golden, but it is
-  // the same model-shape class and is recorded here with them.
-  it("CR 477.3.b — a multi-target limited effect snapshots separately for each object", () => {});
+  // REGRESSION: `snapshotted` was a scalar, so the effect froze once against
+  // the first target and applied that delta to everyone — the 9-Might unit
+  // landed on 8 instead of 5.
+  it("CR 477.3.b — one multi-target limited effect snapshots separately for each object", () => {
+    const small = makeUnit({ objectId: "small", printedMight: 2, controller: "A", zone: { kind: "base", player: "A" } });
+    const large = makeUnit({ objectId: "large", printedMight: 9, controller: "A", zone: { kind: "base", player: "A" } });
+    const effect: LayerEffect = {
+      layer: 3,
+      sourceObjectId: "src",
+      targetSelector: { kind: "unitsControlledBy", player: { kind: "explicit", player: "A" } },
+      op: { attr: "might", delta: -4, minimum: 1 },
+      fromPassive: false,
+      duration: "thisTurn",
+      timestamp: 1,
+    };
+
+    const after = applyLayers(stateWithObjects([small, large], { activeLayerEffects: [effect] }));
+    expect(after.activeLayerEffects[0].snapshotted).toEqual({ small: -1, large: -4 });
+    expect(currentMight(after, "small")).toBe(1); // clamped by the minimum
+    expect(currentMight(after, "large")).toBe(5); // never hit the floor
+  });
+
+  it("CR 477.3.b — each object's snapshot survives its own later Might changes independently", () => {
+    const small = makeUnit({ objectId: "small", printedMight: 2, controller: "A", zone: { kind: "base", player: "A" } });
+    const large = makeUnit({ objectId: "large", printedMight: 9, controller: "A", zone: { kind: "base", player: "A" } });
+    const effect: LayerEffect = {
+      layer: 3,
+      sourceObjectId: "src",
+      targetSelector: { kind: "unitsControlledBy", player: { kind: "explicit", player: "A" } },
+      op: { attr: "might", delta: -4, minimum: 1 },
+      fromPassive: false,
+      duration: "thisTurn",
+      timestamp: 1,
+    };
+    const after = applyLayers(stateWithObjects([small, large], { activeLayerEffects: [effect] }));
+
+    // The small unit grows to 10. Its snapshot stays -1, NOT re-clamped to -4.
+    const grown = {
+      ...after,
+      objects: { ...after.objects, small: { ...after.objects.small, printedMight: 10 } },
+    };
+    expect(currentMight(grown, "small")).toBe(9);
+    expect(currentMight(grown, "large")).toBe(5); // untouched
+  });
 });
 
 describe("isMighty (CR 706-711)", () => {

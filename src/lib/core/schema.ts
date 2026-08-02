@@ -112,6 +112,17 @@ export interface GrantedKeyword {
   sourceObjectId: ObjectId;
 }
 
+/**
+ * CR 437 / 465.2.c.4.a — one assignment-time damage replacement.
+ *
+ * `prevent` carries its own residual: it DECREMENTS as it absorbs (437.3),
+ * and `"all"` is never lethal (437.5.b). `multiply` is the 465.2.c.4.a
+ * "Double all damage that would be dealt to it" shape.
+ */
+export type DamageReplacement =
+  | { kind: "prevent"; value: number | "all" }
+  | { kind: "multiply"; factor: number };
+
 export interface GameObject {
   objectId: ObjectId;
   cardId: CardId | null; // null = identity unknown from this perspective
@@ -155,7 +166,17 @@ export interface GameObject {
   counters: Record<string, number>; // CR 741-749 (no controller)
   attachedTo: ObjectId | null; // CR 716-719
   attachments: ObjectId[]; // this object as TopMostCard
-  preventValue: number | "all" | null; // CR 437 — decrementing tracked value
+  /**
+   * CR 465.2.c.5 — replacement effects that apply AT ASSIGNMENT of damage,
+   * as an ORDERED list. Order is the affected unit's CONTROLLER's choice and
+   * is load-bearing: a 2-Might unit with prevent 2 and a doubler takes 2
+   * damage if prevent goes first and 4 if the doubler does.
+   *
+   * This replaced a single `preventValue: number | "all" | null`, which could
+   * only ever reduce and so could not express "Double all damage dealt to it"
+   * (465.2.c.4.a) at all. See Model Corrections 001, adjudications 3-5.
+   */
+  damageReplacements: DamageReplacement[];
   grantedKeywords: GrantedKeyword[]; // CR 801.3
 }
 
@@ -465,9 +486,25 @@ export interface LayerEffect {
   targets?: ObjectId[];
   op: TraitOp | AbilityOp | ArithmeticOp;
   fromPassive: boolean; // CR 477.3.b — passives do NOT snapshot
-  snapshotted?: number; // resolved limited value, remembered for the duration
+  /**
+   * CR 477.3.b — the limited value is computed "at the time of its
+   * application", and an application is PER OBJECT: one "-4 [M] to a min of 1"
+   * over a 2-Might and a 9-Might unit remembers -1 for the first and -4 for
+   * the second. Keyed by ObjectId for exactly that reason; a scalar applied
+   * one object's snapshot to every target. See Model Corrections 001,
+   * adjudication 2.
+   */
+  snapshotted?: Record<ObjectId, number>;
   duration: Duration;
   timestamp: number;
+  /**
+   * Set when this effect was emitted by a conditional PassiveAbility. CR 476.2
+   * requires those to be re-derived on every fixed-point iteration, so
+   * `applyLayers` owns them: it emits them while the condition holds and
+   * withdraws them when it stops. Author-supplied effects leave this undefined
+   * and are never touched.
+   */
+  fromAbilityId?: string;
 }
 export type ArithmeticOp = { attr: "might" | "energyCost" | "powerCost"; delta: number; minimum?: number; maximum?: number };
 export type TraitOp =

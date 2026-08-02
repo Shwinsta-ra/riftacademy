@@ -43,7 +43,7 @@ export function makeObject(overrides: Partial<GameObject> = {}): GameObject {
     counters: {},
     attachedTo: null,
     attachments: [],
-    preventValue: null,
+    damageReplacements: [],
     grantedKeywords: [],
     ...overrides,
   };

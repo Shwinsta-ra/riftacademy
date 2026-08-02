@@ -8,8 +8,10 @@ import {
   legalDamageAssignments,
   minimumLethal,
   resolveCombatDamage,
+  resolveDamageThroughReplacements,
   tierOf,
 } from "../combat";
+import type { DamageReplacement } from "../schema";
 import { currentMight } from "../layers";
 import { arithmeticEffect, grant, makeUnit, stateWithObjects } from "./fixtures";
 
@@ -71,7 +73,7 @@ describe("isKilled (CR 465.2.c.2)", () => {
 
 describe("minimumLethal computed THROUGH replacement effects (CR 465.2.c.4.a, .c.5)", () => {
   it("a 'prevent 3' 2-Might unit needs 5 assigned", () => {
-    const unit = makeUnit({ objectId: "u1", printedMight: 2, preventValue: 3 });
+    const unit = makeUnit({ objectId: "u1", printedMight: 2, damageReplacements: [{ kind: "prevent", value: 3 }] });
     expect(minimumLethal(stateWithObjects([unit]), "u1", "defender")).toBe(5);
   });
 
@@ -81,7 +83,7 @@ describe("minimumLethal computed THROUGH replacement effects (CR 465.2.c.4.a, .c
   });
 
   it("'prevent All' is NEVER lethal (437.5.b)", () => {
-    const unit = makeUnit({ objectId: "u1", printedMight: 2, preventValue: "all" });
+    const unit = makeUnit({ objectId: "u1", printedMight: 2, damageReplacements: [{ kind: "prevent", value: "all" }] });
     expect(minimumLethal(stateWithObjects([unit]), "u1", "defender")).toBe("unkillable");
   });
 });
@@ -189,7 +191,7 @@ describe("legalDamageAssignments — the constraint system (CR 465.2.c)", () => 
       objectId: "tank",
       printedMight: 2,
       controller: "B",
-      preventValue: "all",
+      damageReplacements: [{ kind: "prevent", value: "all" }],
       grantedKeywords: [grant("Tank")],
     });
     const other = makeUnit({ objectId: "other", printedMight: 2, controller: "B" });
@@ -252,7 +254,7 @@ describe("damage assignment — GOLDEN cases from CR 465.2.c", () => {
   // would take each combat.' The unit would need to be assigned 5 damage in
   // order to have lethal damage assigned to it."
   it("CR 465.2.c.5 — a 2M unit with 'prevent the first 3' needs 5 damage ASSIGNED for lethal", () => {
-    const unit = makeUnit({ objectId: "u1", printedMight: 2, preventValue: 3, controller: "B" });
+    const unit = makeUnit({ objectId: "u1", printedMight: 2, damageReplacements: [{ kind: "prevent", value: 3 }], controller: "B" });
     const state = stateWithObjects([unit]);
     expect(minimumLethal(state, "u1", "defender")).toBe(5);
 
@@ -420,8 +422,8 @@ describe("damage assignment — adversarial (CR 465.2.c)", () => {
   });
 
   it("CR 437.5.b — when every defender prevents All, nothing is ever lethal but assignment stays legal", () => {
-    const a = makeUnit({ objectId: "a", printedMight: 2, controller: "B", preventValue: "all" });
-    const b = makeUnit({ objectId: "b", printedMight: 2, controller: "B", preventValue: "all" });
+    const a = makeUnit({ objectId: "a", printedMight: 2, controller: "B", damageReplacements: [{ kind: "prevent", value: "all" }] });
+    const b = makeUnit({ objectId: "b", printedMight: 2, controller: "B", damageReplacements: [{ kind: "prevent", value: "all" }] });
     const state = stateWithObjects([a, b]);
 
     expect(minimumLethal(state, "a", "defender")).toBe("unkillable");
@@ -497,50 +499,138 @@ describe("damage assignment — adversarial (CR 465.2.c)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// ESCALATED — Tier A goldens blocked on the canonical model's SHAPE
+// Assignment-time replacements — CR 465.2.c.4.a / .c.5
 // ---------------------------------------------------------------------------
 //
-// Both need a damage-MULTIPLYING replacement effect. `GameObject` models
-// replacement effects on damage with exactly one field, `preventValue:
-// number | "all" | null`, which can only ever REDUCE. There is no way to
-// express "Double all damage dealt to it", so `minimumLethal` cannot compute
-// through it. Per the failure protocol this is a type gaining a field, not a
-// computation to fix, so it is reported rather than patched.
-//
-// Note CR 465.2.c.5's third example makes this harder than a single extra
-// number: prevent and doubling are BOTH replacement effects on the assignment,
-// applied "in the order of the controller of the unit's choice", and the two
-// orders give different results (4 assigned vs 6). A faithful model needs an
-// ordered LIST of assignment-time replacements, not a second scalar.
+// RESOLVED — Model Corrections 001, adjudications 3-5. These were skipped
+// escalations; `GameObject.damageReplacements` is now an ordered list and
+// `minimumLethal` computes through it.
 
-describe.skip("ESCALATED — damage-assignment goldens blocked on model shape", () => {
-  // GOLDEN — CR 465.2.c.4.a (D-A3). "A unit with 3 [M]... has a delayed
-  // replacement effect applied to it that reads 'Double all damage that would
-  // be dealt to it this turn.' When assigning damage, the assigning player can
-  // only choose to assign 1 or 2 damage to this unit — when doing so, the
-  // assigned damage is doubled to 2 or 4 damage respectively. The minimum
-  // applied value such that the unit would take lethal damage in this way is 4
-  // damage."
-  //
-  // So: legal assigned values are exactly {1, 2}, and minimum-lethal ASSIGNED
-  // is 2. The kernel has no doubling to compute through and returns 3.
-  it("CR 465.2.c.4.a — a 3M unit with damage doubling may be assigned only 1 or 2; lethal is 2", () => {});
+describe("damage assignment through replacement effects (CR 465.2.c.4.a, .c.5)", () => {
+  const DOUBLE = { kind: "multiply" as const, factor: 2 };
+
+  // GOLDEN — CR 465.2.c.4.a (D-A3). "A unit with 3 [M] is being assigned damage
+  // in the combat damage step. There are other units without damage assigned
+  // to them with the same controller. The unit has a delayed replacement
+  // effect applied to it that reads 'Double all damage that would be dealt to
+  // it this turn.' When assigning damage, the assigning player can only choose
+  // to assign 1 or 2 damage to this unit — when doing so, the assigned damage
+  // is doubled to 2 or 4 damage respectively. The minimum applied value such
+  // that the unit would take lethal damage in this way is 4 damage."
+  // Expected values are from the CR text. Do not adjust.
+  it("CR 465.2.c.4.a — a 3M unit that doubles damage may be assigned only 1 or 2; lethal is 2", () => {
+    const doubler = makeUnit({ objectId: "d", printedMight: 3, controller: "B", damageReplacements: [DOUBLE] });
+    const other = makeUnit({ objectId: "o", printedMight: 3, controller: "B" });
+    const state = stateWithObjects([doubler, other]);
+
+    // Minimum-lethal ASSIGNED is 2, which becomes the CR's "4 damage" applied.
+    expect(minimumLethal(state, "d", "defender")).toBe(2);
+    expect(resolveDamageThroughReplacements([DOUBLE], 2).dealt).toBe(4);
+    expect(resolveDamageThroughReplacements([DOUBLE], 1).dealt).toBe(2); // not yet lethal vs 3
+
+    // With another unit still unassigned, 465.2.c.4 caps assignment at
+    // minimum-lethal — so the only legal values are 1 and 2, never 3.
+    const assignable = new Set<number>();
+    for (const pool of [1, 2, 3]) {
+      for (const result of asMaps(legalDamageAssignments(state, "A", ["d", "o"], pool, "defender"))) {
+        if (result.d !== undefined) assignable.add(result.d);
+      }
+    }
+    expect([...assignable].sort()).toEqual([1, 2]);
+  });
 
   // GOLDEN — CR 465.2.c.5 (D-A5). "The attacking player is assigning their 3
   // [M] worth of damage to two defending units with 2 [M] each. One of the
-  // units has... 'Double all damage that would be dealt to it this turn.' The
-  // attacking player assigns two damage to the other defending unit, then...
-  // they assign 2 damage to it; 1 damage that doubles to 2 damage as it is
-  // assigned to the unit."
-  //
-  // So a 3 pool kills BOTH 2-Might units: 2 to the plain one, 1 to the doubler.
-  // The kernel needs 2+2=4 and so kills only one.
-  it("CR 465.2.c.5 — 3 damage kills both 2M defenders when one doubles incoming damage", () => {});
+  // units has a delayed replacement effect applied to it that reads 'Double
+  // all damage that would be dealt to it this turn.' The attacking player
+  // assigns two damage to the other defending unit, then when assigning damage
+  // to the unit with the delayed replacement effect they assign 2 damage to
+  // it; 1 damage that doubles to 2 damage as it is assigned to the unit."
+  it("CR 465.2.c.5 — 3 damage kills BOTH 2M defenders when one doubles incoming damage", () => {
+    const plain = makeUnit({ objectId: "plain", printedMight: 2, controller: "B" });
+    const doubler = makeUnit({ objectId: "doubler", printedMight: 2, controller: "B", damageReplacements: [DOUBLE] });
+    const state = stateWithObjects([plain, doubler]);
 
-  // CR 465.2.c.5, third example — the ordering choice between two
-  // assignment-time replacements. Recorded with the goldens because it is what
-  // makes a single extra scalar insufficient as a fix.
-  it("CR 465.2.c.5 — prevent-then-double and double-then-prevent give 4 vs 6 assigned, controller's choice", () => {});
+    expect(minimumLethal(state, "plain", "defender")).toBe(2);
+    expect(minimumLethal(state, "doubler", "defender")).toBe(1); // 1 doubles to 2
+
+    // A 3 pool covers both: 2 to the plain unit, 1 to the doubler.
+    expect(asMaps(legalDamageAssignments(state, "A", ["plain", "doubler"], 3, "defender"))).toContainEqual({
+      plain: 2,
+      doubler: 1,
+    });
+
+    // And dealing it kills both — the doubling already happened at assignment,
+    // so it "doesn't get doubled again" when the damage is dealt.
+    const { killed } = resolveCombatDamage(
+      state,
+      [
+        {
+          fromPlayer: "A",
+          assignments: [
+            { targetObjectId: "plain", amount: 2 },
+            { targetObjectId: "doubler", amount: 1 },
+          ],
+        },
+      ],
+      { plain: "defender", doubler: "defender" }
+    );
+    expect(killed.sort()).toEqual(["doubler", "plain"]);
+  });
+
+  // GOLDEN — CR 465.2.c.5, third example. "That unit has a prevent value of two
+  // being applied to it, as well as the effect of Lotus Trap, doubling the
+  // damage dealt to them. Both of these replacement effects apply to the
+  // assignment of damage, in the order of the controller of the 2 [M] unit's
+  // choice. If they choose to order the replacement effects so that the
+  // prevent value is applied first, the unit will prevent 2 of the assigned
+  // damage, then the last 1 point of damage will be doubled to 2. The unit
+  // will have 4 damage assigned to it. When damage is dealt, the unit will
+  // take 2 damage. If they choose the other order, the unit will have 6 damage
+  // assigned to it, 2 of which will be prevented. When damage is dealt, the
+  // unit will take 4 damage." Expected values are from the CR text.
+  it("CR 465.2.c.5 — prevent-then-double vs double-then-prevent: 4 vs 6 assigned, 2 vs 4 dealt", () => {
+    const PREVENT_2 = { kind: "prevent" as const, value: 2 };
+
+    const preventFirst = resolveDamageThroughReplacements([PREVENT_2, DOUBLE], 3);
+    expect(preventFirst.assigned).toBe(4);
+    expect(preventFirst.dealt).toBe(2);
+
+    const doubleFirst = resolveDamageThroughReplacements([DOUBLE, PREVENT_2], 3);
+    expect(doubleFirst.assigned).toBe(6);
+    expect(doubleFirst.dealt).toBe(4);
+  });
+
+  it("CR 465.2.c.5 — the ORDER is the affected unit's controller's choice, and it changes minimum-lethal", () => {
+    const build = (order: DamageReplacement[]) =>
+      stateWithObjects([makeUnit({ objectId: "u", printedMight: 2, controller: "B", damageReplacements: order })]);
+
+    // Prevent first: dealt = 2*(raw-2), so raw 3 is needed for 2 lethal.
+    expect(minimumLethal(build([{ kind: "prevent", value: 2 }, DOUBLE]), "u", "defender")).toBe(3);
+    // Double first: dealt = 2*raw - 2, so raw 2 suffices.
+    expect(minimumLethal(build([DOUBLE, { kind: "prevent", value: 2 }]), "u", "defender")).toBe(2);
+  });
+
+  it("CR 437.3 — Prevent decrements as it absorbs; a multiplier does not", () => {
+    const { next } = resolveDamageThroughReplacements([{ kind: "prevent", value: 3 }, DOUBLE], 2);
+    expect(next).toEqual([{ kind: "prevent", value: 1 }, DOUBLE]);
+  });
+
+  it("CR 437.5.b — 'prevent All' never decrements and is never lethal, whatever else is in the chain", () => {
+    const chain: DamageReplacement[] = [DOUBLE, { kind: "prevent", value: "all" }];
+    const result = resolveDamageThroughReplacements(chain, 50);
+    expect(result.dealt).toBe(0);
+    expect(result.next).toEqual(chain);
+
+    const state = stateWithObjects([
+      makeUnit({ objectId: "u", printedMight: 2, controller: "B", damageReplacements: chain }),
+    ]);
+    expect(minimumLethal(state, "u", "defender")).toBe("unkillable");
+  });
+
+  it("an empty replacement list is the identity — dealt equals assigned equals raw", () => {
+    expect(resolveDamageThroughReplacements([], 4)).toEqual({ dealt: 4, prevented: 0, assigned: 4, next: [] });
+  });
 });
 
 describe("resolveCombatDamage — assign all, THEN deal simultaneously (CR 465.2.c.1)", () => {
@@ -563,7 +653,7 @@ describe("resolveCombatDamage — assign all, THEN deal simultaneously (CR 465.2
   });
 
   it("Prevent absorbs first and DECREMENTS (437.3); fully-prevented damage was never dealt (437.4)", () => {
-    const unit = makeUnit({ objectId: "u1", printedMight: 5, preventValue: 3 });
+    const unit = makeUnit({ objectId: "u1", printedMight: 5, damageReplacements: [{ kind: "prevent", value: 3 }] });
     const state = stateWithObjects([unit]);
 
     const result = resolveCombatDamage(
@@ -572,7 +662,7 @@ describe("resolveCombatDamage — assign all, THEN deal simultaneously (CR 465.2
       { u1: "defender" }
     );
     expect(result.state.objects.u1.damage).toBe(0); // fully prevented
-    expect(result.state.objects.u1.preventValue).toBe(1); // decremented by the 2 absorbed
+    expect(result.state.objects.u1.damageReplacements).toEqual([{ kind: "prevent", value: 1 }]); // decremented by the 2 absorbed
     expect(result.killed).toEqual([]);
   });
 });
