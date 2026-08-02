@@ -185,9 +185,18 @@ export function recycle(
   return next;
 }
 
-/** CR 417 — Deal: mark damage on units. Assigning is NOT dealing (417.1.a); valid damage is >= 1 (417.1.e). CR 712-715 — Bonus Damage sums and applies once to the total. */
-export function deal(state: GameState, targetObjectId: ObjectId, amount: number, bonusDamage = 0): GameState {
-  const total = amount + Math.max(0, bonusDamage); // 714.2 — bonus is positive-only
+/**
+ * CR 417 — Deal: mark damage on units. Assigning is NOT dealing (417.1.a);
+ * valid damage is >= 1 (417.1.e). CR 712-715 — Bonus Damage sums and applies
+ * once to the total.
+ *
+ * `raw` is the instructed amount BEFORE the unit's replacement chain, in the
+ * Addendum A sense: dealing raw 3 to a unit that doubles marks 6 damage. The
+ * name is deliberate — the number that lands is the return value's effect on
+ * `damage`, never this parameter.
+ */
+export function deal(state: GameState, targetObjectId: ObjectId, raw: number, bonusDamage = 0): GameState {
+  const total = raw + Math.max(0, bonusDamage); // 714.2 — bonus is positive-only
   if (total < 1) return state; // 417.1.e
   const object = state.objects[targetObjectId];
   if (!object) return state;
