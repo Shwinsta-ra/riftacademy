@@ -80,6 +80,19 @@ describe("validateDeck — constructed (CR 101-103, TR 402.1)", () => {
     if (cardId.startsWith("rune")) {
       return { name: "Mind Rune", domains: ["Mind"], isChampion: false, isSignature: false, championTag: null, isUnique: false };
     }
+    // Reprint pairs: SAME name, different set-prefixed cardIds — the shape TR
+    // 601.2.a exists for ("legal if it has the same name as a card from a
+    // legal set"). Every name-keyed rule must collapse these two ids into one.
+    if (cardId === "ogn-twin" || cardId === "ogs-twin") {
+      return { name: "Reprinted Card, Twin", domains: ["Mind"], isChampion: false, isSignature: false, championTag: null, isUnique: false };
+    }
+    if (cardId === "ogn-uniq" || cardId === "ogs-uniq") {
+      return { name: "Singular Relic, Only One", domains: ["Mind"], isChampion: false, isSignature: false, championTag: null, isUnique: true };
+    }
+    if (cardId === "ogs-champ") {
+      // A reprint of "champ" — same name, different id.
+      return { name: "Test Champion, Chosen", domains: ["Mind"], isChampion: true, isSignature: false, championTag: "yi", isUnique: false };
+    }
     if (cardId === "offDomain") {
       return { name: "Off Domain Card", domains: ["Fury"], isChampion: false, isSignature: false, championTag: null, isUnique: false };
     }
@@ -137,6 +150,40 @@ describe("validateDeck — constructed (CR 101-103, TR 402.1)", () => {
     const deck = baseDeck(39);
     deck.mainDeck = [...Array.from({ length: 3 }, () => "dupe"), ...Array.from({ length: 36 }, (_, i) => `f${i}`), "champ"];
     expect(validateDeck(deck, constructed, facts).legal).toBe(true);
+  });
+
+  // -------------------------------------------------------------------------
+  // Reprints: same name, different cardId (TR 601.2.a)
+  // -------------------------------------------------------------------------
+
+  it("2 + 2 across a reprint pair is 4 copies of ONE name — ILLEGAL (CR 103.2.b)", () => {
+    // The exact failure an id-keyed tally misses: it reads "2 and 2" and passes.
+    const deck = baseDeck(39);
+    deck.mainDeck = ["ogn-twin", "ogn-twin", "ogs-twin", "ogs-twin", ...Array.from({ length: 35 }, (_, i) => `f${i}`), "champ"];
+    const result = validateDeck(deck, constructed, facts);
+    expect(result.legal).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/"Reprinted Card, Twin" appears 4 times \(limit 3 per name\)/);
+  });
+
+  it("2 + 1 across a reprint pair is 3 copies — LEGAL", () => {
+    const deck = baseDeck(39);
+    deck.mainDeck = ["ogn-twin", "ogn-twin", "ogs-twin", ...Array.from({ length: 36 }, (_, i) => `f${i}`), "champ"];
+    expect(validateDeck(deck, constructed, facts).errors).toEqual([]);
+  });
+
+  it("Unique counts across printings — one OGN + one OGS is two of that name (CR 825)", () => {
+    const deck = baseDeck(39);
+    deck.mainDeck = ["ogn-uniq", "ogs-uniq", ...Array.from({ length: 37 }, (_, i) => `f${i}`), "champ"];
+    const result = validateDeck(deck, constructed, facts);
+    expect(result.legal).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/"Singular Relic, Only One" is Unique/);
+  });
+
+  it("a REPRINT of the Chosen Champion satisfies the in-deck requirement (CR 103.2.a.3)", () => {
+    // Registered "champ"; the deck runs the OGS printing. Same name, so under
+    // 103.2.a.3 it IS the Chosen Champion. An id comparison rejects this deck.
+    const deck = { ...baseDeck(39), mainDeck: [...Array.from({ length: 39 }, (_, i) => `f${i}`), "ogs-champ"] };
+    expect(validateDeck(deck, constructed, facts).errors).toEqual([]);
   });
 
   it("requires exactly 12 runes (CR 103.3)", () => {
