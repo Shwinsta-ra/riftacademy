@@ -112,9 +112,34 @@ export interface GrantedKeyword {
   sourceObjectId: ObjectId;
 }
 
+/**
+ * CR 437 / 465.2.c.4.a — one assignment-time damage replacement.
+ *
+ * `prevent` carries its own residual: it DECREMENTS as it absorbs (437.3),
+ * and `"all"` is never lethal (437.5.b). `multiply` is the 465.2.c.4.a
+ * "Double all damage that would be dealt to it" shape.
+ */
+export type DamageReplacement =
+  | { kind: "prevent"; value: number | "all" }
+  | { kind: "multiply"; factor: number };
+
 export interface GameObject {
   objectId: ObjectId;
   cardId: CardId | null; // null = identity unknown from this perspective
+  /**
+   * CR 132.4 — the full "Name, Subtitle" comma form IS the card's name for all
+   * purposes. Carried on the object, like `printedKeywords` and `domains`, so
+   * the kernel never reaches into the card catalog.
+   *
+   * This is NOT derivable from `cardId`. Reprints share a name across sets with
+   * different ids (TR 601.2.a makes a card legal if it merely shares a name
+   * with one from a legal set — a rule that only exists because that happens),
+   * and our ids are set-prefixed. Every name-keyed rule — the 3-per-name copy
+   * limit (CR 103.2.b), name-based Chosen Champion status (CR 103.2.a.3),
+   * Unique (CR 825), and naming a card (CR 760-763) — is wrong under id
+   * comparison. Empty string for a nameless object (an anonymous token).
+   */
+  name: string;
   owner: PlayerId; // CR 127
   controller: PlayerId | null; // CR 188; null only for uncontrolled battlefields
   isToken: boolean; // CR 185.1 — immutable nature
@@ -141,7 +166,17 @@ export interface GameObject {
   counters: Record<string, number>; // CR 741-749 (no controller)
   attachedTo: ObjectId | null; // CR 716-719
   attachments: ObjectId[]; // this object as TopMostCard
-  preventValue: number | "all" | null; // CR 437 — decrementing tracked value
+  /**
+   * CR 465.2.c.5 — replacement effects that apply AT ASSIGNMENT of damage,
+   * as an ORDERED list. Order is the affected unit's CONTROLLER's choice and
+   * is load-bearing: a 2-Might unit with prevent 2 and a doubler takes 2
+   * damage if prevent goes first and 4 if the doubler does.
+   *
+   * This replaced a single `preventValue: number | "all" | null`, which could
+   * only ever reduce and so could not express "Double all damage dealt to it"
+   * (465.2.c.4.a) at all. See Model Corrections 001, adjudications 3-5.
+   */
+  damageReplacements: DamageReplacement[];
   grantedKeywords: GrantedKeyword[]; // CR 801.3
 }
 
@@ -278,7 +313,7 @@ export type Predicate =
   | { op: "hasSupertype"; supertype: Supertype }
   | { op: "hasTag"; tag: string }
   | { op: "hasDomain"; domain: Domain }
-  | { op: "nameIs"; name: string } // CR 132.4 — the full "Name, Subtitle" form IS the name
+  | { op: "nameIs"; name: string } // CR 132.4 — matches GameObject.name, NOT cardId (reprints share a name)
   | { op: "mightAtLeast"; value: number }
   | { op: "mightAtMost"; value: number }
   | { op: "isMighty" } // CR 708 — derived (>= 5), NOT a keyword
@@ -451,9 +486,25 @@ export interface LayerEffect {
   targets?: ObjectId[];
   op: TraitOp | AbilityOp | ArithmeticOp;
   fromPassive: boolean; // CR 477.3.b — passives do NOT snapshot
-  snapshotted?: number; // resolved limited value, remembered for the duration
+  /**
+   * CR 477.3.b — the limited value is computed "at the time of its
+   * application", and an application is PER OBJECT: one "-4 [M] to a min of 1"
+   * over a 2-Might and a 9-Might unit remembers -1 for the first and -4 for
+   * the second. Keyed by ObjectId for exactly that reason; a scalar applied
+   * one object's snapshot to every target. See Model Corrections 001,
+   * adjudication 2.
+   */
+  snapshotted?: Record<ObjectId, number>;
   duration: Duration;
   timestamp: number;
+  /**
+   * Set when this effect was emitted by a conditional PassiveAbility. CR 476.2
+   * requires those to be re-derived on every fixed-point iteration, so
+   * `applyLayers` owns them: it emits them while the condition holds and
+   * withdraws them when it stops. Author-supplied effects leave this undefined
+   * and are never touched.
+   */
+  fromAbilityId?: string;
 }
 export type ArithmeticOp = { attr: "might" | "energyCost" | "powerCost"; delta: number; minimum?: number; maximum?: number };
 export type TraitOp =
@@ -472,7 +523,13 @@ export interface PlayerState {
   runePool: { energy: number; power: { domain: Domain; universal: boolean }[] }; // CR 165-167
   handCount: number; // CR 108.7.e — public even when contents are private
   legendObjectId: ObjectId;
-  chosenChampionCardId: CardId; // CR 103.2.a.3 — name-based status
+  /**
+   * CR 103.2.a.3 — Chosen Champion status is NAME-based, not card-based: any
+   * Champion Unit sharing the chosen card's name is also your Chosen Champion,
+   * in any zone, for every rule and effect that cares. Stored as the name (not
+   * a CardId) so a reprint copy is recognized; see `GameObject.name`.
+   */
+  chosenChampionName: string;
   scoredBattlefieldsThisTurn: Set<ObjectId>; // CR 470 — once per BF per turn, both methods
 }
 
@@ -504,7 +561,15 @@ export interface CombatState {
 }
 export interface DamageAssignment {
   fromPlayer: PlayerId;
-  assignments: { targetObjectId: ObjectId; amount: number }[];
+  /**
+   * `raw` is what the assigning player spends from their Might pool, and it is
+   * what the pool is conserved in — a doubler on the receiving unit does NOT
+   * let the assigner spend more. It is deliberately NOT the CR's "assigned"
+   * figure, which is post-replacement and can exceed the pool (raw 3 -> 6
+   * assigned under double-then-prevent). See Model Corrections 001 Addendum A;
+   * the CR overloads "assigned" for both, which is what made it ambiguous.
+   */
+  assignments: { targetObjectId: ObjectId; raw: number }[];
 }
 
 export type ScoreMethod = "conquer" | "hold";
@@ -606,7 +671,18 @@ export type GameEvent =
   | { type: "exhausted"; objectId: ObjectId } // Exhaust 414
   | { type: "readied"; objectId: ObjectId } // Ready 415
   | { type: "recycled"; objectId: ObjectId; to: "mainDeck" | "runeDeck" } // Recycle 416
-  | { type: "dealt"; sourceObjectId: ObjectId | null; targetObjectId: ObjectId; amount: number } // Deal 417
+  /**
+   * CR 417 — Deal. `raw` is the instructed amount BEFORE the target's
+   * replacement chain, matching `actions.deal`'s parameter and the
+   * raw/assigned/dealt vocabulary (Model Corrections 001 Addendum A). Dealing
+   * raw 3 to a unit that doubles marks 6 damage.
+   *
+   * A capture-time observer sees DEALT damage rather than raw instruction, so
+   * an optional `dealt?` will likely be wanted once RiftNotes has a concrete
+   * need. That is purely additive and free under the schema-change protocol —
+   * deliberately not guessed at here.
+   */
+  | { type: "dealt"; sourceObjectId: ObjectId | null; targetObjectId: ObjectId; raw: number }
   | { type: "healed"; objectId: ObjectId; amount: number } // Heal 418
   | {
       type: "played";

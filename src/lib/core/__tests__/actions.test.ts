@@ -93,20 +93,24 @@ describe("Deal / Heal (CR 417-418) and Prevent (CR 437)", () => {
   });
 
   it("Prevent absorbs and decrements; fully-prevented damage was never dealt (437.3-.4)", () => {
-    const unit = makeUnit({ objectId: "u1", printedMight: 5, preventValue: 3 });
+    const unit = makeUnit({ objectId: "u1", printedMight: 5, damageReplacements: [{ kind: "prevent", value: 3 }] });
     const next = deal(stateWithObjects([unit]), "u1", 2);
     expect(next.objects.u1.damage).toBe(0);
-    expect(next.objects.u1.preventValue).toBe(1);
+    expect(next.objects.u1.damageReplacements).toEqual([{ kind: "prevent", value: 1 }]); // 437.3 decrement
   });
 
   it("'prevent All' blocks damage entirely (437.5.b)", () => {
-    const unit = makeUnit({ objectId: "u1", printedMight: 5, preventValue: "all" });
+    const unit = makeUnit({ objectId: "u1", printedMight: 5, damageReplacements: [{ kind: "prevent", value: "all" }] });
     expect(deal(stateWithObjects([unit]), "u1", 99).objects.u1.damage).toBe(0);
   });
 
   it("prevent accumulates onto an existing value", () => {
-    const unit = makeUnit({ objectId: "u1", printedMight: 5, preventValue: 2 });
-    expect(prevent(stateWithObjects([unit]), "u1", 3).objects.u1.preventValue).toBe(5);
+    const unit = makeUnit({ objectId: "u1", printedMight: 5, damageReplacements: [{ kind: "prevent", value: 2 }] });
+    // CR 465.2.c.5 — replacements are an ordered LIST, not a summed scalar.
+    expect(prevent(stateWithObjects([unit]), "u1", 3).objects.u1.damageReplacements).toEqual([
+      { kind: "prevent", value: 2 },
+      { kind: "prevent", value: 3 },
+    ]);
   });
 
   it("Heal clears damage (418.1.a)", () => {
@@ -271,7 +275,7 @@ describe("object identity on zone change (CR 124)", () => {
       buffCount: 1,
       counters: { charge: 3 },
       statuses: new Set(["stunned", "exhausted"]),
-      preventValue: 2,
+      damageReplacements: [{ kind: "prevent", value: 2 }],
     });
     const next = changeZone(stateWithObjects([unit]), "u1", { kind: "hand", player: "A" });
 
@@ -279,7 +283,7 @@ describe("object identity on zone change (CR 124)", () => {
     expect(next.objects.u1.buffCount).toBe(0);
     expect(next.objects.u1.counters).toEqual({});
     expect(next.objects.u1.statuses.size).toBe(0);
-    expect(next.objects.u1.preventValue).toBeNull();
+    expect(next.objects.u1.damageReplacements).toEqual([]);
   });
 
   it("mints a NEW ObjectId when one is supplied", () => {
@@ -287,6 +291,19 @@ describe("object identity on zone change (CR 124)", () => {
     const next = changeZone(stateWithObjects([unit]), "u1", { kind: "hand", player: "A" }, "u1-new");
     expect(next.objects["u1-new"]).toBeDefined();
     expect(next.objects.u1).toBeUndefined();
+  });
+
+  it("NEGATIVE: damage does NOT survive a board -> hand -> board round trip (CR 124)", () => {
+    const unit = makeUnit({ objectId: "u1", printedMight: 5, damage: 3, counters: { charge: 1 } });
+    const toHand = changeZone(stateWithObjects([unit]), "u1", { kind: "hand", player: "A" }, "u1-hand");
+    const backToBoard = changeZone(toHand, "u1-hand", { kind: "base", player: "A" }, "u1-board");
+
+    const returned = backToBoard.objects["u1-board"];
+    expect(returned.damage).toBe(0);
+    expect(returned.counters).toEqual({});
+    // And the earlier identities are gone — each crossing is a new object.
+    expect(backToBoard.objects.u1).toBeUndefined();
+    expect(backToBoard.objects["u1-hand"]).toBeUndefined();
   });
 
   it("preserves state for a board-to-board move (CR 458 — Recall is state-preserving)", () => {

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { makeFormatContext } from "../format";
+import { burnOut } from "../actions";
 import { canScore, checkWin, recordScore, resolveScore, scoredEveryBattlefield } from "../scoring";
-import { emptyPlayerState, makeState } from "./fixtures";
+import { emptyPlayerState, makeState, makeUnit, stateWithObjects } from "./fixtures";
 
 const ctx = makeFormatContext("1v1", "constructed"); // victoryScore 8
 
@@ -103,5 +104,93 @@ describe("checkWin — strict majority at a Cleanup (CR 472)", () => {
       players: { A: emptyPlayerState("A", { points: 7 }), B: emptyPlayerState("B", { points: 0 }) },
     });
     expect(checkWin(state, ctx)).toBeNull();
+  });
+
+  it("CR 472 — both players over the threshold: strict majority decides", () => {
+    const state = makeState({
+      players: { A: emptyPlayerState("A", { points: 9 }), B: emptyPlayerState("B", { points: 8 }) },
+    });
+    expect(checkWin(state, ctx)).toBe("A");
+  });
+
+  it("CR 472 — both over the threshold and EQUAL: no winner", () => {
+    const state = makeState({
+      players: { A: emptyPlayerState("A", { points: 12 }), B: emptyPlayerState("B", { points: 12 }) },
+    });
+    expect(checkWin(state, ctx)).toBeNull();
+  });
+
+  it("CR 483.3 — victoryScore comes from the FormatContext; nothing hardcodes 8", () => {
+    const state = makeState({
+      players: { A: emptyPlayerState("A", { points: 8 }), B: emptyPlayerState("B", { points: 0 }) },
+    });
+    expect(checkWin(state, makeFormatContext("1v1", "constructed"))).toBe("A");
+    expect(checkWin(state, makeFormatContext("2v2", "constructed"))).toBeNull(); // 11 in 2v2
+  });
+
+  it("scales past three players — the leader must beat EVERY opponent", () => {
+    const state = makeState({
+      players: {
+        A: emptyPlayerState("A", { points: 8 }),
+        B: emptyPlayerState("B", { points: 8 }),
+        C: emptyPlayerState("C", { points: 1 }),
+      },
+    });
+    expect(checkWin(state, ctx)).toBeNull(); // A ties B
+  });
+});
+
+describe("Burn Out — deck-out donates points, it is NOT a loss (CR 431)", () => {
+  const deckedOut = () => {
+    const trashed = makeUnit({
+      objectId: "t1",
+      printedMight: 2,
+      owner: "A",
+      controller: "A",
+      zone: { kind: "trash", player: "A" },
+    });
+    return stateWithObjects([trashed], {
+      deckOrder: { A: [], B: [] },
+      players: { A: emptyPlayerState("A", { points: 3 }), B: emptyPlayerState("B", { points: 5 }) },
+    });
+  };
+
+  it("CR 431.2.b/.c — recycles the trash into the Main Deck and gives an opponent 1 point", () => {
+    const after = burnOut(deckedOut(), "A", "B");
+    expect(after.players.B.points).toBe(6); // 431.2.c
+    expect(after.players.A.points).toBe(3); // the burning player loses nothing
+    expect(after.objects.t1.zone.kind).toBe("mainDeck"); // 431.2.b
+  });
+
+  it("CR 431 — running out of deck is not a loss condition for the burning player", () => {
+    const after = burnOut(deckedOut(), "A", "B");
+    expect(checkWin(after, ctx)).toBeNull(); // nobody has won; A is still playing
+  });
+
+  it("CR 431.3.a — repeated Burn Outs walk an opponent to the Victory Score", () => {
+    // Empty deck AND empty trash: each attempt burns out again, donating a
+    // point every time, until the opponent wins. Nothing about this ends the
+    // game for the player who decked out.
+    let state = stateWithObjects([], {
+      deckOrder: { A: [], B: [] },
+      players: { A: emptyPlayerState("A"), B: emptyPlayerState("B", { points: 5 }) },
+    });
+    for (let i = 0; i < 3; i++) state = burnOut(state, "A", "B");
+    expect(state.players.B.points).toBe(8);
+    expect(checkWin(state, ctx)).toBe("B"); // 431.3.c
+  });
+
+  it("CR 431.2.c — the burning player CHOOSES which opponent gains the point", () => {
+    const state = stateWithObjects([], {
+      deckOrder: { A: [], B: [], C: [] },
+      players: {
+        A: emptyPlayerState("A"),
+        B: emptyPlayerState("B"),
+        C: emptyPlayerState("C"),
+      },
+    });
+    const after = burnOut(state, "A", "C");
+    expect(after.players.C.points).toBe(1);
+    expect(after.players.B.points).toBe(0);
   });
 });

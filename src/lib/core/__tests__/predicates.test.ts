@@ -2,13 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   evaluatePredicate,
   hasKeyword,
+  isChosenChampion,
   matchesEvent,
   resolveKeywords,
   resolvePlayerRef,
   resolveSelector,
   sumKeywordValue,
 } from "../predicates";
-import { grant, grantKeywordEffect, makeTurnState, makeUnit, stateWithObjects } from "./fixtures";
+import { isMighty } from "../layers";
+import { emptyPlayerState, grant, grantKeywordEffect, makeTurnState, makeUnit, stateWithObjects } from "./fixtures";
 import { OBJECT_STATUSES } from "../schema";
 import type { EventPredicate, GameEvent, Predicate, Selector } from "../schema";
 
@@ -232,6 +234,132 @@ describe("Predicates", () => {
   });
 });
 
+describe("name-based identity (CR 132.4, 103.2.a.3, 760-763)", () => {
+  // A reprint pair: identical name, different set-prefixed cardIds. Our ids are
+  // set-prefixed and Standard lists OGS separately from OGN, so this is the
+  // shape TR 601.2.a is written for.
+  const ognCopy = makeUnit({
+    objectId: "ogn1",
+    cardId: "ogn-042-298",
+    name: "Jinx, Rebel",
+    printedMight: 4,
+    supertypes: ["champion"],
+    controller: "A",
+    owner: "A",
+  });
+  const ogsCopy = makeUnit({
+    objectId: "ogs1",
+    cardId: "ogs-007-024",
+    name: "Jinx, Rebel",
+    printedMight: 4,
+    supertypes: ["champion"],
+    controller: "A",
+    owner: "A",
+    zone: { kind: "hand", player: "A" },
+  });
+  const otherSubtitle = makeUnit({
+    objectId: "other1",
+    cardId: "ogn-043-298",
+    name: "Jinx, Loose Cannon",
+    printedMight: 4,
+    supertypes: ["champion"],
+    controller: "A",
+    owner: "A",
+  });
+
+  const state = stateWithObjects([ognCopy, ogsCopy, otherSubtitle], {
+    players: {
+      A: emptyPlayerState("A", { chosenChampionName: "Jinx, Rebel" }),
+      B: emptyPlayerState("B"),
+    },
+  });
+
+  it("nameIs matches BOTH printings of a reprint — the id comparison matched neither", () => {
+    const predicate: Predicate = { op: "nameIs", name: "Jinx, Rebel" };
+    expect(evaluatePredicate(state, predicate, "ogn1", ctx("ogn1"))).toBe(true);
+    expect(evaluatePredicate(state, predicate, "ogs1", ctx("ogs1"))).toBe(true);
+  });
+
+  it("nameIs does NOT match a cardId — naming a card names a NAME (CR 760-763)", () => {
+    const predicate: Predicate = { op: "nameIs", name: "ogn-042-298" };
+    expect(evaluatePredicate(state, predicate, "ogn1", ctx("ogn1"))).toBe(false);
+  });
+
+  it("a different subtitle is a DIFFERENT name (CR 132.4)", () => {
+    const predicate: Predicate = { op: "nameIs", name: "Jinx, Rebel" };
+    expect(evaluatePredicate(state, predicate, "other1", ctx("other1"))).toBe(false);
+  });
+
+  it("every copy of the named card is the Chosen Champion, in any zone (CR 103.2.a.3)", () => {
+    expect(isChosenChampion(state, "ogn1", "A")).toBe(true);
+    // The reprint sits in hand — 103.2.a.3 names deck, hand, trash and board.
+    expect(isChosenChampion(state, "ogs1", "A")).toBe(true);
+  });
+
+  it("a same-short-name champion with a different subtitle is NOT the Chosen Champion", () => {
+    expect(isChosenChampion(state, "other1", "A")).toBe(false);
+  });
+
+  it("a non-champion sharing the name is not a Chosen Champion (CR 103.2.a)", () => {
+    const spell = makeUnit({ objectId: "s1", cardId: "ogn-900-298", name: "Jinx, Rebel", printedMight: null, supertypes: [] });
+    const withSpell = stateWithObjects([spell], {
+      players: { A: emptyPlayerState("A", { chosenChampionName: "Jinx, Rebel" }), B: emptyPlayerState("B") },
+    });
+    expect(isChosenChampion(withSpell, "s1", "A")).toBe(false);
+  });
+});
+
+describe("keyword stacking and Mighty (CR 708-711, 807/814/823)", () => {
+  // GOLDEN — CR 814.2. "Stalwart Poro has Shield. It is chosen as the target
+  // of Block, which says 'Give a unit [Shield 3] and [Tank] this turn.' After
+  // Block resolves, Stalwart Poro has Shield 4 this turn."
+  // Expected value is from the CR text. Do not adjust to match the code.
+  it("CR 814.2 — printed Shield plus a granted Shield 3 sums to Shield 4", () => {
+    const poro = makeUnit({
+      objectId: "poro",
+      printedMight: 2,
+      printedKeywords: [{ keyword: "Shield" }], // valued keyword, no X -> CR default 1
+      grantedKeywords: [grant("Shield", 3), grant("Tank")],
+    });
+    const state = stateWithObjects([poro]);
+    expect(sumKeywordValue(state, "poro", "Shield")).toBe(4);
+    expect(hasKeyword(state, "poro", "Tank")).toBe(true);
+  });
+
+  it("CR 815/826 — redundant keywords do not stack into a value", () => {
+    const unit = makeUnit({
+      objectId: "u1",
+      printedMight: 2,
+      printedKeywords: [{ keyword: "Tank" }],
+      grantedKeywords: [grant("Tank"), grant("Tank")],
+    });
+    // Tank is binary: having it three times is still just having it.
+    expect(hasKeyword(stateWithObjects([unit]), "u1", "Tank")).toBe(true);
+  });
+
+  // GOLDEN — CR 709. "A Unit with Might 4 that gets +1 [M] becomes Mighty.
+  // A Unit with Might 5 that gets +1 [M] does NOT become Mighty, because it
+  // was already Mighty." Expected values are from the CR text.
+  it("CR 709 — 'becomes Mighty' fires on the 4->5 transition, not on 5->6", () => {
+    const becomesMighty = (before: number, after: number) => {
+      const at = (might: number) => stateWithObjects([makeUnit({ objectId: "u1", printedMight: might })]);
+      return !isMighty(at(before), "u1") && isMighty(at(after), "u1");
+    };
+    expect(becomesMighty(4, 5)).toBe(true);
+    expect(becomesMighty(5, 6)).toBe(false); // already Mighty
+  });
+
+  it("CR 711 — a unit in the trash is Mighty on PRINTED Might, ignoring board effects", () => {
+    const inTrash = makeUnit({
+      objectId: "u1",
+      printedMight: 5,
+      zone: { kind: "trash", player: "A" },
+    });
+    const state = stateWithObjects([inTrash], { activeLayerEffects: [grantKeywordEffect("u1", "Tank")] });
+    expect(isMighty(state, "u1")).toBe(true);
+  });
+});
+
 describe("EventPredicates (CR 367-375)", () => {
   const unit = makeUnit({ objectId: "u1", printedMight: 3, controller: "A" });
   const state = stateWithObjects([unit], { turn: makeTurnState({ turnPlayer: "A", turnOrder: ["A", "B"] }) });
@@ -248,7 +376,7 @@ describe("EventPredicates (CR 367-375)", () => {
   });
 
   it("matches a deal filtered by its target", () => {
-    const event: GameEvent = { type: "dealt", sourceObjectId: null, targetObjectId: "u1", amount: 2 };
+    const event: GameEvent = { type: "dealt", sourceObjectId: null, targetObjectId: "u1", raw: 2 };
     expect(matchesEvent(state, { on: "deal", to: { op: "mightAtLeast", value: 3 } }, event, ctx("u1"))).toBe(true);
     expect(matchesEvent(state, { on: "deal", to: { op: "mightAtLeast", value: 9 } }, event, ctx("u1"))).toBe(false);
   });

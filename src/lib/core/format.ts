@@ -130,14 +130,18 @@ export function validateDeck(deck: DeckList, ctx: FormatContext, facts: (cardId:
     errors.push(`main deck must be at least ${ctx.mainDeckMin} cards (found ${size})`);
   }
 
-  // CR 103.2 — the Chosen Champion is a member of the Main Deck, not a card beside it.
-  if (ctx.championCountsInMain && !deck.mainDeck.includes(deck.chosenChampionCardId)) {
-    errors.push("the Chosen Champion must be one of the main deck's cards");
-  }
-
   // --- CR 103.2.a — the Chosen Champion must match the Legend's champion tag ---
   const legend = facts(deck.legendCardId);
   const champion = facts(deck.chosenChampionCardId);
+
+  // CR 103.2 — the Chosen Champion is a member of the Main Deck, not a card
+  // beside it. Matched by NAME, not cardId: CR 103.2.a.3 makes any same-named
+  // Champion Unit the Chosen Champion, so registering one printing and running
+  // a reprint of it satisfies this. An id comparison would reject that deck.
+  if (ctx.championCountsInMain && !deck.mainDeck.some((cardId) => facts(cardId).name === champion.name)) {
+    errors.push("the Chosen Champion must be one of the main deck's cards");
+  }
+
   if (!champion.isChampion) {
     errors.push(`Chosen Champion "${champion.name}" is not a champion unit`);
   }
@@ -146,21 +150,22 @@ export function validateDeck(deck: DeckList, ctx: FormatContext, facts: (cardId:
   }
 
   // --- CR 103.2.b — up to 3 copies per NAME (champion included) ---
+  //
+  // Grouping is by NAME, never cardId. Reprints share a name under different
+  // set-prefixed ids, so an id-keyed tally reads 2 OGN + 2 reprint as "2 and
+  // 2" and passes a deck holding 4 copies of one name.
   if (ctx.copyLimitApplies) {
-    const byName = new Map<string, number>();
+    const byName = new Map<string, { count: number; isUnique: boolean }>();
     for (const cardId of deck.mainDeck) {
-      const name = facts(cardId).name;
-      byName.set(name, (byName.get(name) ?? 0) + 1);
+      const card = facts(cardId);
+      const entry = byName.get(card.name) ?? { count: 0, isUnique: false };
+      byName.set(card.name, { count: entry.count + 1, isUnique: entry.isUnique || card.isUnique });
     }
-    for (const [name, count] of byName) {
+    for (const [name, { count, isUnique }] of byName) {
       if (count > 3) errors.push(`"${name}" appears ${count} times (limit 3 per name)`);
-    }
-
-    // CR 825 — Unique: only one card of that name per deck.
-    if (ctx.uniqueApplies) {
-      for (const [name, count] of byName) {
-        const isUnique = deck.mainDeck.some((cardId) => facts(cardId).name === name && facts(cardId).isUnique);
-        if (isUnique && count > 1) errors.push(`"${name}" is Unique — only one copy per deck (found ${count})`);
+      // CR 825 — Unique: only one card of that name per deck.
+      if (ctx.uniqueApplies && isUnique && count > 1) {
+        errors.push(`"${name}" is Unique — only one copy per deck (found ${count})`);
       }
     }
   }

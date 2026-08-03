@@ -72,6 +72,7 @@ type ObjectStatus =
 interface GameObject {
   objectId: ObjectId;
   cardId: CardId | null;          // null = identity unknown from this perspective
+  name: string;                   // CR 132.4 — "Name, Subtitle"; NOT derivable from cardId (reprints)
   owner: PlayerId;                // CR 127
   controller: PlayerId | null;    // CR 188; null only for uncontrolled battlefields
   isToken: boolean;               // CR 185.1 — immutable nature
@@ -85,7 +86,7 @@ interface GameObject {
   counters: Record<string, number>;               // CR 741–749 (no controller)
   attachedTo: ObjectId | null;                    // CR 716–719
   attachments: ObjectId[];                        // this object as TopMostCard
-  preventValue: number | "all" | null;            // CR 437 — decrementing tracked value
+  damageReplacements: DamageReplacement[];        // CR 465.2.c.5 — ORDERED, controller's choice
   grantedKeywords: GrantedKeyword[];              // CR 801.3 (duration-bearing)
 }
 
@@ -179,14 +180,24 @@ interface LayerEffect {
   layer: LayerNumber; sourceObjectId:ObjectId; targetSelector:Selector;
   op: TraitOp | AbilityOp | ArithmeticOp;
   fromPassive: boolean;             // CR 477.3.b — passives do NOT snapshot
-  snapshotted?: number;             // resolved limited value, remembered for the duration
+  snapshotted?: Record<ObjectId,number>;  // CR 477.3.b — PER OBJECT; an application is per-object
   duration: Duration; timestamp:number;
+  fromAbilityId?: string;           // set when emitted by a conditional PassiveAbility (476.2)
 }
+
+/** CR 437 / 465.2.c.4.a — one assignment-time damage replacement */
+type DamageReplacement = { kind:"prevent"; value:number|"all" } | { kind:"multiply"; factor:number };
 type ArithmeticOp = { attr:"might"|"energyCost"|"powerCost"; delta:number; minimum?:number; maximum?:number };
 type TraitOp      = { set:"might"|"name"|"type"|"tags"|"controller"|"cost"|"domain"; value:unknown } | { copyFrom:ObjectId };
 type AbilityOp    = { grantKeyword?:Keyword; removeKeyword?:Keyword; appendText?:string; removeText?:string };
 ```
-**Resolution:** apply layers 1→2→3, each effect once, **iterate to a fixed point** (476). **Snapshot** non-passive limited arithmetic at application (477.3.b). **Increase-by-negative → 0** (477.3.c). Negative Might is legal (477.3.c).
+**Resolution:** `applyLayers` OWNS the fixed point (476). Each iteration re-evaluates every conditional `PassiveAbility.condition` and emits/withdraws its `layerEffects` (476.2), then applies layers 1→2→3, each effect once (476.1); withdrawal is separate from application and also happens once (476.3). Repeat until a pass changes nothing.
+
+**Layer 3 has two SUBLAYERS (477.3.e):** all **increases** first (.e.1), all **decreases** last (.e.2), each snapshotting independently. Timestamp orders *within* a sublayer only — CR 480.3 says "within each Layer and Sublayer".
+
+**Snapshot** non-passive limited arithmetic at application, **per object** (477.3.b). **Increase-by-negative → 0** (477.3.c, enforced in the Double action). Negative Might is legal (477.3.c).
+
+> Corrected by **Model Corrections 001** — the fixed point had been placed outside Layers, snapshots were scalar, and 477.3.e was never recorded.
 
 ## 9. Players & format context
 
@@ -198,7 +209,7 @@ interface PlayerState {
   runePool: { energy:number; power:{ domain:Domain; universal:boolean }[] };  // CR 165–167
   handCount: number;                           // CR 108.7.e — public even when contents are private
   legendObjectId: ObjectId;
-  chosenChampionCardId: CardId;                // CR 103.2.a.3 — name-based status
+  chosenChampionName: string;                  // CR 103.2.a.3 — name-based status, so stored as the NAME
   scoredBattlefieldsThisTurn: Set<ObjectId>;   // CR 470 — once per BF per turn, both methods
 }
 
@@ -225,9 +236,16 @@ interface CombatState {                        // CR 459–466
   defender: PlayerId;
   step: 1|2|3;
 }
-interface DamageAssignment { fromPlayer:PlayerId; assignments:{ targetObjectId:ObjectId; amount:number }[] }
+interface DamageAssignment { fromPlayer:PlayerId; assignments:{ targetObjectId:ObjectId; raw:number }[] }
 ```
 **Assignment constraints (465.2.c + 815/826):** lethal-first universal (c.3); **never exceed minimum-lethal while unassigned units remain** (c.4); replacement effects apply **at assignment**, minimum-lethal computed through them (c.5, c.4.a); Tank-first / Backline-last as validity gates; contradictory requirements → choose one (c.8).
+
+**Damage quantities are THREE distinct things** (Model Corrections 001 Addendum A) — the CR overloads "assigned" for two of them:
+| `raw` | the assigner's pool spend. **Conserved**; a doubler does not let them spend more. `minimumLethal` returns this. |
+| `assigned` | the CR's reported post-replacement figure, **= prevented + dealt**. Accounting only; may exceed the pool. |
+| `dealt` | what lands and marks damage. **Lethality is tested on this, never on `assigned`.** |
+
+Replacements are an ORDERED list on the unit, sequenced by that unit's **controller** (465.2.c.5); ordering changes both `assigned` and `dealt` (4/2 vs 6/4).
 
 **Scoring (467–472):**
 ```ts
