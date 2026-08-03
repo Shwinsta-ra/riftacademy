@@ -56,6 +56,31 @@ describe("speed legality is a pure function of turn state (CR 308-310)", () => {
   });
 });
 
+describe("NEGATIVE timing cases (CR 308-310)", () => {
+  it("CR 309.1.a — an ACTION-speed card is rejected in a Neutral Closed state", () => {
+    const turn = makeTurnState({ showdownState: "neutral", openState: "closed", turnPlayer: "A" });
+    expect(isTimingPermitted(turn, ACTION, "A")).toBe(false);
+    expect(isTimingPermitted(turn, REACTION, "A")).toBe(true); // Reaction still legal
+  });
+
+  it("CR 309.1.a — an ACTION-speed card is rejected in a Showdown Closed state", () => {
+    const turn = makeTurnState({ showdownState: "showdown", openState: "closed", turnPlayer: "A" });
+    expect(isTimingPermitted(turn, ACTION, "A")).toBe(false);
+  });
+
+  it("CR 308.1.a — a NORMAL-speed card is rejected in a Showdown Open state, even on your turn", () => {
+    const turn = makeTurnState({ showdownState: "showdown", openState: "open", turnPlayer: "A" });
+    expect(isTimingPermitted(turn, NORMAL, "A")).toBe(false);
+    expect(isTimingPermitted(turn, ACTION, "A")).toBe(true);
+  });
+
+  it("CR 381 — a normal-speed activated ability is rejected on an opponent's turn", () => {
+    const turn = makeTurnState({ showdownState: "neutral", openState: "open", turnPlayer: "B" });
+    expect(isTimingPermitted(turn, NORMAL, "A")).toBe(false);
+    expect(isTimingPermitted(turn, NORMAL, "B")).toBe(true);
+  });
+});
+
 describe("Priority and Focus are two independent slots (CR 312-313)", () => {
   it("gaining Focus also grants Priority (313.2)", () => {
     const turn = setShowdownState(makeTurnState(), "showdown");

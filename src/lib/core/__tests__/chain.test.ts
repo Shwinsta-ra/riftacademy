@@ -10,10 +10,14 @@ import {
   runCleanup,
 } from "../chain";
 import { makeState, makeTurnState, makeUnit, stateWithObjects } from "./fixtures";
-import type { PendingChainItem } from "../schema";
+import type { FinalizedChainItem, PendingChainItem } from "../schema";
 
 function pending(itemId: string, addedSeq: number, objectId: string | null = null): PendingChainItem {
   return { itemId, objectId, controller: "A", kind: objectId ? "card" : "ability", addedSeq };
+}
+
+function finalizedItem(itemId: string, finalizedSeq: number): FinalizedChainItem {
+  return { itemId, objectId: null, controller: "A", choices: {}, totalCost: { energy: 0, power: [] }, finalizedSeq };
 }
 
 describe("chain ordering — FIFO finalize, LIFO resolve (CR 337.1.b / 340.1)", () => {
@@ -32,6 +36,36 @@ describe("chain ordering — FIFO finalize, LIFO resolve (CR 337.1.b / 340.1)", 
       ],
     };
     expect(newestFinalized(chain)?.itemId).toBe("c");
+  });
+
+  it("CR 337.1.b vs 340.1 — with 3+ items, finalize order and resolve order are OPPOSITE", () => {
+    // The single property most likely to be silently reversed. Two items can
+    // pass by luck; three cannot.
+    const ids = ["a", "b", "c"];
+    let chain = { pending: ids.map((id, i) => pending(id, i + 1)), finalized: [] as ReturnType<typeof finalizedItem>[] };
+
+    const finalizeOrder: string[] = [];
+    while (chain.pending.length > 0) {
+      const next = oldestPending(chain);
+      if (!next) break;
+      finalizeOrder.push(next.itemId);
+      chain = {
+        pending: chain.pending.filter((p) => p.itemId !== next.itemId),
+        finalized: [...chain.finalized, finalizedItem(next.itemId, finalizeOrder.length)],
+      };
+    }
+
+    const resolveOrder: string[] = [];
+    while (chain.finalized.length > 0) {
+      const top = newestFinalized(chain);
+      if (!top) break;
+      resolveOrder.push(top.itemId);
+      chain = { pending: chain.pending, finalized: chain.finalized.filter((f) => f.itemId !== top.itemId) };
+    }
+
+    expect(finalizeOrder).toEqual(["a", "b", "c"]); // FIFO
+    expect(resolveOrder).toEqual(["c", "b", "a"]); // LIFO
+    expect(resolveOrder).toEqual([...finalizeOrder].reverse());
   });
 
   it("the Chain exists only while it holds items (CR 328-330)", () => {

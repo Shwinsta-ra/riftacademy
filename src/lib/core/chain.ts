@@ -13,6 +13,7 @@
 //     abilities resolve the moment they finalize, so there is no reaction
 //     window against them and they are never counterable.
 
+import { currentMight } from "./layers";
 import { checkWin } from "./scoring";
 import type {
   Chain,
@@ -334,7 +335,13 @@ function noteDeathknellsThenKill(state: GameState): GameState {
   for (const object of Object.values(state.objects)) {
     if (!object.categories.includes("unit")) continue;
     if (object.zone.kind !== "base" && object.zone.kind !== "battlefield") continue;
-    const might = object.printedMight ?? 0;
+    // CR 142.4.b — Lethal Damage is measured against the unit's CURRENT Might,
+    // not its printed Might. The rule's own example is a 5-Might unit with 3
+    // damage whose Might "becomes 3", at which point it has lethal damage
+    // marked. Reading printedMight here made every Might-altering effect
+    // invisible to the kill step in both directions: that unit survived, and a
+    // buffed unit died to damage below its actual Might.
+    const might = currentMight(state, object.objectId);
     if (object.damage > 0 && object.damage >= might) lethal.push(object);
   }
   if (lethal.length === 0) return state;
@@ -361,7 +368,7 @@ function noteDeathknellsThenKill(state: GameState): GameState {
       buffCount: 0,
       counters: {},
       grantedKeywords: [],
-      preventValue: null,
+      damageReplacements: [],
       statuses: new Set(),
     };
   }
@@ -487,8 +494,14 @@ function expireThisTurnEffects(state: GameState): GameState {
   return { ...state, activeLayerEffects: remaining };
 }
 
-/** CR 167 — Rune Pools empty at the start of each Main Phase AND at the end of each turn. */
-function emptyRunePools(state: GameState): GameState {
+/**
+ * CR 167 — Rune Pools empty at the start of each Main Phase AND at the end of
+ * each turn; any unspent Energy or Power is lost (167.1). The turn-end half
+ * runs from the Ending Special Cleanup above; the Main-Phase half is applied
+ * by the `phaseChanged` reducer in rulesKernel.ts, which is why this is
+ * exported rather than private.
+ */
+export function emptyRunePools(state: GameState): GameState {
   const players = { ...state.players };
   let changed = false;
   for (const [playerId, player] of Object.entries(players)) {

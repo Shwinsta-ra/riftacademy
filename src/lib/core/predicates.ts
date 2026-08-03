@@ -77,6 +77,28 @@ export function sumKeywordValue(state: GameState, objectId: ObjectId, keyword: K
 }
 
 // ---------------------------------------------------------------------------
+// Chosen Champion identity (CR 103.2.a.3)
+// ---------------------------------------------------------------------------
+
+/**
+ * CR 103.2.a.3 — a player's Chosen Champion is the specific card chosen during
+ * deck building AND any Champion Unit with the same name, in any zone, for
+ * every rule and effect that cares about Chosen Champion status during play.
+ *
+ * Name-based, so a reprint of the chosen card under a different `cardId` still
+ * counts. Comparing ids here would answer "is this the exact printing I
+ * registered?", which is not the question the rule asks.
+ */
+export function isChosenChampion(state: GameState, objectId: ObjectId, player: PlayerId): boolean {
+  const object = state.objects[objectId];
+  const chosenName = state.players[player]?.chosenChampionName;
+  if (!object || !chosenName) return false;
+  // "Champion Unit" — the supertype, not merely a unit (CR 103.2.a).
+  if (!object.supertypes.includes("champion")) return false;
+  return object.name === chosenName;
+}
+
+// ---------------------------------------------------------------------------
 // Player references
 // ---------------------------------------------------------------------------
 
@@ -200,11 +222,12 @@ export function evaluatePredicate(state: GameState, predicate: Predicate, subjec
     case "hasDomain":
       return object?.domains.includes(predicate.domain) ?? false; // CR 134.2
     case "nameIs":
-      // CR 132.4 — the full "Name, Subtitle" comma form IS the name. Matching
-      // is by cardId because that is the object's catalog identity; resolving
-      // a display name would require the card catalog, which the kernel
-      // deliberately does not import.
-      return object?.cardId === predicate.name;
+      // CR 132.4 — the full "Name, Subtitle" comma form IS the name, and it is
+      // what naming a card names (CR 760-763). Matching on `cardId` was wrong:
+      // reprints share a name across sets under different ids, so an
+      // id-comparison silently fails to match an otherwise-identical card. The
+      // name is mirrored onto the object, so this still needs no catalog.
+      return object ? object.name === predicate.name : false;
     case "mightAtLeast":
       return object ? currentMight(state, subject) >= predicate.value : false;
     case "mightAtMost":
