@@ -19,6 +19,19 @@ Static files that must be served verbatim at the web root (domain-verification t
 
 Corollary, worth remembering before anyone adds SPA deep-link routing: this app currently has **no catch-all rewrite**, which is exactly why `/riot.txt` works. If a future change adds one to make deep links resolve to `index.html`, it must exclude `/riot.txt` (and any other root static file) ahead of the catch-all, or Riot's verification silently starts returning HTML and fails.
 
+**Deployment protection — `main` is the only verifiable point (measured 2026-08-05):**
+Neither the PR preview nor `staging` can be used to confirm this works. Both sit behind Vercel SSO and `302` every path to `vercel.com/sso-api`, including `/riot.txt`:
+
+| Host | `/riot.txt` |
+|---|---|
+| `riftacademy-git-feature-riot-domain-verification-…vercel.app` | `302` → Vercel SSO |
+| `riftacademy-staging.vercel.app` | `302` → Vercel SSO |
+| `riftacademy-tau.vercel.app` | `404` pre-deploy, publicly reachable |
+
+Two consequences. First, a `302` on preview/staging is deployment protection, **not** a failure of the file — don't debug it as one. Second, Riot's verification crawler is unauthenticated, so it can only ever see production; this genuinely has to reach `main` before it can be verified at all.
+
+This also means Section 5's description of `staging` as the "public preview" domain is out of date — `riftacademy-staging.vercel.app` is not publicly reachable as of this measurement. Worth correcting at reconciliation, and worth knowing for any other thread that assumes it can hand a staging link to someone outside the team.
+
 **Anything another thread working today should know:**
 The token only takes effect on `riftacademy-tau.vercel.app` once this reaches `main` — i.e. after the normal `integration → beta → staging → main` promotion. Post-deploy check:
 
