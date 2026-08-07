@@ -14,9 +14,17 @@ New directory `docs/contracts/`, for **published contracts with conformance obli
 | `RiftCore_PrintingCode_Spec_v2_1_Amendment.md` | `docs/contracts/` |
 | `RiftCore_to_M9_ChangeDetection_Requirements_2026-08-06.md` | `docs/contracts/` |
 | `RiftCore_to_M9_ChangeDetection_Answers_2026-08-06.md` | `docs/contracts/` |
+| `RiftCore_to_M9_Supabase_DDL_AUDITED_FINAL.md` | `docs/contracts/` |
 | `printing_code_fixtures.json` | `docs/contracts/` — new, see below |
 | `printing_code_fixtures_FINDINGS.md` | `docs/contracts/` — new, see below |
+| `RiftAcademy_Rules_Questions_Register.md` | `docs/rules/` |
 | `RiftCore_to_M8_M9_v2_Acceptance_Notes_2026-08-06.md` | `docs/design/riftcore-v2/` |
+| `RiftCore_to_M9_Reply_Adjudication_2026-08-05.md` | `docs/design/riftcore-v2/` |
+| `RiftCore_to_M9_DDL_Signoff_2026-08-05.md` | `docs/design/riftcore-v2/` |
+| `RiftCore_to_M9_DryRun_Adjudication_2026-08-05.md` | `docs/design/riftcore-v2/` |
+| `RiftCore_to_M9_MasterInventory_Adjudication_2026-08-05.md` | `docs/design/riftcore-v2/` |
+
+**The Rules Questions Register is the one that matters most going forward.** It is a *persistent, accumulating* record, not a point-in-time document: four entries so far (Q-001 to Q-004), all `CR-CLEAR`, all pending judge confirmation, each carrying its CR citation and a "downstream impact if corrected" note. It had been uncommitted since 2026-08-04. New rules questions append to it, and a `JUDGE-CORRECTED` status is the signal to check what was built on the old answer — so it needs to live in git, where that history is visible, rather than in a thread.
 
 Superseded printing-code documents (v1, Addenda A/B/C) are deliberately **not** committed. v2 states what it supersedes; committing dead documents adds noise without adding recoverability.
 
@@ -36,5 +44,5 @@ Added to `CLAUDE.md`: *analytical and specification documents are committed, not
 
 **Anything another thread working today should know before touching related code:**
 
-- **Six required documents could not be committed — they are not on this machine.** `RiftCore_to_M9_Supabase_DDL_AUDITED_FINAL.md`, `RiftAcademy_Rules_Questions_Register.md` (flagged uncommitted since 2026-08-04), and four 2026-08-05 adjudication records: `RiftCore_to_M9_Reply_Adjudication`, `RiftCore_to_M9_DDL_Signoff`, `RiftCore_to_M9_DryRun_Adjudication`, `RiftCore_to_M9_MasterInventory_Adjudication`. Searched `~/Downloads` and the whole repo working tree; none present under those names. They need a second pass once the files are supplied.
+- **All twelve documents are now committed.** Six were missing on the first pass and were supplied by Core the same day; a second pass added them before this PR merged. Nothing is outstanding.
 - Anyone building a printing-code translator: **read `printing_code_fixtures_FINDINGS.md` before implementing.** Finding 1 will make the Python and TypeScript implementations disagree on rune, token and Crystal Rose codes until Core rules on it, and per §4's own warning the symptom is a silently empty join rather than an error.
