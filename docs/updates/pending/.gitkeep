@@ -1,0 +1,6 @@
+Fragments live here between reconciliations, one file per thread per topic,
+named YYYY-MM-DD-short-topic.md, following docs/updates/TEMPLATE.md.
+
+This file exists only so the directory survives in git when the folder is
+empty (git does not track empty directories). The 2026-08-06 reconciliation
+was the first to clear the folder completely. Do not delete it.
