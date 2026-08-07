@@ -42,7 +42,13 @@ STATE_FILE = Path.home() / ".riftacademy_tcgcsv_state.json"
 # That is deliberate: card_printings stays gameplay-shaped, per Core's read that foil-ness
 # belongs to the physical copy rather than the printing, while the price spine carries the
 # distinction where it actually matters.
-CAPTURE_ALL_SUB_TYPES = True
+#
+# There is no toggle for this, deliberately. A CAPTURE_ALL_SUB_TYPES = True constant used
+# to sit here and was referenced nowhere - setting it False changed nothing, so anyone
+# auditing "is filtering on?" found a plausible-looking control that controlled nothing.
+# Removed rather than wired: capturing every subtype is the decided behaviour, and a
+# toggle implies a supported off-state that has never been designed. If subtype filtering
+# is ever needed again, specify it against that requirement rather than resurrecting this.
 
 SEALED_PATTERNS = [
     ("pre_rift_kit",    ["pre-rift", "prerift"]),

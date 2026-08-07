@@ -1,25 +1,34 @@
 {
-  "version": "2.2",
-  "source": "docs/contracts/RiftCore_PrintingCode_Spec_v2_CONSOLIDATED.md §8",
-  "amended_by": [
-    "docs/contracts/RiftCore_PrintingCode_Spec_v2_1_Amendment.md",
-    "docs/contracts/RiftCore_PrintingCode_Spec_v2_2_Amendment.md"
+  "version": "3",
+  "source": "docs/contracts/RiftCore_PrintingCode_Spec_v3.md §8",
+  "supersedes_sources": [
+    "docs/contracts/RiftCore_PrintingCode_Spec_v2_CONSOLIDATED.md §8 (deleted 2026-08-07, folded into v3)",
+    "docs/contracts/RiftCore_PrintingCode_Spec_v2_1_Amendment.md (deleted 2026-08-07, folded into v3)",
+    "docs/contracts/RiftCore_PrintingCode_Spec_v2_2_Amendment.md (deleted 2026-08-07, folded into v3)"
   ],
   "harness_rules": [
-    "Fixtures with \"withdrawn\": true MUST be skipped, never executed (v2.2 §4).",
-    "Fixtures with \"deferred\": true MUST be skipped until \"blocked_on\" is satisfied, and their skip MUST be reported rather than counted as a pass (v2.2 §2).",
+    "Fixtures with \"withdrawn\": true MUST be skipped, never executed (v3 §8.4).",
+    "Fixtures with \"deferred\": true MUST be skipped until \"blocked_on\" is satisfied, and their skip MUST be reported rather than counted as a pass (v3 §8 row 17b).",
     "The entry with \"kind\": \"assertion\" is a meta-assertion over the other fixtures, not a data fixture; dispatch on it rather than parsing an external value.",
-    "Fixtures are keyed by (id, part). \"part\" is absent for every fixture except the two halves of 17, which are (17, \"a\") and (17, \"b\"). This keeps \"id\" an integer for typed loaders rather than mixing int and string."
+    "Fixtures are keyed by (id, part). \"part\" is absent for every fixture except the two halves of 17, which are (17, \"a\") and (17, \"b\"). This keeps \"id\" an integer for typed loaders rather than mixing int and string, while keeping ids traceable to v3 §8's numbering (v3 §8.2).",
+    "Human-facing output (test names, reports) MUST use the derived display key: str(id) + (part or \"\") -> \"5\", \"17a\", \"17b\". Uniqueness is asserted on (id, part); the display form is presentation only and is never a key (v3 §8.2).",
+    "Reports MUST state both counts from \"counts\" below — 20 executable data fixtures AND 21 harness assertions today — so \"20\" is never read as \"the harness runs 20 things\" (v3 §8.1)."
   ],
   "counts": {
     "entries": 23,
+    "meta_assertions": 1,
     "data_fixtures": 22,
+    "withdrawn": 1,
+    "deferred": 1,
     "executable": 21,
     "executable_today": 20,
-    "derivation": "23 entries, minus the meta-assertion (19) = 22 data fixtures; minus withdrawn (13) = 21 executable; minus deferred (17b) = 20 executable today. Matches v2.2 §5.5."
+    "harness_assertions_today": 21,
+    "derivation": "23 entries, minus the meta-assertion (19) = 22 data fixtures; minus withdrawn (13) = 21 executable; minus deferred (17b) = 20 executable today. Harness assertions today = 20 executable data fixtures + 1 meta-assertion (19, which is excluded from the fixture count but IS executed) = 21. See v3 §8.1.",
+    "note": "\"executable\" (21) and \"harness_assertions_today\" (21) are equal by coincidence and mean different things. \"executable\" counts data fixtures that are not withdrawn, INCLUDING the deferred 17b. \"harness_assertions_today\" counts what the harness actually runs today. Always report \"executable_today\" (20) and \"harness_assertions_today\" (21) together.",
+    "asserted_by": "scripts/verify_printing_code_fixtures.py — recomputes every field above from the \"fixtures\" array rather than trusting this block."
   },
-  "casing_rule": "v2.2 §1, internal -> external: (1) uppercase the SET component; (2) uppercase the NUMBER's alphabetic prefix if present (r->R, t->T, sp->SP); (3) preserve the variant suffix letter in lowercase; (4) preserve the asterisk verbatim; (5) insert '/' before TOTAL when present. External -> internal is unchanged: lowercase everything.",
-  "set_codes_are_data": "v2.2 §3: the parser MUST NOT validate the set component against any enumeration. Any 2-4 letter set is accepted; whether it exists is answered by the join, not the regex. A well-formed code for an unknown set is situation C (data gap), not situation A (malformed).",
+  "casing_rule": "v3 §4, internal -> external: (1) uppercase the SET component; (2) uppercase the NUMBER's alphabetic prefix if present (r->R, t->T, sp->SP); (3) preserve the variant suffix letter in lowercase; (4) preserve the asterisk verbatim; (5) insert '/' before TOTAL when present. External -> internal is unchanged: lowercase everything.",
+  "set_codes_are_data": "v3 §3: the parser MUST NOT validate the set component against any enumeration. Any 2-4 letter set is accepted; whether it exists is answered by the join, not the regex. A well-formed code for an unknown set is situation C (data gap), not situation A (malformed).",
   "fixtures": [
     { "id": 1, "case": "signature_asterisk", "external": "SFD-227*/221", "internal": "sfd-227*-221",
       "note": "Ahri, Inquisitive — $3,089" },
@@ -36,7 +45,7 @@
     { "id": 6, "case": "alt_art", "external": "SFD-110a/221", "internal": "sfd-110a-221" },
 
     { "id": 7, "case": "rune_suffix_beyond_b", "external": "OP-R06c", "internal": "op-r06c",
-      "note": "Asserts lowercasing and that the suffix range reaches [a-z] beyond [ab]. Remains valid even though 'op' is not a sanctioned internal set code: per v2.2 §3 the parser does not validate set codes at all, so this fixture tests casing and suffix range, not set membership." },
+      "note": "Asserts lowercasing and that the suffix range reaches [a-z] beyond [ab]. Remains valid even though 'op' is not a sanctioned internal set code: per v3 §3 the parser does not validate set codes at all, so this fixture tests casing and suffix range, not set membership." },
 
     { "id": 8, "case": "rune_no_total", "external": "VEN-R01", "internal": "ven-r01" },
 
@@ -52,9 +61,9 @@
 
     { "id": 13, "case": "promo_prefix", "external": "OP-041/166", "internal": "op-041-166",
       "withdrawn": true,
-      "withdrawn_by": "RiftCore_PrintingCode_Spec_v2_1_Amendment.md §2",
+      "withdrawn_by": "RiftCore_PrintingCode_Spec_v3.md §8.4 (ruling originally issued as v2.1 §2, 2026-08-06)",
       "reason": "OP is a distribution marker, not a set code. All 7 live OP holdings mirror base-set collector number and total (OP-127/219 = unl-127-219). Withdrawn v2.1 2026-08-06.",
-      "note": "Retained rather than deleted, per v2.2 §4: a withdrawn fixture carrying its reason is a record; a deleted one is a gap someone re-derives wrongly — here, by reinstating the false model that 'op' is a set. HARNESS MUST SKIP." },
+      "note": "Retained rather than deleted, per v3 §8.4: a withdrawn fixture carrying its reason is a record; a deleted one is a gap someone re-derives wrongly — here, by reinstating the false model that 'op' is a set. HARNESS MUST SKIP." },
 
     { "id": 14, "case": "starter", "external": "OGS-009/024", "internal": "ogs-009-024" },
 
@@ -70,14 +79,14 @@
     { "id": 17, "part": "a", "case": "dual_face_split", "tcgplayer_fragment": "T05 // T06",
       "returns": ["T05", "T06"],
       "round_trip": false,
-      "note": "EXECUTABLE NOW (v2.2 §2). Asserts the ' // ' split and that one product yields a LIST rather than a parse failure. Requires no group mapping, because it stops before translation." },
+      "note": "EXECUTABLE NOW (v3 §8, row 17a). Asserts the ' // ' split and that one product yields a LIST rather than a parse failure. Requires no group mapping, because it stops before translation." },
 
     { "id": 17, "part": "b", "case": "dual_face_translation", "tcgplayer_fragment": "T05 // T06",
       "internal_list": ["unl-t05", "unl-t06"],
       "round_trip": false,
       "deferred": true,
       "blocked_on": "tcgplayer_groups",
-      "note": "DEFERRED (v2.2 §2). Full translation needs group_id resolved through the tcgplayer_groups(group_id, set_code) mapping, which does not exist yet. Activates when the group mapping lands. Harness must skip and REPORT the skip, never count it as a pass." },
+      "note": "DEFERRED (v3 §8, row 17b). Full translation needs group_id resolved through the tcgplayer_groups(group_id, set_code) mapping, which does not exist yet. Activates when the group mapping lands. Harness must skip and REPORT the skip, never count it as a pass." },
 
     { "id": 18, "case": "forward_looking", "external": "VEN-135a*/166", "internal": "ven-135a*-166",
       "note": "zero occurrences in both populations (1,165 card_printings and 1,422 TCGplayer) as of 2026-08-06; do not delete as redundant" },
@@ -85,7 +94,7 @@
     { "id": 19, "case": "round_trip", "kind": "assertion",
       "assertion": "For every fixture with an external and an internal value, external -> internal -> external equals the input.",
       "exceptions": [15, 16, 17],
-      "note": "Not a data fixture — a meta-assertion over the others. HOLDS under v2.2's corrected §4 casing rule; it did NOT hold under v2's \"uppercase the set prefix only\", which failed fixtures 7, 8, 9, 10 and 11. That failure is what produced the v2.2 amendment, and it was only visible because this assertion was executable rather than prose." },
+      "note": "Not a data fixture — a meta-assertion over the others. HOLDS under v3 §4's corrected casing rule; it did NOT hold under v2's \"uppercase the set prefix only\", which failed fixtures 7, 8, 9, 10 and 11. That failure is what produced the v2.2 amendment (now v3 §4), and it was only visible because this assertion was executable rather than prose." },
 
     { "id": 20, "case": "malformed", "external": "VEN-?/166", "expect": "raise",
       "note": "2026-08-02 placeholder" },
@@ -93,6 +102,6 @@
     { "id": 21, "case": "malformed_empty", "external": "", "expect": "raise" },
 
     { "id": 22, "case": "unknown_prefix", "external": "VEN-ZZ1/006", "expect": "raise",
-      "note": "Unknown NUMBER prefix must fail to parse — new forms are findings. Note this is a prefix check, not a set check: per v2.2 §3 an unknown SET is situation C (data gap), not a raise." }
+      "note": "Unknown NUMBER prefix must fail to parse — new forms are findings. Note this is a prefix check, not a set check: per v3 §3 an unknown SET is situation C (data gap), not a raise." }
   ]
 }
