@@ -71,3 +71,25 @@ from cards;
 -- an ordered array distinguishing domain symbols from [C] and [A]. Deriving those from
 -- classification.domain would be inference, which Core prohibits and which is RiftEngine's
 -- remit. A symbol-bearing source is required before power_cost can be populated.
+
+select '=== 9. ERRATA ASSERTIONS (Core 2026-08-05) ===' as section;
+-- Markers supplied by RiftCore. Pass requires the post-errata substring to be present.
+-- Markers are in the Master Card Inventory CSV's plain notation (Might, not :rb_might:),
+-- which is the authoritative rules-text source as of migration 008.
+-- HISTORY: these read 0/7 against the original Riftcodex load, because every Riftcodex
+-- snapshot predates the 2026-07-23 errata. After migrations 008 and 009 all 7 should pass.
+-- If Diana, Lunari alone fails, migration 009 has not been applied.
+select name, marker, (rules_text ilike '%' || marker || '%') as passed
+from (values
+  ('Draven, Vanquisher',  'to give me +2'),
+  ('Emperor''s Dais',     'to play a 2 Might Sand Soldier'),
+  ('Fizz, Trickster',     'Then recycle it.'),
+  ('Diana, Lunari',       'to [Predict]'),
+  ('Stalking Wolf',       'You may [Ambush] me to its battlefield'),
+  ('Astral Heron',        'the next card you play this turn'),
+  ('Gangplank, Naval',    '+3 Might this turn instead')
+) as e(name, marker)
+join cards c using (name)
+order by name;
+-- Resonating Strike carries no assertion: its errata was reminder-text only and
+-- functionally null, so presence in section 3 suffices.
