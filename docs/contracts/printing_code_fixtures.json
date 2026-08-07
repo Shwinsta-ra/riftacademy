@@ -1,0 +1,75 @@
+{
+  "version": "2.1",
+  "source": "docs/contracts/RiftCore_PrintingCode_Spec_v2_CONSOLIDATED.md §8",
+  "amended_by": "docs/contracts/RiftCore_PrintingCode_Spec_v2_1_Amendment.md",
+  "note": "Fixture 13 withdrawn per v2.1 Amendment §2; retained here with \"withdrawn\": true so the withdrawal is visible rather than silent, and so fixture ids stay stable against the spec table. Fixture 7 asserts lowercasing and the [a-z] suffix range only. Loaders MUST skip any fixture with \"withdrawn\": true.",
+  "open_findings": "See docs/contracts/printing_code_fixtures_FINDINGS.md. Three ambiguities in §8 are unresolved and are flagged there rather than resolved here; fixtures 7, 8, 9, 10, 11, 17 and 19 are affected.",
+  "fixtures": [
+    { "id": 1, "case": "signature_asterisk", "external": "SFD-227*/221", "internal": "sfd-227*-221",
+      "note": "Ahri, Inquisitive — $3,089" },
+
+    { "id": 2, "case": "signature_asterisk", "external": "OGN-303*/298", "internal": "ogn-303*-298" },
+
+    { "id": 3, "case": "signature_asterisk", "external": "VEN-189*/166", "internal": "ven-189*-166" },
+
+    { "id": 4, "case": "signature_asterisk", "external": "UNL-234*/219", "internal": "unl-234*-219" },
+
+    { "id": 5, "case": "alt_art_case_preserved", "external": "VEN-135a/166", "internal": "ven-135a-166",
+      "note": "must not become 135A" },
+
+    { "id": 6, "case": "alt_art", "external": "SFD-110a/221", "internal": "sfd-110a-221" },
+
+    { "id": 7, "case": "rune_suffix_beyond_b", "external": "OP-R06c", "internal": "op-r06c",
+      "provisional": true,
+      "note": "v2.1 §2.2 reduces this to a lowercasing assertion plus proof that the suffix range reaches [a-z] beyond [ab]. The 'op' prefix model is UNRESOLVED — v2.1 §2.3 forbids creating an internal set code 'op'. Do not treat the internal value here as endorsing 'op' as a set." },
+
+    { "id": 8, "case": "rune_no_total", "external": "VEN-R01", "internal": "ven-r01" },
+
+    { "id": 9, "case": "rune_variant", "external": "VEN-R03a", "internal": "ven-r03a" },
+
+    { "id": 10, "case": "token_no_total", "external": "UNL-T01", "internal": "unl-t01" },
+
+    { "id": 11, "case": "special_subset", "external": "VEN-SP1/006", "internal": "ven-sp1-006",
+      "note": "total = subset size (6-card Crystal Rose subset), not the VEN set total of 166" },
+
+    { "id": 12, "case": "standard", "external": "VEN-142/166", "internal": "ven-142-166" },
+
+    { "id": 13, "case": "promo_prefix", "external": "OP-041/166", "internal": "op-041-166",
+      "withdrawn": true,
+      "withdrawn_by": "RiftCore_PrintingCode_Spec_v2_1_Amendment.md §2",
+      "note": "WITHDRAWN — do not implement against this. It asserts 'op' as a set prefix, which encodes a false model: all 7 of M8's live OP holdings carry the collector number and total of the card's ORIGINAL set (OP-041/166 mirrors ven-041-166, Riven, Shattered). OP is a distribution marker, not a set." },
+
+    { "id": 14, "case": "starter", "external": "OGS-009/024", "internal": "ogs-009-024" },
+
+    { "id": 15, "case": "alias_input_only", "external": "PG-019/024", "internal": "ogs-019-024",
+      "round_trip": false,
+      "note": "must not round-trip to PG; accept PG on input, never emit it" },
+
+    { "id": 16, "case": "foil_strip_and_flag", "external": "VEN-081/166-f", "internal": "ven-081-166",
+      "flags": { "foil": true },
+      "round_trip": false,
+      "note": "never emit -f internally" },
+
+    { "id": 17, "case": "dual_face_tcgplayer", "tcgplayer_fragment": "T05 // T06",
+      "internal_list": ["...t05", "...t06"],
+      "round_trip": false,
+      "unresolved": true,
+      "note": "The set prefix is written as an ellipsis in §8 and is GENUINELY UNSPECIFIED: it resolves from group_id via the tcgplayer_groups mapping table, which does not exist yet (v2 §12). Transcribed verbatim rather than guessed. An implementation cannot execute this fixture until §5 fixtures are added with real group ids." },
+
+    { "id": 18, "case": "forward_looking", "external": "VEN-135a*/166", "internal": "ven-135a*-166",
+      "note": "zero occurrences in both populations (1,165 card_printings and 1,422 TCGplayer) as of 2026-08-06; do not delete as redundant" },
+
+    { "id": 19, "case": "round_trip", "kind": "assertion",
+      "assertion": "For every fixture with an external and an internal value, external -> internal -> external equals the input.",
+      "exceptions": [15, 16, 17],
+      "note": "Not a data fixture — a meta-assertion over the others. Encoded as \"kind\": \"assertion\" so a loader can dispatch on it rather than trying to parse an external value. Fixtures excluded from it carry \"round_trip\": false. SEE FINDING 1 — as §4 is literally written, this assertion fails fixtures 7, 8, 9, 10 and 11." },
+
+    { "id": 20, "case": "malformed", "external": "VEN-?/166", "expect": "raise",
+      "note": "2026-08-02 placeholder" },
+
+    { "id": 21, "case": "malformed_empty", "external": "", "expect": "raise" },
+
+    { "id": 22, "case": "unknown_prefix", "external": "VEN-ZZ1/006", "expect": "raise",
+      "note": "new forms are findings — unknown prefixes must fail to parse, not be accepted" }
+  ]
+}
