@@ -4,6 +4,14 @@
 **Status: ALL THREE RESOLVED** by `RiftCore_PrintingCode_Spec_v2_2_Amendment.md`, same day.
 **Against:** `RiftCore_PrintingCode_Spec_v2_CONSOLIDATED.md` as amended by v2.1 and v2.2
 
+> **Reading this after 2026-08-07:** v2, v2.1 and v2.2 were consolidated into
+> **`RiftCore_PrintingCode_Spec_v3.md`** and deleted in the same commit. The `§` citations
+> below refer to those documents **as they stood when the findings were raised**, and are
+> left unrewritten — a record that silently renumbers itself is not a record. For where each
+> ruling lives now, see v3 §13's carry-forward table. Current spec references: Finding 1 →
+> v3 §4; Finding 2 → v3 §8 rows 17a/17b; Finding 3 → v3 §3; fixture 13 → v3 §8.4; the
+> counting section below → v3 §8.1, which supersedes it (see the note there).
+
 This document is kept rather than deleted now that the findings are closed. Same reasoning Core applied to withdrawn fixture 13 in v2.2 §4: *a record carrying its reason is a record; a deleted one is a gap someone re-derives wrongly.* The resolutions are recorded inline against each finding.
 
 The task specified: *"Flag any ambiguity in the markdown table rather than resolving it — an ambiguous fixture is a Core finding."* Three were flagged and none was resolved unilaterally. Every fixture value in `printing_code_fixtures.json` was transcribed verbatim from the §8 table; transcription was verified mechanically by parsing the table out of the markdown and comparing every quoted token, not by eye.
@@ -83,6 +91,16 @@ Core's required inline `reason` field has been added verbatim.
 
 ## Counting, recorded so it is not re-derived differently
 
+### ✅ RESOLVED — Core ruling 2026-08-07, now **v3 §8.1**, which supersedes this section.
+
+The reading below was **confirmed**: the meta-assertion is excluded from the fixture count, on the merits — fixture 19 has no external/internal pair, so it is a property assertion *over* the other fixtures rather than a data fixture. The derivation stands as recorded.
+
+Core also recorded that v2.2 §5.5's own arithmetic was wrong and reached the right figure by coincidence: it used 22 as the base — the **pre-split** count — having forgotten that splitting 17 adds an entry. The derivation below was reverse-engineered as a coherent rationale for a carelessly produced number, and it is the correct one.
+
+**One addition, because "20" alone is misleading** — it invites the reading *"the harness runs 20 things,"* when it runs 21. v3 §8.1 requires both figures be reported: **20 executable data fixtures** and **21 harness assertions today** (20 data + 1 meta). Both are now asserted programmatically by `scripts/verify_printing_code_fixtures.py`, which recomputes them from the fixtures array rather than trusting the recorded block.
+
+The original reading, retained:
+
 v2.2 §5.5 states **21 executable, 20 executable today.** That reconciles only if the meta-assertion is excluded from the fixture count, which is not stated explicitly:
 
 | | |
@@ -95,6 +113,14 @@ v2.2 §5.5 states **21 executable, 20 executable today.** That reconciles only i
 Matches v2.2 §5.5 exactly under that reading. The derivation is recorded in the JSON's `counts.derivation` field so a future reader does not arrive at 21 or 22 by counting differently.
 
 ## One representation choice, flagged for confirmation
+
+### ✅ RESOLVED — Core ruling 2026-08-07, now **v3 §8.2**. `(id, part)` **confirmed; keep it.**
+
+The type argument below was accepted as the smaller half of the reasoning. **The larger half: fixture ids must stay traceable to §8's numbering**, because that is how a human cross-references a failing test against the specification. Renumbering 1–23 would break that traceability; literal string ids preserve it but impose a `number | string` union on every loader for the sake of two entries. `(id, part)` preserves both properties.
+
+**One addition:** human-facing output derives a **display key** — `str(id) + (part or "")`, giving `"5"`, `"17a"`, `"17b"` — for test names and reports, so reports read naturally while the key stays typed. Uniqueness is asserted on `(id, part)`; the display form is presentation only and is never a key. Recorded in the JSON's `harness_rules` and asserted by `scripts/verify_printing_code_fixtures.py`.
+
+The original flag, retained:
 
 Splitting fixture 17 into `17a` and `17b` needs a unique key. Rather than making `id` a string for two entries and an integer for the other 21 — awkward for a typed TypeScript loader — the file keys fixtures on **`(id, part)`**, where `part` is absent everywhere except `(17, "a")` and `(17, "b")`. Recorded in the JSON's `harness_rules`. Say if Core would rather have literal string ids `"17a"` / `"17b"`.
 
