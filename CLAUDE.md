@@ -81,6 +81,13 @@ UI screenshots and mockups must always be delivered as PNG, rendered at 2x for p
 ## Fragment verification claims must cite evidence
 Any fragment asserting a verification (e.g. "confirmed merged," "verified working") must cite its evidence - branch, file:line, or the actual command run. A claim with no evidence trail is not acceptable. This exists because a false "confirmed merged to integration" claim shipped in a fragment on 2026-07-21, sat wrong for a day, and gated real work (RiftIQ) on the wrong assumption before another thread caught it via direct code verification.
 
+## Analytical and specification documents are committed, not circulated (adopted 2026-08-06)
+Any document that another module implements against, or that records a decision, is committed to the repo in the same session it is produced — `docs/contracts/` for cross-module contracts, `docs/design/` for internal design and decision records, `docs/rules/` for rules-derived reference.
+
+**When a document supersedes others, the superseding commit must delete them in the same commit.** The diff is the record that nothing was dropped in consolidation. Consolidation is where rulings disappear silently, and a deletion visible next to an addition is what makes that reviewable.
+
+`docs/contracts/` is distinct from `docs/design/` on purpose: a contract has someone on the other side who must comply. A spec nobody can diff is a spec nobody can be held to. This rule exists because consolidating five Core documents into one on 2026-08-06 silently dropped a ruling that had already been made, and another thread caught it rather than review.
+
 ## Deliverable style
 - Terminal commands handed to Ashwin must be bare, with **no inline `#` comments** — they break copy-paste into his terminal. Put explanations in prose before/after the code block, never inside it.
 - Instructions should be granular and exact: full paths, explicit commands, no assumed context.
