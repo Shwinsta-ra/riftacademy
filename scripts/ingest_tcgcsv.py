@@ -213,7 +213,12 @@ def main():
         w = f.write
         w(f"-- RiftAcademy price ingest for {observed_on}\n")
         w(f"-- tcgcsv build: {built_at}\n")
-        w("-- Foil rows discarded at source per Ashwin's 2026-08-06 decision.\n")
+        # Report the tally rather than restating the policy. The line this replaced read
+        # "Foil rows discarded at source", which was true for about an hour on 2026-08-06
+        # and false in every file generated afterwards. A header that reports what the run
+        # actually did cannot go stale the way a hardcoded claim about intent does.
+        w(f"-- Subtypes captured: {json.dumps(dict(sub_tally), sort_keys=True)}. Every subtype\n")
+        w("-- is ingested; migration 011 records why the foil exclusion was reversed.\n")
         w("-- Idempotent: re-running the same day overwrites rather than duplicating.\n\n")
         w("begin;\n\n")
 
