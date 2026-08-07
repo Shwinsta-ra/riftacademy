@@ -1,27 +1,26 @@
 # Findings from transcribing spec v2 §8 into `printing_code_fixtures.json`
 
-**Date:** 2026-08-06 · **Raised by:** Code, during the transcription task
-**Against:** `RiftCore_PrintingCode_Spec_v2_CONSOLIDATED.md` as amended by `RiftCore_PrintingCode_Spec_v2_1_Amendment.md`
+**Date raised:** 2026-08-06 · **Raised by:** Code, during the transcription task
+**Status: ALL THREE RESOLVED** by `RiftCore_PrintingCode_Spec_v2_2_Amendment.md`, same day.
+**Against:** `RiftCore_PrintingCode_Spec_v2_CONSOLIDATED.md` as amended by v2.1 and v2.2
 
-The task specified: *"Flag any ambiguity in the markdown table rather than resolving it — an ambiguous fixture is a Core finding."* Three are flagged below. **None is resolved in the JSON.** Every fixture value in `printing_code_fixtures.json` is transcribed verbatim from the §8 table; where §8 is ambiguous, the ambiguity is carried forward and marked, not decided.
+This document is kept rather than deleted now that the findings are closed. Same reasoning Core applied to withdrawn fixture 13 in v2.2 §4: *a record carrying its reason is a record; a deleted one is a gap someone re-derives wrongly.* The resolutions are recorded inline against each finding.
 
-Transcription was verified mechanically rather than by eye: the §8 table was parsed out of the markdown and every quoted token compared against the JSON. All 22 ids are present and every external/internal pair matches character-for-character.
+The task specified: *"Flag any ambiguity in the markdown table rather than resolving it — an ambiguous fixture is a Core finding."* Three were flagged and none was resolved unilaterally. Every fixture value in `printing_code_fixtures.json` was transcribed verbatim from the §8 table; transcription was verified mechanically by parsing the table out of the markdown and comparing every quoted token, not by eye.
 
 ---
 
 ## Finding 1 ⭐ — §4 and fixture 19 are mutually inconsistent for `r` / `t` / `sp` prefixes
 
-**Severity: this one propagates.** It is the exact failure mode §8 exists to prevent, and it is currently *inside* §8.
+### ✅ RESOLVED — v2.2 §1. **§4 was incomplete. §8's external column stands.**
 
-§4 states, for internal → external:
+§4 originally read, for internal → external:
 
 > uppercase **the set prefix only**; restore `/` before TOTAL when present.
 
-Fixture 19 asserts that external → internal → external equals the input for every fixture except 15, 16 and 17.
+Fixture 19 asserts that external → internal → external equals the input for every fixture except 15, 16 and 17. Implementing §4 literally and running fixture 19 over the table, **five fixtures failed**:
 
-Implementing §4 literally and running fixture 19 over the table, **five fixtures fail**:
-
-| # | Fixture's external | §4 as written produces | |
+| # | Fixture's external | §4 as written produced | |
 |---|---|---|---|
 | 7 | `OP-R06c` | `OP-r06c` | ✗ |
 | 8 | `VEN-R01` | `VEN-r01` | ✗ |
@@ -29,54 +28,76 @@ Implementing §4 literally and running fixture 19 over the table, **five fixture
 | 10 | `UNL-T01` | `UNL-t01` | ✗ |
 | 11 | `VEN-SP1/006` | `VEN-sp1/006` | ✗ |
 
-The other eleven round-tripping fixtures pass. The five failures are exactly the fixtures whose NUMBER carries an `r`, `t` or `sp` prefix — §8 writes those uppercase in the external column, but §4 authorises uppercasing the set prefix and nothing else.
+Exactly the fixtures whose NUMBER carries an `r`, `t` or `sp` prefix. It could not be patched with a blanket uppercase, because fixture 5 requires `135a` to stay lowercase — and **fixture 9 (`VEN-R03a`) contains both cases in one code**, which is why no single blanket rule satisfies it.
 
-**Why this cannot be patched with a blanket uppercase.** Fixture 5's note is explicit that `ven-135a-166` must render as `VEN-135a/166` and **must not become `135A`**. So the trailing alt-art letter must stay lowercase while the leading `r`/`t`/`sp` prefix uppercases.
+**Core's ruling (v2.2 §1).** The corrected internal → external rule:
 
-**Fixture 9 is the decisive case, and it already contains both.** `VEN-R03a` needs `R` uppercased and `a` left alone, in one code. Any rule stated as "uppercase the set prefix only" or as "uppercase everything except the last character" gets one of these wrong.
+1. Uppercase the **SET** component.
+2. Uppercase the **NUMBER's alphabetic prefix** if present (`r`→`R`, `t`→`T`, `sp`→`SP`).
+3. **Preserve the variant suffix letter in lowercase.**
+4. Preserve the asterisk verbatim.
+5. Insert `/` before TOTAL when a total is present.
 
-**Not resolved here.** Two readings are available and they are not equivalent:
+External → internal is unchanged (lowercase everything) — which is why only the round-trip assertion caught this.
 
-- **(a)** §4 is incomplete and should read *"uppercase the set prefix and the `r`/`t`/`sp` number prefix; never the trailing letter suffix."* Fixtures unchanged.
-- **(b)** §8's external column is wrong for those five and should read `VEN-r01`, `UNL-t01`, `VEN-sp1/006`, etc. §4 unchanged.
+The principle: the set code and the number prefix both identify a **namespace** (which set, which numbering space — main, rune, token, special); the trailing letter is a **variant discriminator within** that namespace. Core confirmed it against two independent live populations rather than by symmetry alone — M8's 614-row Holdings (`OP-R06c` shows `R` upper and `c` lower in one code) and the 1,422-printing TCGplayer catalogue.
 
-Reading (b) has an external consequence that reading (a) does not: RuneHoard and the ROI tracker consume the external form, and §4's own `.upper()` warning notes that a mismatched external code fails with **zero rows rather than an error**. Which reading is correct is a Core call about what those consumers actually emit — it is not inferable from the spec text, and this document does not guess.
+**Verified after the ruling:** the corrected rule was implemented and fixture 19 re-run across the table. It now holds for all 16 round-tripping fixtures, and all three must-raise fixtures still raise. `VEN-R03a` renders correctly.
 
-**Until it is decided,** the two implementations will disagree on rune, token and Crystal Rose codes, and — per fixture 19's own logic — a silently empty join is the symptom.
+**Core recorded its own error** (v2.2 §1): §4 was written while warning against the `135A` trap and over-corrected — *"guarding against uppercasing too much produced a rule that uppercases too little."* The ⚠ warning and the rule it accompanied pulled in opposite directions.
 
 ## Finding 2 — Fixture 17's expected value is unspecified, not merely abbreviated
 
-§8 row 17 reads:
+### ✅ RESOLVED — v2.2 §2. **Split; the testable half stays in §8.**
 
-| # | Case | External | Internal |
-|---|---|---|---|
-| 17 | Dual-face (TCGplayer) | `(group, "T05 // T06")` | `[…t05, …t06]` |
+§8 row 17's internal column read `[…t05, …t06]`. The ellipsis was not shorthand for a value stated elsewhere — the set prefix resolves from `group_id` through the `tcgplayer_groups` mapping table, which v2 §12 records as not yet built. The fixture was therefore not executable, and it was transcribed verbatim and marked unresolved rather than filled in with a guessed prefix.
 
-The ellipsis is not shorthand for a value that exists elsewhere in the document. The set prefix resolves from `group_id` through the `tcgplayer_groups(group_id, set_code)` mapping table, and v2 §12 records that table as **not yet built** — *"fixtures for §5 added once group ids are known."*
+**Core's ruling.** An unexecutable fixture makes §8's binding rule (*"no implementation ships without passing §8 verbatim"*) unsatisfiable, which weakens it for every other fixture. But only the second half needs the group mapping:
 
-So fixture 17 is **not executable today**. An implementation can assert the ` // ` split and that a list of two is returned; it cannot assert what the two elements are.
+- **17a — splitting.** In §8, **executable now.** Input `"T05 // T06"` returns `["T05", "T06"]`. Asserts the ` // ` split and that one product yields a list rather than a parse failure.
+- **17b — full translation.** **Deferred**, `blocked_on: tcgplayer_groups`. `(group_id, "T05 // T06")` → `["unl-t05", "unl-t06"]`. Activates when the group mapping lands.
 
-Transcribed verbatim as `["...t05", "...t06"]` and marked `"unresolved": true`. It is deliberately not filled in with a guessed prefix — guessing here would fabricate a passing test for behaviour nobody has specified.
-
-**Ask:** confirm whether fixture 17 should stay in §8 as unexecutable, or move to the §5 fixture set that arrives with the group-id mapping.
+Same treatment for any future fixture requiring the group mapping. The harness must skip 17b and **report the skip**, never count it as a pass.
 
 ## Finding 3 — `OP` remains in §3's set enumeration after v2.1 removed the model that justified it
 
-v2.1 §2 establishes that `OP` is a **distribution marker, not a set** (7 of 7 live holdings carry their original set's collector number and total), withdraws fixture 13 on that basis, and states in §2.3: *"Do not create internal set codes `op`, `opp`, or `pr`."*
+### ✅ RESOLVED — v2.2 §3, and the fix is broader than the finding.
 
-Two things in v2 were not updated to match:
+v2.1 §2 established `OP` as a distribution marker rather than a set, withdrew fixture 13 on that basis, and forbade creating internal set codes `op`/`opp`/`pr` — but §3 still enumerated `OP` among known sets, and v2.1's fold-in list did not mention removing it.
 
-1. **§3's grammar still enumerates it:** `SET := 2–4 letters (OGN, OGS, SFD, UNL, VEN, OP; alias PG→OGS)`.
-2. **Fixture 7 still carries the internal value `op-r06c`.** v2.1 §2.2 retains fixture 7 but reduces it to *"a lowercasing assertion, marked provisional"* — which leaves an internal value in the table that §2.3 says must not exist as a set code.
+**Core removed it, and went further:**
 
-v2.1 §3 lists five amendments to fold into v2; **removing `OP` from §3's SET enumeration is not among them.** That looks like an oversight rather than a decision, but it is Core's call, so it is flagged rather than corrected.
+> **Set codes are data, not grammar.** The parser accepts any 2–4 letter set component. Whether that set exists is answered by the join, not by the regex — a well-formed code for an unknown set is **situation C** (a data gap), not situation A (malformed).
 
-The JSON marks fixture 7 `"provisional": true` and records in its note that the `op` prefix model is unresolved and that the internal value must not be read as endorsing `op` as a set.
+This is the more valuable half. It keeps fixture 7 (`OP-R06c`) valid as a lowercasing and suffix-range assertion even though `op` is not a sanctioned internal set, and it prevents the enumeration from silently hardening into a validator during implementation — which is how this leftover would have caused a real failure rather than a documentation inconsistency.
 
-**No live impact today** — `card_printings` holds zero promo printings, so nothing resolves and nothing breaks. The risk is that an implementer reads §3, sees `OP` enumerated, and hardcodes it.
+**Note for implementers:** fixture 22 (`VEN-ZZ1/006` must raise) is an unknown **NUMBER prefix** check, not a set check. Under this ruling an unknown *set* must NOT raise.
+
+## Fixture 13 representation — Code's reading confirmed
+
+Fixture 13 was kept in the file marked `"withdrawn": true` rather than deleted, against v2.1's literal instruction to *"remove it from §8."* v2.2 §4 confirms this and records that Core's original instruction was worse: deleting the fixture would erase the withdrawal from the artifact, leaving the reasoning discoverable only in a superseded amendment — the exact failure mode of *"consolidation is where rulings disappear silently."* Re-deriving it would reinstate the false model that `op` is a set.
+
+Core's required inline `reason` field has been added verbatim.
 
 ---
 
+## Counting, recorded so it is not re-derived differently
+
+v2.2 §5.5 states **21 executable, 20 executable today.** That reconciles only if the meta-assertion is excluded from the fixture count, which is not stated explicitly:
+
+| | |
+|---|---|
+| Entries in the file | 23 (ids 1–22, with 17 split into 17a and 17b) |
+| minus the meta-assertion (19) | 22 data fixtures |
+| minus withdrawn (13) | **21 executable** |
+| minus deferred (17b) | **20 executable today** |
+
+Matches v2.2 §5.5 exactly under that reading. The derivation is recorded in the JSON's `counts.derivation` field so a future reader does not arrive at 21 or 22 by counting differently.
+
+## One representation choice, flagged for confirmation
+
+Splitting fixture 17 into `17a` and `17b` needs a unique key. Rather than making `id` a string for two entries and an integer for the other 21 — awkward for a typed TypeScript loader — the file keys fixtures on **`(id, part)`**, where `part` is absent everywhere except `(17, "a")` and `(17, "b")`. Recorded in the JSON's `harness_rules`. Say if Core would rather have literal string ids `"17a"` / `"17b"`.
+
 ## Also observed, outside this task's scope
 
-`supabase/seed/core_grammar_validation.sql` (committed separately, PR #166) validates against `^([a-z]{2,4})-((?:[rt])?[0-9]+[a-z]?\*?)(?:-([0-9]+))?$` — the pre-`sp` grammar. That is correct for what it was written to do (it predicts the six `ven-sp*-006` codes as failures, which is how the Crystal Rose gap was found), but it is **not** v2 §3's canonical regex, which admits `sp`. Anyone re-running that file expecting a v2 conformance check will read the six failures as a defect rather than as the intended result. Worth a comment on the file when it is next touched.
+`supabase/seed/core_grammar_validation.sql` validates against `^([a-z]{2,4})-((?:[rt])?[0-9]+[a-z]?\*?)(?:-([0-9]+))?$` — the pre-`sp` grammar. That is correct for what it was written to do (it predicts the six `ven-sp*-006` codes as failures, which is how the Crystal Rose gap was found), but it is **not** v2 §3's canonical regex, which admits `sp`. Anyone re-running that file expecting a v2 conformance check will read the six failures as a defect rather than as the intended result. Worth a comment on the file when it is next touched.

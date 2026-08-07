@@ -1,9 +1,25 @@
 {
-  "version": "2.1",
+  "version": "2.2",
   "source": "docs/contracts/RiftCore_PrintingCode_Spec_v2_CONSOLIDATED.md §8",
-  "amended_by": "docs/contracts/RiftCore_PrintingCode_Spec_v2_1_Amendment.md",
-  "note": "Fixture 13 withdrawn per v2.1 Amendment §2; retained here with \"withdrawn\": true so the withdrawal is visible rather than silent, and so fixture ids stay stable against the spec table. Fixture 7 asserts lowercasing and the [a-z] suffix range only. Loaders MUST skip any fixture with \"withdrawn\": true.",
-  "open_findings": "See docs/contracts/printing_code_fixtures_FINDINGS.md. Three ambiguities in §8 are unresolved and are flagged there rather than resolved here; fixtures 7, 8, 9, 10, 11, 17 and 19 are affected.",
+  "amended_by": [
+    "docs/contracts/RiftCore_PrintingCode_Spec_v2_1_Amendment.md",
+    "docs/contracts/RiftCore_PrintingCode_Spec_v2_2_Amendment.md"
+  ],
+  "harness_rules": [
+    "Fixtures with \"withdrawn\": true MUST be skipped, never executed (v2.2 §4).",
+    "Fixtures with \"deferred\": true MUST be skipped until \"blocked_on\" is satisfied, and their skip MUST be reported rather than counted as a pass (v2.2 §2).",
+    "The entry with \"kind\": \"assertion\" is a meta-assertion over the other fixtures, not a data fixture; dispatch on it rather than parsing an external value.",
+    "Fixtures are keyed by (id, part). \"part\" is absent for every fixture except the two halves of 17, which are (17, \"a\") and (17, \"b\"). This keeps \"id\" an integer for typed loaders rather than mixing int and string."
+  ],
+  "counts": {
+    "entries": 23,
+    "data_fixtures": 22,
+    "executable": 21,
+    "executable_today": 20,
+    "derivation": "23 entries, minus the meta-assertion (19) = 22 data fixtures; minus withdrawn (13) = 21 executable; minus deferred (17b) = 20 executable today. Matches v2.2 §5.5."
+  },
+  "casing_rule": "v2.2 §1, internal -> external: (1) uppercase the SET component; (2) uppercase the NUMBER's alphabetic prefix if present (r->R, t->T, sp->SP); (3) preserve the variant suffix letter in lowercase; (4) preserve the asterisk verbatim; (5) insert '/' before TOTAL when present. External -> internal is unchanged: lowercase everything.",
+  "set_codes_are_data": "v2.2 §3: the parser MUST NOT validate the set component against any enumeration. Any 2-4 letter set is accepted; whether it exists is answered by the join, not the regex. A well-formed code for an unknown set is situation C (data gap), not situation A (malformed).",
   "fixtures": [
     { "id": 1, "case": "signature_asterisk", "external": "SFD-227*/221", "internal": "sfd-227*-221",
       "note": "Ahri, Inquisitive — $3,089" },
@@ -15,29 +31,30 @@
     { "id": 4, "case": "signature_asterisk", "external": "UNL-234*/219", "internal": "unl-234*-219" },
 
     { "id": 5, "case": "alt_art_case_preserved", "external": "VEN-135a/166", "internal": "ven-135a-166",
-      "note": "must not become 135A" },
+      "note": "must not become 135A — the variant suffix stays lowercase (casing rule 3)" },
 
     { "id": 6, "case": "alt_art", "external": "SFD-110a/221", "internal": "sfd-110a-221" },
 
     { "id": 7, "case": "rune_suffix_beyond_b", "external": "OP-R06c", "internal": "op-r06c",
-      "provisional": true,
-      "note": "v2.1 §2.2 reduces this to a lowercasing assertion plus proof that the suffix range reaches [a-z] beyond [ab]. The 'op' prefix model is UNRESOLVED — v2.1 §2.3 forbids creating an internal set code 'op'. Do not treat the internal value here as endorsing 'op' as a set." },
+      "note": "Asserts lowercasing and that the suffix range reaches [a-z] beyond [ab]. Remains valid even though 'op' is not a sanctioned internal set code: per v2.2 §3 the parser does not validate set codes at all, so this fixture tests casing and suffix range, not set membership." },
 
     { "id": 8, "case": "rune_no_total", "external": "VEN-R01", "internal": "ven-r01" },
 
-    { "id": 9, "case": "rune_variant", "external": "VEN-R03a", "internal": "ven-r03a" },
+    { "id": 9, "case": "rune_variant", "external": "VEN-R03a", "internal": "ven-r03a",
+      "note": "The decisive case for the casing rule: R uppercases as a numbering-space prefix, a stays lowercase as a variant suffix, in one code. No blanket rule satisfies both." },
 
     { "id": 10, "case": "token_no_total", "external": "UNL-T01", "internal": "unl-t01" },
 
     { "id": 11, "case": "special_subset", "external": "VEN-SP1/006", "internal": "ven-sp1-006",
-      "note": "total = subset size (6-card Crystal Rose subset), not the VEN set total of 166" },
+      "note": "total = subset size (6-card Crystal Rose subset), not the VEN set total of 166. SP uppercases as a numbering-space prefix." },
 
     { "id": 12, "case": "standard", "external": "VEN-142/166", "internal": "ven-142-166" },
 
     { "id": 13, "case": "promo_prefix", "external": "OP-041/166", "internal": "op-041-166",
       "withdrawn": true,
       "withdrawn_by": "RiftCore_PrintingCode_Spec_v2_1_Amendment.md §2",
-      "note": "WITHDRAWN — do not implement against this. It asserts 'op' as a set prefix, which encodes a false model: all 7 of M8's live OP holdings carry the collector number and total of the card's ORIGINAL set (OP-041/166 mirrors ven-041-166, Riven, Shattered). OP is a distribution marker, not a set." },
+      "reason": "OP is a distribution marker, not a set code. All 7 live OP holdings mirror base-set collector number and total (OP-127/219 = unl-127-219). Withdrawn v2.1 2026-08-06.",
+      "note": "Retained rather than deleted, per v2.2 §4: a withdrawn fixture carrying its reason is a record; a deleted one is a gap someone re-derives wrongly — here, by reinstating the false model that 'op' is a set. HARNESS MUST SKIP." },
 
     { "id": 14, "case": "starter", "external": "OGS-009/024", "internal": "ogs-009-024" },
 
@@ -50,11 +67,17 @@
       "round_trip": false,
       "note": "never emit -f internally" },
 
-    { "id": 17, "case": "dual_face_tcgplayer", "tcgplayer_fragment": "T05 // T06",
-      "internal_list": ["...t05", "...t06"],
+    { "id": 17, "part": "a", "case": "dual_face_split", "tcgplayer_fragment": "T05 // T06",
+      "returns": ["T05", "T06"],
       "round_trip": false,
-      "unresolved": true,
-      "note": "The set prefix is written as an ellipsis in §8 and is GENUINELY UNSPECIFIED: it resolves from group_id via the tcgplayer_groups mapping table, which does not exist yet (v2 §12). Transcribed verbatim rather than guessed. An implementation cannot execute this fixture until §5 fixtures are added with real group ids." },
+      "note": "EXECUTABLE NOW (v2.2 §2). Asserts the ' // ' split and that one product yields a LIST rather than a parse failure. Requires no group mapping, because it stops before translation." },
+
+    { "id": 17, "part": "b", "case": "dual_face_translation", "tcgplayer_fragment": "T05 // T06",
+      "internal_list": ["unl-t05", "unl-t06"],
+      "round_trip": false,
+      "deferred": true,
+      "blocked_on": "tcgplayer_groups",
+      "note": "DEFERRED (v2.2 §2). Full translation needs group_id resolved through the tcgplayer_groups(group_id, set_code) mapping, which does not exist yet. Activates when the group mapping lands. Harness must skip and REPORT the skip, never count it as a pass." },
 
     { "id": 18, "case": "forward_looking", "external": "VEN-135a*/166", "internal": "ven-135a*-166",
       "note": "zero occurrences in both populations (1,165 card_printings and 1,422 TCGplayer) as of 2026-08-06; do not delete as redundant" },
@@ -62,7 +85,7 @@
     { "id": 19, "case": "round_trip", "kind": "assertion",
       "assertion": "For every fixture with an external and an internal value, external -> internal -> external equals the input.",
       "exceptions": [15, 16, 17],
-      "note": "Not a data fixture — a meta-assertion over the others. Encoded as \"kind\": \"assertion\" so a loader can dispatch on it rather than trying to parse an external value. Fixtures excluded from it carry \"round_trip\": false. SEE FINDING 1 — as §4 is literally written, this assertion fails fixtures 7, 8, 9, 10 and 11." },
+      "note": "Not a data fixture — a meta-assertion over the others. HOLDS under v2.2's corrected §4 casing rule; it did NOT hold under v2's \"uppercase the set prefix only\", which failed fixtures 7, 8, 9, 10 and 11. That failure is what produced the v2.2 amendment, and it was only visible because this assertion was executable rather than prose." },
 
     { "id": 20, "case": "malformed", "external": "VEN-?/166", "expect": "raise",
       "note": "2026-08-02 placeholder" },
@@ -70,6 +93,6 @@
     { "id": 21, "case": "malformed_empty", "external": "", "expect": "raise" },
 
     { "id": 22, "case": "unknown_prefix", "external": "VEN-ZZ1/006", "expect": "raise",
-      "note": "new forms are findings — unknown prefixes must fail to parse, not be accepted" }
+      "note": "Unknown NUMBER prefix must fail to parse — new forms are findings. Note this is a prefix check, not a set check: per v2.2 §3 an unknown SET is situation C (data gap), not a raise." }
   ]
 }
