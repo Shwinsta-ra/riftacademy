@@ -14,3 +14,8 @@ __pycache__/
 # Vercel project link (created by `vercel link`)
 .vercel
 .env*
+
+# Daily output of scripts/ingest_tcgcsv.py. The generator is committed; its output
+# is not. Unlike seed_cards.sql, a one-time record of a load that will never repeat,
+# these regenerate every day and would add a file per day forever.
+price_ingest_*.sql
