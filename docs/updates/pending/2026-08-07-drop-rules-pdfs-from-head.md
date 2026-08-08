@@ -20,7 +20,9 @@ Git LFS and history rewriting were both considered and rejected: the 60 MB stays
 **New standing rule or convention worth capturing:**
 Two caveats now recorded in `docs/rules/README.md`, both of which will bite any thread that greps these files:
 
-1. **The extractions preserve `ﬁ`/`ﬂ` ligatures as single glyphs** — 526 of them in the Core Rules. `grep battlefield` returns **zero** lines; `battleﬁeld` returns 138. Normalize with NFKC before searching. This is live today and independent of the PDF removal.
+1. **The extractions preserve `ﬁ`/`ﬂ` ligatures as single glyphs** — **778** in the Core Rules (717 `ﬁ`, 61 `ﬂ`, across 526 lines) and **190** in the Tournament Rules (176 `ﬁ`, 14 `ﬂ`, across 147 lines). `grep battlefield` returns **zero** lines; `battleﬁeld` returns 138. Normalize with NFKC before searching. This is live today and independent of the PDF removal.
+
+   *Correction:* an earlier draft of this fragment and of `docs/rules/README.md` gave 526 as an occurrence count. 526 is the number of *lines* containing a ligature (`grep -c` counts matching lines, not matches). The occurrence count is 778. RiftCore's independent audit caught this; the numbers above are reconciled with it. The Core Rules also contain 12 `…` characters, which NFKC expands too, for 790 normalizable characters in total.
 2. **Fourteen Core rules have their body on a following line** (`177`, `193`, `197`, `201`, `347.1.b`, `727`, `729`, `735`, `740.2`, `741`, `750`, `756`, `759`, `764`), a page-break artifact; `347.1.b` is fragmented one word per line. The text is present in all fourteen. `CR 197` and `CR 741` are cited in `riftcore-v2`; both are section headers and read correctly in context.
 
 **Anything another thread working today should know before touching related code:**
