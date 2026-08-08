@@ -586,7 +586,7 @@ Code then runs the equivalent of the old manual commands (checkout `integration`
 3. Donate link platform + Riot LJJ policy check — unresolved, not urgent.
 4. Keyword badge styling — undecided, low priority.
 5. RiftIQ real module design — what goes in it beyond placeholders.
-6. Stale GitHub branch cleanup — process documented, not yet executed.
+6. ~~Stale GitHub branch cleanup~~ — **DONE 2026-08-08.** 61 merged local branches deleted after verifying each was an ancestor of `origin/staging`, plus two merged remote leftovers (`fix/drop-rules-pdfs-from-head`, `feature/riftiq-puzzle-schema`). Three unmerged local branches were pushed to origin as backup rather than deleted. The leftovers existed because auto-delete-on-merge does not fire when a branch outruns its PR's recorded head; see 11.7.
 7. **Em dashes in this doc.** Section 6 bans them in project documents effective July 19, 2026, but the existing body of this doc uses them throughout, including in entries written well after that date. The August 6 reconciliation wrote its own additions in compliance and left legacy text alone rather than silently rewriting it. Decide: enforce the rule with a cleanup pass, narrow it to app-facing text only, or drop it. Until then the doc is visibly inconsistent with its own stated rule.
 8. **Repair Specialist gear threshold** — the exact gear number is still open with Ashwin (RiftCoach v8, July 25).
 9. **MUST-play cards on the v8 page-4 slack** — page 4 runs about 72% full against 86 to 95% on the other three, and the printed-reference standard says below roughly 85% a page should absorb something. Open with Ashwin.
@@ -594,3 +594,102 @@ Code then runs the equivalent of the old manual commands (checkout `integration`
 11. **RiftCore G6, turn-phase and priority granularity** — left nominal. RiftEngine to confirm it will not need finer combat-window events before this is locked as won't-build.
 12. **Sealed/draft deck construction** — explicitly deferred rather than guessed. That format is roughly three months out and will be rebuilt from TR 602.4 when live; in particular **whether sealed's 25-card minimum includes the champion is deliberately unresolved.**
 13. **Is RiftCore Phase 4 actually unblocked?** It was recorded as blocked on the Supabase card inventory, which has since loaded. Nobody has confirmed the blocker cleared; this is an inference across two fragments, not a stated fact from either.
+
+---
+
+## 11. Troubleshooting & manual state reversions
+
+> Operational runbook for recovering from bad merges, mis-targeted PRs, and failed promotions. `main` auto-deploys to production via Vercel, so **anything that lands on `main` is live** — treat every `main` incident as a production incident. Reversions here favor *additive* fixes (revert commits, Vercel rollback) over history rewrites, because `main`/`staging` are protected and Vercel-tracked.
+
+### 11.0 First: is it actually merged?
+The `check-source-branch` guard (`enforce-branch-flow.yml`) is a **required** check on all four core branches. A PR whose source→base pair violates `feature|fix|hotfix → integration → beta → staging → main` shows a **failed check and is not mergeable**. A red ✗ on "Enforce branch flow" for a wrong-base PR means the guard **worked** — nothing merged.
+- **Wrong base branch on an open (unmerged) PR:** no reversion needed. Edit the PR's base branch to the correct target, or close it and open a new one.
+- **Wrong branch-name prefix on an open (unmerged) PR** (e.g. `docs/*` isn't allowed into `integration`): git can't rename a branch under an open PR. Push a new branch with an allowed prefix (`feature/*`/`fix/*`/`hotfix/*`) from the same commit, open a fresh PR referencing the old one, close the old PR without merging. Don't delete the old branch — just leave it closed.
+- **Merged, but did it merge everything?** A PR can merge a stale head and silently
+  drop your most recent commit. See 11.7.
+- Confirm `main` is untouched:
+```
+git fetch origin
+git log --oneline -5 origin/main
+```
+
+### 11.1 Fastest production recovery (decouple prod from git)
+If something bad is *live* and you need it gone NOW, fix production first, git second:
+- Vercel dashboard → project → Deployments → find the last known-good **Production** deployment → ⋯ → **Promote to Production** (Instant Rollback).
+- This re-serves the previous good build immediately without touching git, buying time to fix `main` calmly.
+- Then do 11.2 so the next `main` deploy is also correct — otherwise the next push to `main` re-deploys the bad state.
+
+### 11.2 Revert an accidental merge into `main`
+Use a **revert commit** (additive, safe). Never `git reset --hard` + force-push on `main`: it is protected and Vercel-tracked, and rewriting shared history is dangerous and blocked.
+
+Find the bad merge commit:
+```
+git fetch origin
+git checkout main
+git pull origin main
+git log --first-parent --oneline -5 origin/main
+```
+Copy the bad **merge commit** SHA from that log (or from the merged PR page). Create the revert on a hotfix branch:
+```
+git checkout -b hotfix/revert-bad-merge
+git revert -m 1 <bad_merge_commit_sha>
+git push -u origin hotfix/revert-bad-merge
+```
+`-m 1` keeps `main`'s prior state (parent 1) and undoes the changes the merged branch introduced (parent 2).
+
+Open a PR `hotfix/revert-bad-merge` → `main`. The `check-source-branch` guard **will fail** (source isn't `staging`) — expected. For a genuine emergency, merge past it one of two ways:
+- **Admin override (preferred):** in the PR merge box, use "Merge without waiting for requirements to be met" (visible to you as repo owner, unless "Include administrators" is enabled on the rule).
+- **Temporary protection toggle (if override isn't offered):** Settings → Branches → `main` rule → temporarily uncheck the required `check-source-branch` (or "Require status checks to pass") → merge → **immediately re-enable it** (see 11.6).
+
+Vercel then auto-redeploys `main` to the corrected state.
+
+### 11.3 Un-promote a failed hotfix from `main`
+Same mechanism as 11.2:
+- Landed as a **merge commit** → `git revert -m 1 <merge_sha>`.
+- Landed as one or more **direct commits** → `git revert <commit_sha>` for each (newest first), or a range:
+```
+git revert <oldest_sha>^..<newest_sha>
+```
+Push on a `hotfix/…` branch, PR into `main`, admin-override merge, let Vercel redeploy. Run 11.1 first if production must be clean immediately.
+
+### 11.4 The clean (non-emergency) path
+If it's not on fire, revert through the normal pipeline instead of admin-overriding:
+1. Branch off `staging`, make the revert commit there (`git revert -m 1 <sha>`), PR into `staging`.
+2. Validate on `riftacademy-staging.vercel.app`.
+3. Promote `staging` → `main` via the normal PR (passes `check-source-branch`).
+
+This keeps the guard intact and gives the fix a staging soak.
+
+### 11.5 Gotcha: re-merging after a revert
+Reverting a merge makes git treat those changes as "already handled." If you later *do* want that branch's work in `main`, you cannot just re-merge it — first **revert the revert** on the source branch (`git revert <revert_commit_sha>`), then bring it back through the pipeline. Relevant only when the reverted work was wanted-but-mistimed, not for a genuinely bad change.
+
+### 11.6 Diagnosis discipline (reinforces Section 6)
+- Diagnose real state with `git fetch origin` then `git diff origin/main origin/staging` — **not** the GitHub UI.
+- Never use GitHub's "Delete branch" button on core branches (has nuked them before).
+- After any admin-override merge or temporary protection toggle, confirm branch protection + both required checks (`typecheck`, `check-source-branch`) are re-enabled on all four core branches (`integration`, `beta`, `staging`, `main`).
+
+### 11.7 A merged PR that silently dropped a commit (added 2026-08-08)
+
+A PR can merge the wrong commit with no error, no failed check, and no warning. This happened on PR #175 and cost a full recovery cycle.
+
+**What happens.** You push a second commit to an already-open PR. The branch ref on the server advances. GitHub's PR object caches its own `head.sha` separately, and that cache can fail to catch up. Merging then merges the **stale head**: the later commit never lands, even though the PR page looks complete and every check is green. The checks are green because they ran against the old head.
+
+**The best diagnostic is a branch that refuses to disappear.** With `delete_branch_on_merge` enabled (this repo has it on), GitHub deletes the head branch only when its head still equals what was merged. So **a branch surviving its own merge is a signal that the merge took a stale head.** Two branches survived here for exactly this reason: `feature/riftiq-puzzle-schema` (PR #175) and `fix/drop-rules-pdfs-from-head` (PR #172).
+
+**Check before merging any PR you have pushed to:**
+```
+git rev-parse HEAD
+gh api repos/Shwinsta-ra/riftacademy/pulls/<N> --jq .head.sha
+```
+Those two must be equal. If they differ, the PR is not ready to merge regardless of what the UI shows. A green check mark is a statement about the head the PR *thinks* it has.
+
+**Recovery.** The commit is not lost; it stays on the origin branch. Cherry-pick it onto a fresh branch off the target and open a new PR:
+```
+git checkout -b <new-branch> integration
+git cherry-pick <dropped_sha>
+```
+Then confirm before assuming anything landed:
+```
+git merge-base --is-ancestor <dropped_sha> origin/integration
+```
+Ancestry is the only proof a commit merged. Content being present is not the same thing: a cherry-pick puts the content on the target while the original commit remains a non-ancestor, which is why `git branch --merged` will still list such a branch as unmerged.
