@@ -19,3 +19,10 @@ __pycache__/
 # is not. Unlike seed_cards.sql, a one-time record of a load that will never repeat,
 # these regenerate every day and would add a file per day forever.
 price_ingest_*.sql
+
+# Rules PDFs. Removed from HEAD 2026-08-07: 60MB of the repo's 62MB tracked
+# content, which pushed the daily upload zip past the 30MB attachment limit.
+# The .txt extractions in docs/rules/ are what CR/TR citations resolve against;
+# the PDFs live in Google Drive and remain recoverable from git history.
+# See docs/rules/README.md.
+docs/rules/*.pdf
