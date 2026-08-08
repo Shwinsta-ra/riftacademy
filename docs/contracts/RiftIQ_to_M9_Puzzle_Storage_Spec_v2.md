@@ -8,6 +8,11 @@ corrected to 929 Supabase / 928 artifact / 1 expected token gap (§5); product c
 resolved (§9: format default constructed, daily duel-only); **authoring workflow and operating
 model added (§10); **anchor closure added to the §6.2 check and §10.4 validator (guided-step
 anchors are a second unenforced jsonb reference class, per M9 flag).**
+**Correction (2026-08-08, on commit to `docs/contracts/`):** §3.1 described `format` as
+"FK-checked", contradicting §9.3, which resolves it to a CHECK constraint. §3.1 has been corrected
+to match §9.3, the decision-of-record section. No behaviour change: migration 013 already
+implements `format` as a CHECK (`puzzles_format_valid`), so the DDL was right and only the prose
+disagreed with itself.
 **Purpose:** define how puzzle content and puzzle attempts are stored, aligned to the M9 data
 model overview (2026-08-06). This is the logical POV. M9 owns the technical build and the
 migration; nothing here is applied until M9 reviews it against the partition and
@@ -67,7 +72,7 @@ One row per puzzle.
 | `title` | text | display |
 | `question_mode` | text FK to `puzzle_question_modes` | `best_line` / `sequencing` / `predict_outcome`. **Named `question_mode`, not `mode`,** to avoid colliding with the CR game `modes` table. Reference table (not CHECK) per M9 §4.3, since it plausibly grows columns of its own. |
 | `game_mode` | text FK to `modes.mode` | NOT NULL, default `duel`. Resolves Q4. |
-| `format` | text | `constructed` / `limited`, FK-checked, **default `constructed`**. Added per M9 §2b: the ban join needs a format to filter on, and this makes sealed and draft puzzles expressible later without a migration. |
+| `format` | text | `constructed` / `limited`, **CHECK-constrained** (per §9.3), **default `constructed`**. Added per M9 §2b: the ban join needs a format to filter on, and this makes sealed and draft puzzles expressible later without a migration. |
 | `theme_domains` | text[] | thematic categorization (Fury, Calm, ...). `text[]` to match `cards.domains`. Empty array means "no single-domain theme", never unknown, per the M9 empty-array convention. |
 | `difficulty` | text | **authored** label: `easy` / `hard` (extensible). A fact about the author's intent, not a computed value. If a computed difficulty is ever added, it is a separate column and follows the multi-signal cross-check caution (M9 §5). |
 | `goal` | text | display |

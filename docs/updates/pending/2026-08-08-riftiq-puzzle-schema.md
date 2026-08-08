@@ -71,10 +71,31 @@ verbatim: `role` (all 9 values, §3.2), `verdict` (§3.3), `provenance`, `author
 with RLS). §9.3's three mechanism rulings are all honoured — reference table for `question_mode`,
 CHECK for the rest, partial unique index rather than a trigger for one-correct-answer.
 
-One internal inconsistency in the spec, resolved in the DDL: **§3.1 describes `format` as
-"FK-checked" while §9.3 resolves it to a CHECK constraint.** The DDL follows §9.3, which is the
-later decision-of-record section. Worth correcting in a future spec revision so the two sections
-don't disagree.
+One internal inconsistency in the spec, now **corrected**: §3.1 described `format` as "FK-checked"
+while §9.3 resolves it to a CHECK constraint. §3.1 was corrected to match §9.3, the
+decision-of-record section, with a dated correction note in the spec header. No behaviour change —
+migration 013 already implements `puzzles_format_valid` as a CHECK, so only the prose disagreed
+with itself.
+
+**PROCESS INCIDENT — a merged PR silently dropped a commit.** Worth knowing because it will
+recur. PR #175 was pushed a second commit (the spec). GitHub's PR object went stale: the branch
+ref on the server was at `e6f6645` while the PR's `head.sha` still reported `008c46b`, and it
+never caught up. Merging the PR merged the **stale head**, so the spec commit was never merged
+even though the PR looked complete. Nothing errored and nothing warned.
+
+Caught by Ashwin asking for a re-verification, not by any check. Recovered by cherry-picking
+`e6f6645` onto a fresh branch; the commit was intact on the origin branch the whole time.
+
+**The lesson, generalised: after pushing to an open PR, verify the PR's `head.sha` matches the
+pushed commit before merging.** The two are not the same object and can disagree:
+
+```
+git rev-parse HEAD
+gh api repos/OWNER/REPO/pulls/N --jq .head.sha
+```
+
+If they differ, the PR is not ready to merge regardless of what the UI shows. A green check mark
+on a PR is a statement about the head it *thinks* it has.
 
 **Verification performed on this PR:** every FK target confirmed to exist in an earlier migration —
 `modes` and `keywords` in `20260805000001_reference.sql:9,34`; `cards` and `card_printings` in
