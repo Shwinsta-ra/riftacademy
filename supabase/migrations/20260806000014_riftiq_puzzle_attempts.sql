@@ -1,6 +1,6 @@
 -- RiftAcademy Supabase — Migration 014: RiftIQ puzzle attempts (user data)
 --
--- Source spec: RiftIQ_Puzzle_Storage_Spec.md v2 (2026-08-06) section 3.7.
+-- Source spec: docs/contracts/RiftIQ_to_M9_Puzzle_Storage_Spec_v2.md (v2, 2026-08-06) §3.7.
 --
 -- SEPARATED FROM MIGRATION 013 DELIBERATELY. This is the one puzzle table that needs real RLS
 -- policies before launch, and a policy bug should never be confusable with a content-load bug.

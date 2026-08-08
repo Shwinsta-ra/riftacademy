@@ -13,9 +13,18 @@ Three SQL files that had been sitting uncommitted in the working tree are now in
 
 | File | What it is |
 |---|---|
+| `docs/contracts/RiftIQ_to_M9_Puzzle_Storage_Spec_v2.md` | The source spec both migrations implement |
 | `supabase/migrations/20260806000013_riftiq_puzzle_content.sql` | 7 puzzle **content** tables (protected partition) |
 | `supabase/migrations/20260806000014_riftiq_puzzle_attempts.sql` | 1 puzzle **attempts** table + the database's first RLS policies |
 | `supabase/seed/ligature_encoding_audit.sql` | Read-only encoding audit for the Core Phase 4 Stage 1 gate |
+
+**The source spec is now committed.** `RiftIQ_to_M9_Puzzle_Storage_Spec_v2.md` (RiftIQ → M9,
+v2, 2026-08-06, M9 technical review incorporated) lands in `docs/contracts/` — a contract rather
+than a design doc because M9 is on the other side of it and must comply. Both migration headers
+were updated to cite the committed path, so the reference now resolves. The spec carries material
+the DDL comments do not: the `board_state` jsonb schema (§4), the offline pipeline (§5), the
+ban-join predicate with the nullable-`mode` trap (§6.3), and the authoring workflow and
+lightweight-validator gate list (§10).
 
 **013 — puzzle content.** `puzzle_question_modes`, `puzzles`, `puzzle_cards`, `puzzle_answers`,
 `puzzle_guided_steps`, `puzzle_rules_refs`, `puzzle_schedule`. RLS enabled on all seven, no
@@ -55,6 +64,18 @@ interpretation warning, not a query: a ligature showing up as an unmatched brack
 like an *unknown keyword*, and the natural fix — adding it to the vocabulary — would silently
 enshrine a ligature as a 26th keyword. Any finding must be reported as an **encoding fault**.
 
+**DDL checked against the spec (2026-08-08).** All seven tables in migration 013 match §3.1–3.6
+plus the `puzzle_question_modes` reference table. Every CHECK vocabulary matches the spec
+verbatim: `role` (all 9 values, §3.2), `verdict` (§3.3), `provenance`, `authoring_status`,
+`format`, `verification_method` (§3.1). Migration split matches §9.4 (013 content, 014 attempts
+with RLS). §9.3's three mechanism rulings are all honoured — reference table for `question_mode`,
+CHECK for the rest, partial unique index rather than a trigger for one-correct-answer.
+
+One internal inconsistency in the spec, resolved in the DDL: **§3.1 describes `format` as
+"FK-checked" while §9.3 resolves it to a CHECK constraint.** The DDL follows §9.3, which is the
+later decision-of-record section. Worth correcting in a future spec revision so the two sections
+don't disagree.
+
 **Verification performed on this PR:** every FK target confirmed to exist in an earlier migration —
 `modes` and `keywords` in `20260805000001_reference.sql:9,34`; `cards` and `card_printings` in
 `20260805000002_cards.sql:7,93`; `card_bans` in `20260805000003_legality.sql:13`; `analysis_tags`
@@ -65,11 +86,22 @@ session — the check above is static, not an execution result.
 
 **Anything another thread working today should know before touching related code:**
 
-- **`RiftIQ_Puzzle_Storage_Spec.md` v2 (2026-08-06) is cited as the source spec in both migration
-  headers but does not exist anywhere in the repo** (`grep -ril "Puzzle_Storage_Spec"` matches only
-  the two migrations themselves). Under the 2026-08-06 standing rule, a document another module
-  implements against belongs in `docs/contracts/`. Whoever holds that spec should commit it — right
-  now the migration comments are the only surviving record of its rulings.
+- **Content loading is a separate, later-numbered migration** (§9.4, §10.6). Expect periodic
+  content-load migrations after 013/014, not a single one — batches of 10–20 puzzles land per
+  load, every week or two (§10.1).
+- **The closure check must be implemented once and run twice** (§6.2, §10.6): the content build
+  (RiftIQ) and a database-side assertion in the load migration (M9) share one implementation. Two
+  reference classes are unenforced by Postgres and both must be closed — `card_code` strings and
+  `puzzle_guided_steps.anchor` values.
+- **The ban-awareness join has a live trap** (§6.3): `card_bans.mode` is nullable and NULL means
+  "all modes" (10 of 11 current rows). A plain equality join silently misses them — the same bug
+  that invalidated Core's original `card_bans` primary key. The correct predicate is in §6.3.
+- **A puzzle referencing a `card_code` absent from the artifact renders as a blank card offline.**
+  Per §5 the Supabase-to-artifact drift check must treat this as a **build failure, not a
+  warning** — a silent failure at a venue with no connectivity is the worst place for it.
+- **Kernel verification needs M10 clearance before the harness is wired** (§9.7). Storing puzzles
+  invokes no kernel and is unaffected, but the Riot API application declares no general rules
+  engine within its four declared features.
 - If RiftCoach wants puzzle performance for KPIs, it should **read `puzzle_attempts`** rather than
   define its own table, so the no-cross-user-comparison constraint from the Riot API application is
   implemented once rather than twice.
