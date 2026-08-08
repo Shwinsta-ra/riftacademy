@@ -31,9 +31,9 @@ files. Search `*.normalized.txt` instead, or normalize your query.
 | `difficult-to-recover` | 1 | 0 | silent zero |
 | `disqualification` | 15 | 0 | silent zero |
 | `disqualified` | 6 | 0 | silent zero |
-| `final` | 12 | 36 | **partial -- 12 of 48 hidden** |
+| `final` | 12 | 8 | **partial -- 12 of 20 hidden** |
 | `finalization` | 11 | 1 | **partial -- 11 of 12 hidden** |
-| `finalize` | 8 | 25 | **partial -- 8 of 33 hidden** |
+| `finalize` | 8 | 5 | **partial -- 8 of 13 hidden** |
 | `finalized` | 24 | 20 | **partial -- 24 of 44 hidden** |
 | `finalizes` | 1 | 0 | silent zero |
 | `finalizing` | 8 | 1 | **partial -- 8 of 9 hidden** |
@@ -85,7 +85,7 @@ files. Search `*.normalized.txt` instead, or normalize your query.
 | `specified` | 59 | 0 | silent zero |
 | `specifies` | 20 | 0 | silent zero |
 | `spot-fixing` | 1 | 0 | silent zero |
-| `sufficient` | 3 | 9 | **partial -- 3 of 12 hidden** |
+| `sufficient` | 3 | 3 | **partial -- 3 of 6 hidden** |
 | `unmodified` | 1 | 0 | silent zero |
 | `verified` | 1 | 0 | silent zero |
 | `verifies` | 1 | 0 | silent zero |

@@ -76,7 +76,7 @@ Plain `battlefield` matches **zero** lines; `battleﬁeld` matches 138. The Core
 |---|---|---|
 | `finalization` | 11 | 12 |
 | `finalized` | 24 | 44 |
-| `finalize` | 8 | 33 |
+| `finalize` | 8 | 13 |
 | `first` | 119 | 138 |
 | `flow` | 3 | 13 |
 

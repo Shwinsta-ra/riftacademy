@@ -20,17 +20,19 @@ The ligature problem was described — by this thread, and in the handoff to Rif
 |---|---|---|
 | `finalization` | 11 | 12 |
 | `finalized` | 24 | 44 |
-| `finalize` | 8 | 33 |
+| `finalize` | 8 | 13 |
 | `finalizing` | 8 | 9 |
-| `final` | 12 | 48 |
+| `final` | 12 | 20 |
 | `first` | 119 | 138 |
 | `flow` | 3 | 13 |
-| `sufficient` | 3 | 12 |
+| `sufficient` | 3 | 6 |
 | `shuffled` | 3 | 5 |
 | `finish` | 4 | 6 |
 | `floor` | 6 | 8 |
 | `insufficient` | 1 | 3 |
 | `shuffles` | 1 | 3 |
+
+*Total-column correction (2026-08-07, PR #174):* the first version of this table and of `ligature-words.md` counted ASCII spellings by bare substring, so `final` matched inside `Finalized` and the totals for `final`, `finalize` and `sufficient` were overstated. The generator now matches on word boundaries. **The set of 13 words and every "hidden" count are unchanged** — only those three totals moved.
 
 **This is materially worse than a zero result, and it changes the exposure question RiftCore is currently working.** A search returning nothing invites suspicion and a second method. A search for `finalized` returning 20 hits looks like a complete answer while omitting 24 — there is no signal to investigate. `finalize`/`finalization`/`finalized`/`finalizing` is precisely the vocabulary RiftCore identified as "the FEPR core," and `flow` is a Vendetta keyword mechanic.
 
