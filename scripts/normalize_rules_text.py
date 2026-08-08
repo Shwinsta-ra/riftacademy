@@ -127,7 +127,12 @@ def main():
     corpus = "\n".join((RULES_DIR / n).read_text(encoding="utf-8") for n in SOURCES)
     mixed = {}
     for word in lig_words:
-        ascii_hits = len(re.findall(re.escape(word), corpus, re.I))
+        # Word boundaries matter: a bare substring search counts "final" inside
+        # "Finalized" and overstates how often the word is spelled in ASCII.
+        # \b is wrong here because the corpus uses U+2019 inside words
+        # ("battlefield’s"), so the boundary is spelled out explicitly.
+        pattern = r"(?<![\w’])" + re.escape(word) + r"(?![\w’])"
+        ascii_hits = len(re.findall(pattern, corpus, re.I))
         if ascii_hits:
             mixed[word] = ascii_hits
 
