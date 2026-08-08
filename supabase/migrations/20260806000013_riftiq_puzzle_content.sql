@@ -1,6 +1,7 @@
 -- RiftAcademy Supabase — Migration 013: RiftIQ puzzle content tables
 --
--- Source spec: RiftIQ_Puzzle_Storage_Spec.md v2 (2026-08-06), M9 technical review incorporated.
+-- Source spec: docs/contracts/RiftIQ_to_M9_Puzzle_Storage_Spec_v2.md (v2, 2026-08-06),
+-- M9 technical review incorporated. Committed 2026-08-08 alongside this migration.
 -- Design owner: RiftIQ (M5). Physical build: M9. Partition: APPLICATION.
 --
 -- CHANGE DETECTION: every table here is PROTECTED. Core's corrected criterion (2026-08-06) is
