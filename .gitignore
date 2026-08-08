@@ -19,3 +19,15 @@ __pycache__/
 # is not. Unlike seed_cards.sql, a one-time record of a load that will never repeat,
 # these regenerate every day and would add a file per day forever.
 price_ingest_*.sql
+
+# Claude Code dev-server launch config. Machine-local tooling: it names local ports
+# and commands for one person's setup, so it would conflict rather than help if shared.
+# .claude/settings.json IS tracked — that one is shared project convention.
+.claude/launch.json
+
+# Rules PDFs. Removed from HEAD 2026-08-07: 60MB of the repo's 62MB tracked
+# content, which pushed the daily upload zip past the 30MB attachment limit.
+# The .txt extractions in docs/rules/ are what CR/TR citations resolve against;
+# the PDFs live in Google Drive and remain recoverable from git history.
+# See docs/rules/README.md.
+docs/rules/*.pdf
