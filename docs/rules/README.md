@@ -43,7 +43,14 @@ Every difference found between the two ran in the `.txt`'s favour: it carries fu
 
 ### Two caveats when reading these files
 
-**1. Ligature glyphs.** The extraction preserves `ﬁ` and `ﬂ` as single characters — 526 occurrences in the Core Rules. Plain `battlefield` matches **zero** lines; `battleﬁeld` matches 138. Normalize before searching:
+**1. Ligature glyphs.** The extraction preserves `ﬁ` and `ﬂ` as single characters:
+
+| File | `ﬁ` | `ﬂ` | Ligatures | Lines affected |
+|---|---|---|---|---|
+| `core-rules-RUP4.txt` | 717 | 61 | **778** | 526 |
+| `tournament-rules-RUP4.txt` | 176 | 14 | **190** | 147 |
+
+Plain `battlefield` matches **zero** lines; `battleﬁeld` matches 138. The Core Rules additionally contain 12 `…` ellipsis characters, which NFKC also expands, for 790 normalizable characters in total. Normalize before searching:
 
 ```bash
 python3 -c "import unicodedata,sys; print(unicodedata.normalize('NFKC', open(sys.argv[1]).read()))" docs/rules/core-rules-RUP4.txt | grep -in battlefield
