@@ -77,12 +77,46 @@ Three levels: **Secret** (no one may look — deck order), **Private** (controll
 
 **Ending Phase (317):** Ending Step (end-of-turn effects) → **Expiration Step**: an Ending Special Cleanup inserting **"Heal all Units"**, **"all 'this turn' effects expire simultaneously"**, **"Rune Pools empty"** — looping if any FEPR occurred → next player becomes Turn Player.
 
-## 10. Process of Play — tail (CR 357–359)
+## 10. Conceding & Removal of a Player (CR 649–652) — addendum, 2026-08-08
+
+**Gap history:** absent from all seven Parts and cited nowhere in this model until now. Root cause: the CR's own numbering jumps from ~489 straight to 649 (700 "Additional Rules" follows immediately after 652), and Phase 1's sectional reading stepped over the discontinuity — a coverage failure, not a searchability one (a keyword search for "concede" would have found nothing either, since the text is present but never read). Found by a 2026-08-07 coverage reconciliation (enumerable CR section numbers checked against what the model cites), not by any content-based scan.
+
+**⭐ Two independent win triggers exist, not one.** §9 above (Cleanup task order, 323.1) covers the points-based win check. **651.1 is a second, structurally different trigger: if a concession leaves exactly one other player, that player Wins outright**, no points check involved. The kernel must not treat "win" as a single Cleanup-task predicate — it needs to also fire on this concession-driven path.
+
+- **Concede (650):** any player, at any time — a Discretionary action available regardless of Priority/timing restrictions (no cost, no window).
+- **651. On concession, the player is removed from the game in progress:**
+  - **651.1:** exactly one other player remains → that player **Wins** (see ⭐ above).
+  - **651.2:** more than one player remains → proceed to **Removal of a Player** (652). *(Inert in 1v1 — a 1v1 concession always hits 651.1 and ends the game; there is no "more than one remains" case with only two players to begin with.)*
+  - **651.3:** Removal means the player can no longer make choices or otherwise influence the game — a status distinct from simply losing; the game continues around them.
+  - **⭐ 651.4 — Teammates cascade:** if the conceding player has Teammates (Mode of Play with teams — 2v2/`magma_chamber`), **those Teammates also lose and are removed**, consistent with the already-modeled **489.6.a "Teammates win or lose together"** (Part 1/2 references). This is the load-bearing case for 2v2: one concession can end the game for a whole team in a single step, potentially triggering 651.1 for the opposing team.
+
+- **652. Removal of a Player — steps, in order:**
+  1. **652.1** Banish (→ Banishment zone, already modeled at Part 3 §2) all permanents, runes, and facedown cards they **currently control**, plus all such cards they **own** (a broader set than "control" — catches cards they own but a teammate or opponent currently controls, e.g. a stolen unit).
+  2. **652.2** Remove the Battlefield they contributed to the game, if in use: **replace it with a token battlefield with no abilities**.
+     - **652.2.a** — this is a **Replace** operation, **rule 438**, first citation of that rule anywhere in this model; register it as a kernel primitive still to be specified.
+     - **652.2.b** — units and hidden cards already at that location do **not** move and are otherwise unaffected by the swap itself.
+     - **652.2.c** — any continuous effects the removed battlefield was applying **cease immediately**, which can change characteristics of units/hidden cards there (CR's own example: a "+1 Might here" battlefield disappears, units there lose the buff immediately, not at next Cleanup).
+  3. **652.3** Remove **all** cards they own from the game — broader than 652.1's Banish step; this reaches cards never in play (hand, Main/Rune Deck, Trash, Champion Zone, Banishment already).
+  4. **652.4** Counter all spells and abilities of all types they control that are currently on the Chain.
+  5. **652.5** Proceed with the game — three independent hand-off rules, all keyed off whether the removed player held the relevant role:
+     - **Turn (652.5.a):** if they were Turn Player, play proceeds in Turn Order to the next available player.
+     - **Focus (652.5.b):** if they held Focus in a Showdown, the next player in order receives it; if their removal leaves all remaining players having passed Focus, the Showdown ends and play proceeds (Combat resolves, or a Cleanup completes).
+     - **Priority (652.5.c):** if they held Priority on the Chain, the next player in order receives it; if their removal leaves all remaining players having passed Priority, the most recent Chain item resolves, with Priority re-established afterward per normal post-resolution rules.
+
+**Materiality, confirmed:**
+- **Inert in 1v1** — the game simply ends at 651.1.
+- **Load-bearing in FFA3 (skirmish) and FFA4 (war)** — 651.2/652 apply directly; play must continue correctly with 2–3 remaining players.
+- **Load-bearing in 2v2 (`magma_chamber`)** — 651.4's teammate cascade means a single concession can remove two players at once, immediately followed by a 651.1 check for the surviving team.
+- All five modes are seeded in the `modes` table now, so nothing here is speculative scope — this addendum should land **before any multiplayer-mode work begins**, per the original ticket.
+
+**Correction to the original ticket's materiality note:** the ticket that opened this gap stated "the tournament side IS covered (Part 6 records TR 410 Concessions and Intentional Draws)." **That is not accurate — verified directly against `docs/design/riftcore-v2/RiftCore_v2_Canonical_Model_Part6.md`, which has zero mentions of "concession," "concede," or TR 410.** TR 410 (Concessions and Intentional Draws — a *different* rules document, Tournament Rules, not Core Rules 410 which is the unrelated Discretionary/Limited Actions classification already cited at Part 1 §5) governs conceding a **game or match** at the tournament-procedure level (410.1–410.2), plus policy items already out of Core's scope per Part 6 §2's "Pure policy" bucket (410.3 anti-bribery, 410.4 no-scouting, 410.5 officiate-as-concession-on-refusal). CR 649–652, covered here, is the complementary **in-game mechanical** question — what happens to the conceding player's board state and the remaining players' turn/Focus/Priority. Both are real gaps; this addendum closes the CR side only. **Recommend a short Part 6 follow-up** citing TR 410.1–410.2 as a one-line cross-reference to this section, and 410.3–410.5 filed under Part 6's existing "Pure policy — NOT Core's concern" table.
+
+## 11. Process of Play — tail (CR 357–359)
 
 - **Step 4 Pay (357):** pay combined Energy+Power; **during payment the controller may use Reaction-tagged Add abilities** (this is when runes are tapped/recycled — 357.1.a); non-standard costs in any order (357.2); **replaced costs still count as paid** (Zhonya's Hourglass example, 357.2.a); may not pay in ways that deterministically force illegal later choices, unless no alternative (357.3).
 - **Step 5 Check Legality (358):** targets legal; costs paid; **outcome would not create an illegal state** (e.g. 3-player battlefield); timing permissions. **A Game Effect preventing an action does NOT make cards instructing that action illegal to play — the action is simply skipped at resolution as impossible** (358.3.a).
 
-## 11. Findings (Part 3 additions to the Phase-2 diff)
+## 12. Findings (Part 3 additions to the Phase-2 diff)
 
 | Finding | Status |
 |---|---|
@@ -100,10 +134,17 @@ Three levels: **Secret** (no one may look — deck order), **Private** (controll
 | **Compulsion rule for hidden zones** | 128.6 — type-specific instructions on private/secret cards are ignorable |
 | **Runes, Battlefields, Legends are NOT Permanents** | 133.5, 171, 175 — type-system distinction |
 | **Facedown Zone mechanics** | 107.3 — occupancy 1 (adjustable), controller-locked, cleanup-purged on control loss |
+| **⭐ Concession is a second, independent win trigger** | 651.1 — last-player-standing, distinct from the points-based Cleanup win check (323.1); kernel must check both paths |
+| **⭐ 2v2 concession cascades to Teammates** | 651.4 + 489.6.a — one concession can remove two players and immediately re-trigger the 651.1 check for the survivors |
+| **Removal of a Player: 5-step sequence (Banish → replace Battlefield → remove owned cards → counter their chain items → hand off Turn/Focus/Priority)** | 652.1–652.5 — first full model of what happens to a removed player's board state; load-bearing for FFA3/FFA4/2v2, inert in 1v1 |
+| **First citation of Replace (rule 438)** | 652.2.a — battlefield-replacement primitive not yet specified anywhere else in this model; register as an open kernel primitive |
+| **TR 410 (Concessions and Intentional Draws) is still absent from Part 6**, despite the originating ticket's claim that it was already covered | Verified by direct grep against `RiftCore_v2_Canonical_Model_Part6.md` — zero hits. Distinct from CR 410 (Discretionary/Limited Actions, already cited Part 1 §5). Recommend a short Part 6 follow-up |
 
-## 12. Open adjudications register — additions
+## 13. Open adjudications register — additions
 5. Deck-size framing: champion-in-40 (constructed) — re-verify every deck-construction reference; check whether the sealed "25-minimum" also counts the champion (TR 602.4.a.2 wording) before re-ruling the legacy "card 26" claim.
 6. Any analysis that assumed damage persists across turns, or that resources float across phase boundaries — re-derive under 317.2 / 167.
+7. Rule 438 (Replace) needs its own full citation and kernel primitive spec — this addendum only establishes that it exists and what one call site (652.2.a) requires of it.
+8. Part 6 needs a follow-up addendum citing TR 410.1–410.2 (cross-reference to this section) and filing 410.3–410.5 under its existing "Pure policy" table.
 
-## 13. Next (Part 4)
+## 14. Next (Part 4)
 Abilities in full (360–406): passive/activated/triggered/reflexive/delayed/linked, replacement effects, presence rules; then the 32 Game Action definitions (413–444) verbatim — the complete effect vocabulary for the Phase-4 rebuild.
