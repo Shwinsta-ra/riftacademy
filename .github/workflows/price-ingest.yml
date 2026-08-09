@@ -57,8 +57,11 @@ jobs:
         env:
           LAST_BUILT_AT: ${{ steps.state.outputs.last_built_at }}
           FORCE: ${{ inputs.force }}
+          CI_RUN_ID: ${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
-          args=(--last-built-at "$LAST_BUILT_AT")
+          args=(--last-built-at "$LAST_BUILT_AT"
+                --ci-run-id "$CI_RUN_ID" --commit-sha "$COMMIT_SHA")
           [ "$FORCE" = "true" ] && args+=(--force)
           python3 scripts/ingest_tcgcsv.py "${args[@]}"
           # The script writes price_ingest_<date>.sql only when there is something to
@@ -95,6 +98,7 @@ jobs:
           retention-days: 90
 
       - name: Verify the observations actually landed
+        id: verify
         if: steps.generate.outputs.sql_file != ''
         env:
           RA_DB: ${{ secrets.RA_DB }}
@@ -102,6 +106,7 @@ jobs:
         run: |
           rows=$(psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 \
             -c "select count(*) from price_observations where observed_on = date '$OBSERVED_ON'")
+          echo "rows=$rows" >> "$GITHUB_OUTPUT"
           echo "Rows for $OBSERVED_ON: $rows"
           echo "- **$OBSERVED_ON**: $rows price observations" >> "$GITHUB_STEP_SUMMARY"
           if [ "$rows" -eq 0 ]; then
@@ -112,36 +117,70 @@ jobs:
       # 500 MB is the Supabase free-tier ceiling. Alerting at 350 MB leaves room to act
       # before writes start failing rather than after.
       - name: Check database size against the free-tier ceiling
+        id: dbsize
         # Runs even when the ingest failed - a full database is a plausible CAUSE of
         # that failure - but not when we never got a working connection, since then
         # this step would only fail a second time and bury the real error.
         if: always() && steps.state.outcome == 'success'
         env:
           RA_DB: ${{ secrets.RA_DB }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           mb=$(psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 \
             -c "select (pg_database_size(current_database())/1024/1024)::bigint")
+          echo "mb=$mb" >> "$GITHUB_OUTPUT"
           echo "Database size: ${mb} MB of the 500 MB free-tier ceiling"
           echo "- **Database size**: ${mb} MB / 500 MB" >> "$GITHUB_STEP_SUMMARY"
-          if [ "$mb" -ge 350 ]; then
-            echo "::warning::Database is ${mb} MB, past the 350 MB alert threshold (500 MB ceiling)."
-            if [ -n "$DISCORD_WEBHOOK_URL" ]; then
-              jq -nc --arg c "RiftAcademy DB at ${mb} MB of 500 MB (alert threshold 350 MB)." \
-                '{content:$c}' | curl -sS -X POST -H 'Content-Type: application/json' -d @- "$DISCORD_WEBHOOK_URL"
-            fi
-          fi
+          [ "$mb" -ge 350 ] && echo "::warning::Database is ${mb} MB, past the 350 MB alert threshold (500 MB ceiling)."
+          exit 0
 
-      - name: Alert on failure
-        if: failure()
+      # ONE message per run, always - success, skip, or failure.
+      #
+      # This replaced alert-on-failure-only, which could not distinguish three states
+      # that all looked identical from Discord: ingested a day, correctly skipped, and
+      # never executed at all. The third is the one that matters, because it is exactly
+      # how 2026-08-07 was lost - nobody ran the ingest and nothing said so. An alert
+      # that only fires on failure cannot report the absence of a run.
+      #
+      # Honest limit, accepted by Ashwin 2026-08-09: a heartbeat sent BY the job still
+      # cannot report the job never starting (workflow disabled, Actions outage, or
+      # GitHub's 60-day-inactivity disabling of scheduled workflows). Catching that
+      # needs an external watchdog, which was deliberately not built.
+      - name: Report the run to Discord
+        if: always()
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          JOB_STATUS: ${{ job.status }}
+          SQL_FILE: ${{ steps.generate.outputs.sql_file }}
+          OBSERVED_ON: ${{ steps.generate.outputs.observed_on }}
+          ROWS: ${{ steps.verify.outputs.rows }}
+          DB_MB: ${{ steps.dbsize.outputs.mb }}
+          LAST_BUILT_AT: ${{ steps.state.outputs.last_built_at }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          if [ -n "$DB_MB" ]; then
+            size=" DB ${DB_MB} MB / 500 MB."
+            [ "$DB_MB" -ge 350 ] && size="$size :warning: Past the 350 MB alert threshold."
+          else
+            size=" DB size unknown."
+          fi
+
+          if [ "$JOB_STATUS" != "success" ]; then
+            # A day missed is a day lost - tcgcsv serves only its current build.
+            msg=":x: **Price ingest FAILED.** Today's prices are unrecoverable if this is not fixed before the next tcgcsv rebuild (~20:00 UTC).${size} $RUN_URL"
+          elif [ -z "$SQL_FILE" ]; then
+            msg=":fast_forward: **Price ingest: nothing to do.** tcgcsv has not rebuilt since ${LAST_BUILT_AT:-the last run}, so there was no new data.${size}"
+          else
+            msg=":white_check_mark: **Price ingest OK.** ${ROWS} observations for ${OBSERVED_ON}.${size}"
+          fi
+
+          echo "$msg"
           if [ -z "$DISCORD_WEBHOOK_URL" ]; then
-            echo "::warning::Ingest failed and DISCORD_WEBHOOK_URL is not set, so no alert was sent."
+            echo "::warning::DISCORD_WEBHOOK_URL is not set, so no daily message was sent."
             exit 0
           fi
-          # A day missed is a day lost - tcgcsv serves only its current build.
-          jq -nc --arg c "Daily tcgcsv price ingest FAILED. Today's prices are unrecoverable if not fixed before the next tcgcsv rebuild (~20:00 UTC). $RUN_URL" \
-            '{content:$c}' | curl -sS -X POST -H 'Content-Type: application/json' -d @- "$DISCORD_WEBHOOK_URL"
+          # Never fail the job over the notifier - a successful ingest that could not be
+          # announced is still a successful ingest, and flipping it to red would itself
+          # be a false alarm.
+          jq -nc --arg c "$msg" '{content:$c}' \
+            | curl -sS -X POST -H 'Content-Type: application/json' -d @- "$DISCORD_WEBHOOK_URL" \
+            || echo "::warning::Discord notification failed to send."
