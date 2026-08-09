@@ -82,9 +82,15 @@ enabled = true
 #                          mode, effective_date), so the duplicate insert does not even error,
 #                          it just corrupts the count.
 #
-# Migrations 001-016 are now the complete, self-sufficient path to a correct database. If ban
-# seeding is ever needed again, write a NEW migration -- not a seed file competing with one
-# that already ran. Local card data comes from a fresh pull against live; see supabase/README.md.
+# If ban seeding is ever needed again, write a NEW migration -- not a seed file competing with
+# one that already ran. Local card data comes from a fresh pull against live.
+#
+# NOTE: emptying this does NOT make `supabase db reset` work. Verified 2026-08-09 by running it:
+# reset fails earlier, inside migration 008, which resolves ban card_codes by selecting from
+# `cards` -- empty on a fresh database -- and then asserts it inserted 11 rows. Migration 008 has
+# never been replayable from scratch; it succeeded originally only because it was applied by hand
+# against the already-populated live database. `supabase db push` is unaffected.
+# See supabase/README.md.
 #
 # Do not "fix" this by globbing ./seed/*.sql: that directory holds only read-only verification
 # scripts now, and they must never run as part of seeding.
