@@ -15,13 +15,17 @@ git log --diff-filter=D --oneline -- supabase/seed/seed_cards.sql
 git show <commit>^:supabase/seed/seed_cards.sql > seed_cards.sql
 ```
 
-To produce a fresh dump from live instead (preferred, since it will be current):
+To produce a fresh dump from live instead:
 
 ```
 supabase db dump --linked --data-only -s public -f dump.sql
 ```
 
-That needs Docker running. `psql "$RA_DB" -c "\copy ..."` against the session pooler works too.
+**Verified scope of that claim, so nobody has to re-derive it:** `--linked` *is* a real flag on `db dump` and `db push` on CLI **2.111.0** (confirmed from `--help` on 2026-08-09). This supersedes the transition doc's note that "there is no reliable `--linked` flag on the installed CLI version" — that may still hold for `db query`, which is a different subcommand, but not for these two.
+
+**However, this exact dump command has NOT been run successfully here.** It was attempted on 2026-08-09 and failed: `db dump` shells out to a `supabase/postgres` container, so it needs Docker running, and Docker was not. Treat the command as unverified end-to-end until someone runs it with Docker up. `psql "$RA_DB" -f ...` against the session pooler (port 5432 — not the direct hostname, which is IPv6-only) avoids Docker entirely and is the safer bet if you just need the data.
+
+`db push` is different: it applies migrations to the remote directly and does **not** need Docker.
 
 > **Note on the standing rule.** `docs/RiftAcademy_Project Management.md` cites `seed_cards.sql` as its example of "a one-time record of a load that will never repeat is committed." That rule still stands — the example just needs replacing at the next reconciliation. Retiring the file does not violate its intent (preventing per-day artifact accumulation), and git history keeps the record either way.
 
@@ -54,15 +58,33 @@ Those get their own audit trail instead, following the pattern `price_ingest_run
 
 The answer to "what was inserted, when, and by what" should come from querying that run table, never from reading the migration ledger.
 
+**`price_ingest_runs` does not yet support all of that** (live schema checked 2026-08-09). It has `run_id`, `started_at`, `source_id`, `source_built_at`, the row counters, `status`, and `notes` — which already covers skip-on-unchanged-source and empty-run detection. It is **missing**:
+
+| Column | Why it is needed |
+|---|---|
+| `ci_run_id` | Trace a row back to the exact GitHub Actions execution |
+| `commit_sha` | Trace a row back to the exact code that produced it |
+| `finished_at` | Distinguish a crashed run from a completed one by more than `status` |
+
+So the CI-traceability half of this pattern **is not documentation — it needs its own migration** before a scheduled workflow can populate it. That migration is in scope for the price-ingest automation work, not yet written.
+
 ## Row-level security
 
 **`cards` and `card_printings` have RLS enabled with no policies. This is intentional** (confirmed 2026-08-09) — card data is reachable only via `service_role`, server-side. It is not a misconfiguration and should not be "fixed" by adding an anon read policy.
 
 Practical consequence: any client-side read of these tables using the anon/publishable key returns **zero rows, not an error**. If card data appears mysteriously empty in a client, this is why. Read card data server-side, or from `src/data/cards.json`.
 
-## Verification scripts
+## What is left in `seed/`
 
-The remaining `seed/*.sql` files are read-only checks, not seed data:
+Two different kinds of file live here. They are not interchangeable — one group writes, the other only reads.
+
+**Seed data (writes rows):**
+
+| File | Purpose |
+|---|---|
+| `seed_card_bans.sql` | Ban list seed. Still current, **not** retired |
+
+**Read-only verification scripts (write nothing):**
 
 | File | Purpose |
 |---|---|
@@ -71,4 +93,5 @@ The remaining `seed/*.sql` files are read-only checks, not seed data:
 | `ligature_encoding_audit.sql` | Detects ligature glyphs that break grep |
 | `price_coverage_check.sql` | Price data completeness |
 | `price_diagnostics.sql` | Price ingest troubleshooting |
-| `seed_card_bans.sql` | Ban list seed (still live data, not retired) |
+
+Note that because `config.toml`'s `[db.seed] sql_paths` points at a non-existent `./seed.sql`, **`seed_card_bans.sql` does not load on `db reset` either.** That is a live gap, not just a historical one about the retired card seed.
