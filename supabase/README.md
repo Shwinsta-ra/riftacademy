@@ -76,17 +76,23 @@ So the CI-traceability half of this pattern **is not documentation — it needs 
 
 Practical consequence: any client-side read of these tables using the anon/publishable key returns **zero rows, not an error**. If card data appears mysteriously empty in a client, this is why. Read card data server-side, or from `src/data/cards.json`.
 
-## What is left in `seed/`
+## There is no seed data any more
 
-Two different kinds of file live here. They are not interchangeable — one group writes, the other only reads.
+**`config.toml`'s `[db.seed] sql_paths` is deliberately empty, and everything left in `seed/` is read-only.** Migrations 001–016 are the complete, self-sufficient path to a correct database. If you ever need seeded rows again, write a migration — not a seed file competing with one that already ran.
 
-**Seed data (writes rows):**
+Both files that once lived here are retired. `seed_cards.sql` is covered above.
 
-| File | Purpose |
-|---|---|
-| `seed_card_bans.sql` | Ban list seed. Still current, **not** retired |
+**`seed_card_bans.sql`** was retired because it was **entirely redundant with migration `20260805000008_backfill_master_inventory.sql`**, which is applied and immutable. Migration 008 inserts **11** ban rows — the 7 March-2026 bans plus the *same* 4 July-2026 bans the seed inserted, with identical `card_code` / `format` / `mode` / `effective_date`. It is a strict superset, and live `card_bans` holds exactly 11 rows, confirming migration 008 alone fully seeds bans.
 
-**Read-only verification scripts (write nothing):**
+Re-running the seed on top of that **did not error — it silently inserted 4 duplicates.** `card_bans`'s primary key is a surrogate `ban_id`; there is **no** uniqueness constraint on `(card_code, format, mode, effective_date)`, so nothing rejected the second copy.
+
+That made the file unrunnable from the moment migration 008 landed on 2026-08-05: any gate comparing `card_bans` totals sees migration 008's 11 rows and fails. The dead `./seed.sql` path was the only reason nobody noticed — wiring it up surfaced a bug that had been latent for days rather than creating a new one.
+
+Recover it from git history if ever needed: `git log --diff-filter=D -- supabase/seed/seed_card_bans.sql`.
+
+> **Verification-gate lesson worth keeping.** Before deletion, that file's gate was reworked to assert what survives an unseeded database — separating "target data not loaded yet" (a notice) from "a name failed to match" (an exception) — rather than asserting a flat expected row count. That is the right template for any future seed or migration gate, and it is the same reasoning behind the assertions in migrations 015 and 016. The gate is gone with the file; the pattern should not be.
+
+**Read-only verification scripts (write nothing, and never auto-run):**
 
 | File | Purpose |
 |---|---|
@@ -96,4 +102,4 @@ Two different kinds of file live here. They are not interchangeable — one grou
 | `price_coverage_check.sql` | Price data completeness |
 | `price_diagnostics.sql` | Price ingest troubleshooting |
 
-Note that because `config.toml`'s `[db.seed] sql_paths` points at a non-existent `./seed.sql`, **`seed_card_bans.sql` does not load on `db reset` either.** That is a live gap, not just a historical one about the retired card seed.
+None of these run automatically. Invoke them by hand against whichever database you want to check.
