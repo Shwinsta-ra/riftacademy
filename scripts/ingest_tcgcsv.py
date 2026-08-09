@@ -11,6 +11,7 @@ Usage:
     python3 ingest_tcgcsv.py --force         # ignore the last-updated check
     python3 ingest_tcgcsv.py --dry-run       # fetch and report, write nothing
     python3 ingest_tcgcsv.py --last-built-at TS   # CI: state comes from the database
+    python3 ingest_tcgcsv.py --ci-run-id N --commit-sha SHA   # CI: record provenance
 
 Then:
     psql "$RA_DB" -f price_ingest_<date>.sql
@@ -182,6 +183,10 @@ def main():
     cli_last = arg_value("--last-built-at")
     state_from_db = cli_last is not None
     last_built_at = cli_last if state_from_db else load_state()["last_built_at"]
+    # Empty string is treated as absent so the workflow can pass these unconditionally
+    # without a manual run ever recording a meaningless "" as its provenance.
+    ci_run_id = arg_value("--ci-run-id") or None
+    commit_sha = arg_value("--commit-sha") or None
 
     built_at = get("/last-updated.txt").strip()
     print(f"tcgcsv last built : {built_at}")
@@ -315,12 +320,17 @@ def main():
               "high=excluded.high, direct_low=excluded.direct_low;\n")
         w("\n")
 
+        # ci_run_id / commit_sha are NULL on a manual run, and that is the correct
+        # encoding rather than a gap: NULL means "not produced by CI", which is what
+        # `where ci_run_id is null` relies on to find every hand-applied run. See
+        # migration 017 for why they are not backfilled with a placeholder.
         w("insert into price_ingest_runs (source_id,source_built_at,groups_seen,rows_in,"
           "rows_kept,rows_skipped_foil,printings_matched,printings_unmatched,"
-          "observations_written,status,notes) values ('tcgplayer',"
+          "observations_written,status,notes,ci_run_id,commit_sha) values ('tcgplayer',"
           f"timestamptz {q(built_at)},{len(groups)},{rows_in},{kept},0,"
           f"{matched},{unmatched},{len(observations)},'ok',"
-          f"{q('subtypes: ' + json.dumps(dict(sub_tally), sort_keys=True))});\n\n")
+          f"{q('subtypes: ' + json.dumps(dict(sub_tally), sort_keys=True))},"
+          f"{q(ci_run_id)},{q(commit_sha)});\n\n")
         w("commit;\n")
 
     # Only manual runs keep a local high-water mark. On a CI run the state lives in
