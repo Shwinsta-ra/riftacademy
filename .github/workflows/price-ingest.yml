@@ -43,10 +43,30 @@ jobs:
             echo "::error::Secret RA_DB is not set. Add the Supabase session-pooler connection string (port 5432, not the IPv6-only direct host)."
             exit 1
           fi
+          # Only status='ok' advances the mark. A 'running' row (crashed run) or a
+          # 'skipped' one must never make the next day look already-ingested.
           last=$(psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 \
             -c "select coalesce(max(source_built_at)::text,'') from price_ingest_runs where source_id='tcgplayer' and status='ok'")
           echo "last_built_at=$last" >> "$GITHUB_OUTPUT"
           echo "Last successful ingest: ${last:-never}"
+
+      # Opened BEFORE the fetch, per supabase/README.md: "one row per execution,
+      # written at start and completed at finish, so a crashed run is visibly
+      # incomplete rather than invisible." If this job dies during the fetch, this row
+      # survives as status='running' with a null finished_at.
+      - name: Open the run row
+        id: openrun
+        env:
+          RA_DB: ${{ secrets.RA_DB }}
+          CI_RUN_ID: ${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          run_id=$(psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 \
+            -v ci="$CI_RUN_ID" -v sha="$COMMIT_SHA" \
+            -c "insert into price_ingest_runs (source_id,status,ci_run_id,commit_sha)
+                values ('tcgplayer','running',:'ci',:'sha') returning run_id")
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Opened price_ingest_runs row $run_id"
 
       - name: Fetch tcgcsv and generate SQL
         id: generate
@@ -59,8 +79,9 @@ jobs:
           FORCE: ${{ inputs.force }}
           CI_RUN_ID: ${{ github.run_id }}
           COMMIT_SHA: ${{ github.sha }}
+          RUN_ROW_ID: ${{ steps.openrun.outputs.run_id }}
         run: |
-          args=(--last-built-at "$LAST_BUILT_AT"
+          args=(--last-built-at "$LAST_BUILT_AT" --run-id "$RUN_ROW_ID"
                 --ci-run-id "$CI_RUN_ID" --commit-sha "$COMMIT_SHA")
           [ "$FORCE" = "true" ] && args+=(--force)
           python3 scripts/ingest_tcgcsv.py "${args[@]}"
@@ -116,6 +137,44 @@ jobs:
 
       # 500 MB is the Supabase free-tier ceiling. Alerting at 350 MB leaves room to act
       # before writes start failing rather than after.
+      # The 'ok' close is written by the generated SQL, inside the same transaction as
+      # the observations - so the row can never say 'ok' unless the data actually
+      # landed. The other two outcomes have no generated SQL, so they are closed here.
+      - name: Close the run row for skip or failure
+        if: always() && steps.openrun.outcome == 'success'
+        env:
+          RA_DB: ${{ secrets.RA_DB }}
+          RUN_ROW_ID: ${{ steps.openrun.outputs.run_id }}
+          SQL_FILE: ${{ steps.generate.outputs.sql_file }}
+          JOB_STATUS: ${{ job.status }}
+          LAST_BUILT_AT: ${{ steps.state.outputs.last_built_at }}
+        run: |
+          if [ "$JOB_STATUS" = "success" ] && [ -n "$SQL_FILE" ]; then
+            echo "Ingest succeeded; the generated SQL already closed run $RUN_ROW_ID."
+            exit 0
+          fi
+          if [ "$JOB_STATUS" = "success" ]; then
+            # Skip: guarded on 'running' so it can never overwrite a row the generated
+            # SQL already closed as 'ok'.
+            psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 -v id="$RUN_ROW_ID" \
+              -v note="no new tcgcsv build since ${LAST_BUILT_AT:-never}" \
+              -c "update price_ingest_runs set status='skipped', finished_at=now(), notes=:'note'
+                  where run_id=:'id'::bigint and status='running'"
+            echo "Closed run $RUN_ROW_ID as skipped"
+          else
+            # Failure: deliberately NOT guarded. The two ways to be wrong here are not
+            # symmetric. Marking a run failed when its data actually landed costs one
+            # redundant re-ingest tomorrow, and re-ingest is idempotent. Leaving it
+            # 'ok' when the data did NOT land advances the high-water mark, so the next
+            # run skips and that day is lost permanently - which is the exact failure
+            # this whole workflow exists to prevent. Bias to the recoverable error.
+            psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 -v id="$RUN_ROW_ID" \
+              -v note="job status $JOB_STATUS" \
+              -c "update price_ingest_runs set status='failed', finished_at=now(), notes=:'note'
+                  where run_id=:'id'::bigint"
+            echo "Closed run $RUN_ROW_ID as failed"
+          fi
+
       - name: Check database size against the free-tier ceiling
         id: dbsize
         # Runs even when the ingest failed - a full database is a plausible CAUSE of
