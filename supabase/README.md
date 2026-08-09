@@ -6,9 +6,15 @@ Project: `riftacademy` (`aqhtqgiwvcunbllmbdrq`), Postgres 17, us-west-1.
 
 **The live database is authoritative for `cards` and `card_printings`.** Not `src/data/cards.json`, which is a documented lossy interim source that seeds values only and never structure (see `docs/contracts/RiftCore_to_M9_Supabase_DDL_AUDITED_FINAL.md`). Corrections are applied to live and then, where the repo needs to agree, mirrored into `cards.json`.
 
+**`card_keywords` is the exception, and it is worth knowing why.** It was authored directly in live during Phase 4 Stage 1 and had **no repo-side representation at all** until `20260809000019_seed_card_keywords.sql` (PR #206) — no migration, no seed file. That made it invisible to any bootstrap scoped by table name, which is exactly how it nearly got dropped. It now has a durable source of truth in `migrations/`, but **do not execute 019 against live**: those 740 rows are already there. It exists for the ledger and for from-scratch databases (test environments, CI, disaster recovery).
+
+Live already records it — the ledger holds 19 rows with `20260809000019` as the latest, verified 2026-08-09. **That is the `migration repair --status applied` pattern working as intended**: the version is marked applied so `db push` will not try to execute it, while its body never ran against a database that already had the rows. This is the same treatment 008 gets under the bootstrap procedure below, and it is the normal outcome for any migration whose data reached live before its file did.
+
+The general lesson, since this will recur as more Phase 4 output lands: **a table populated only by hand against live is invisible to every bootstrap, backup-scope and rebuild procedure that enumerates tables.** If you author data directly in live, give it a migration in the same session, or it exists in exactly one place and nothing will tell you when that place is missed.
+
 `seed_cards.sql` is **retired**. It had drifted to 905 of 929 cards with stale `power_cost` / `might_bonus` / `rules_text` on hundreds more, and nothing loaded it — `config.toml`'s `[db.seed] sql_paths` pointed at `./seed.sql`, a path that does not exist. It was a 550KB file with no consumer that re-staled on every change to live.
 
-> **If you can still see `seed/seed_cards.sql`, you are on a branch that predates the deletion.** The file is removed in the same commit that adds this README (branch `fix/retire-seed-cards`, PR #193) and is still present on `main`, `integration`, and every branch cut before that PR merges. Check with `git log --diff-filter=D -- supabase/seed/seed_cards.sql`. Either way it is **not** wired into `sql_paths`, so it does not auto-load on `db reset` — see `config.toml` (PR #194).
+> **If you can still see `seed/seed_cards.sql`, you are on a branch cut before PR #193 merged** (2026-08-09). It is gone from `integration` and everything downstream of it. Check with `git log --diff-filter=D -- supabase/seed/seed_cards.sql`. Either way it was never wired into `sql_paths`, so it did not auto-load on `db reset` — see `config.toml` (PR #194).
 
 Its content is not lost: it is preserved in git history. To recover it:
 
@@ -25,11 +31,13 @@ supabase db dump --linked --data-only -s public -f dump.sql
 
 **Verified scope of that claim, so nobody has to re-derive it:** `--linked` *is* a real flag on `db dump` and `db push` on CLI **2.111.0** (confirmed from `--help` on 2026-08-09). This supersedes the transition doc's note that "there is no reliable `--linked` flag on the installed CLI version" — that may still hold for `db query`, which is a different subcommand, but not for these two.
 
-**However, this exact dump command has NOT been run successfully here.** It was attempted on 2026-08-09 and failed: `db dump` shells out to a `supabase/postgres` container, so it needs Docker running, and Docker was not. Treat the command as unverified end-to-end until someone runs it with Docker up. `psql "$RA_DB" -f ...` against the session pooler (port 5432 — not the direct hostname, which is IPv6-only) avoids Docker entirely and is the safer bet if you just need the data.
+**This exact dump command still has not been run successfully here, though the original blocker is gone.** It was attempted on 2026-08-09 and failed because `db dump` shells out to a `supabase/postgres` container and Docker was not running. Docker has since been used on that machine (it is how `db reset` was finally executed, which is what surfaced the migration 008 defect), so **the Docker blocker is no longer inherent — nobody has simply re-attempted the dump.** Treat it as unverified end-to-end until someone does. `psql "$RA_DB" -f ...` against the session pooler (port 5432 — not the direct hostname, which is IPv6-only) avoids Docker entirely and is the safer bet if you just need the data.
+
+Whichever route you take, **include `card_keywords` in the scope**, per the bootstrap section below.
 
 `db push` is different: it applies migrations to the remote directly and does **not** need Docker.
 
-> **Note on the standing rule.** `docs/RiftAcademy_Project Management.md` cites `seed_cards.sql` as its example of "a one-time record of a load that will never repeat is committed." That rule still stands — the example just needs replacing at the next reconciliation. Retiring the file does not violate its intent (preventing per-day artifact accumulation), and git history keeps the record either way.
+> **Note on the standing rule.** `docs/RiftAcademy_Project Management.md` used to cite `seed_cards.sql` as its example of "a one-time record of a load that will never repeat is committed." **The example was replaced at the 2026-08-09 reconciliation** (PR #195) and now points at the numbered files in `migrations/`. The rule itself never changed: its intent is preventing per-day artifact accumulation, and git history keeps the one-time record either way.
 
 ## Migrations
 
@@ -104,9 +112,29 @@ Practical consequence: any client-side read of these tables using the anon/publi
 >
 > **This is not caused by retiring the seeds.** `db reset` fails at 008, long before seeding would run, whatever `sql_paths` contains.
 >
-> **`supabase db push` is unaffected and remains safe** — it applies only *unapplied* migrations to the remote, which now means 015 and 016 against a live database that already has card data.
+> **`supabase db push` is unaffected and remains safe** — it applies only *unapplied* migrations to the remote. 015 and 016 were applied this way on 2026-08-09 and the ledger now records through 019.
 >
-> Unresolved. See the fragment for the options; fixing it needs a decision from Core/Infra, since migration 008 is recorded as applied and this repo treats applied migrations as immutable.
+> **Decided 2026-08-09 (Core, on Infra's proposal). Migration 008 is not edited; use the bootstrap procedure below instead.**
+
+### Bootstrapping a database from scratch
+
+`db reset` alone cannot do it. Use this instead:
+
+1. Apply schema migrations **001 through 007**. These are pure schema and replay cleanly.
+2. **Restore a data dump from live** covering `cards`, `card_printings`, `card_bans`, **and `card_keywords`**.
+3. `supabase migration repair --status applied <version>` for **008 onward**, so they are recorded without re-executing — the dump already contains everything they would have inserted.
+4. Push any later migrations normally.
+
+**`card_keywords` is in that list deliberately, and leaving it out is a silent data loss.** It holds 740 rows across 522 cards (Phase 4 Stage 1 keyword extraction) and until PR #206 existed *only* in live Supabase, in no migration or seed file. A dump scoped to the three card tables alone restores a database with **zero rows in `card_keywords`**, and nothing errors — you would only catch it by noticing the count is wrong. `20260809000019_seed_card_keywords.sql` now provides a second, repo-side source of truth for the same rows.
+
+**Take the dump from current live state** — after 015, 016, and the `seed_card_bans.sql` retirement — not from an older snapshot. `card_keywords` has only ever existed in its present form, so there is no earlier "clean" version to prefer.
+
+**Why not just fix migration 008?** Two alternatives were considered and rejected:
+
+- **Editing 008 in place** breaks migration immutability and drift detection. `migration repair` exists precisely so history does not need rewriting to fix a bootstrap gap.
+- **Splitting it into a new migration that re-inserts the same rows** is the exact shape of the `seed_card_bans.sql` bug documented below: a surrogate primary key let a re-run silently duplicate rows instead of erroring. `migration repair` never runs 008's body at all, which sidesteps the whole class.
+
+`migration repair --status applied` is not unproven here — it is how versions 008 to 014 were reconciled on 2026-08-09.
 
 Both files that once lived here are retired. `seed_cards.sql` is covered above.
 
