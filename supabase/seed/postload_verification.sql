@@ -1,6 +1,10 @@
 -- RiftAcademy — post-load verification
--- Run AFTER seed_cards.sql. Read-only. Required by RiftCore adjudication 2026-08-05,
--- Decision 3 ("post-load verification") and awareness item 4.
+-- Run AFTER any bulk card load. Read-only. Required by RiftCore adjudication
+-- 2026-08-05, Decision 3 ("post-load verification") and awareness item 4.
+--
+-- Previously read "Run AFTER seed_cards.sql"; that seed was retired 2026-08-09
+-- (live Supabase is authoritative for cards/card_printings -- see ../README.md).
+-- This script is unchanged and still valid against any loaded database.
 
 select '=== 1. Row counts ===' as section;
 select
