@@ -68,7 +68,27 @@ schema_paths = []
 enabled = true
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+#
+# Was ["./seed.sql"] -- a path that has never existed. The real files live in ./seed/, so
+# `db reset` silently seeded nothing at all. Local dev / ephemeral CI only; live is
+# unaffected and remains the source of truth for card data.
+#
+# Deliberately empty. Both files that once lived here are retired:
+#   seed_cards.sql      -- drifted against live and had no working loader.
+#   seed_card_bans.sql  -- fully duplicated migration 008, which already inserts all 11 bans
+#                          (7 March 2026 + 4 July 2026) and is immutable. Re-running the seed
+#                          on top of it created silent duplicate rows: card_bans.ban_id is a
+#                          surrogate key with no uniqueness constraint on (card_code, format,
+#                          mode, effective_date), so the duplicate insert does not even error,
+#                          it just corrupts the count.
+#
+# Migrations 001-016 are now the complete, self-sufficient path to a correct database. If ban
+# seeding is ever needed again, write a NEW migration -- not a seed file competing with one
+# that already ran. Local card data comes from a fresh pull against live; see supabase/README.md.
+#
+# Do not "fix" this by globbing ./seed/*.sql: that directory holds only read-only verification
+# scripts now, and they must never run as part of seeding.
+sql_paths = []
 
 [db.network_restrictions]
 # Enable management of network restrictions.
