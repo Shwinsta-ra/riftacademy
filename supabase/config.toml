@@ -68,7 +68,19 @@ schema_paths = []
 enabled = true
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+#
+# Was ["./seed.sql"] -- a path that has never existed. The real files live in ./seed/, so
+# `db reset` silently seeded nothing at all. Local dev / ephemeral CI only; live is
+# unaffected and remains the source of truth for card data.
+#
+# Deliberately NOT a glob over ./seed/*.sql: that directory also holds read-only verification
+# scripts, which must not run as part of seeding. Only genuine seed data is listed here.
+#
+# seed_cards.sql is intentionally absent even where it is still on disk. Auto-loading a
+# 556KB committed card dump on every reset reintroduces the exact staleness it was retired
+# for (it drifts against live every time cards change). Local card data comes from a fresh
+# pull against live instead -- see supabase/README.md.
+sql_paths = ["./seed/seed_card_bans.sql"]
 
 [db.network_restrictions]
 # Enable management of network restrictions.
