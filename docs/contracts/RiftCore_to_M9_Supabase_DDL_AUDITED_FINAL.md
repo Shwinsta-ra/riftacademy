@@ -98,6 +98,13 @@ create table card_keywords (     -- PRINTED keywords only; runtime grants are ga
   keyword      text not null references keywords,
   value_number int,              -- Assault 2 → 2; Level 6 → 6
   value_cost   jsonb,            -- Equip (1)(R) → {energy:1, power:[{"kind":"domain","domain":"Fury"}]}
+                                 -- Alternative ("OR") costs, e.g. Empower (1) OR (O) on ven-074-166:
+                                 --   {"alternatives":[{"energy":1},{"power":[{"kind":"domain","domain":"Body"}]}]}
+                                 -- each array entry is a standalone cost of the same {energy, power} shape;
+                                 -- pay any ONE entry in full. NOTE FOR INFRA: this shape must round-trip back
+                                 -- to player-facing text ("(1) OR (O)") for puzzle/UI display, not just be
+                                 -- machine-consumable — confirm your renderer handles `alternatives` before
+                                 -- Phase 4 Stage 3 ships anything that emits it.
   sequence     int not null,
   primary key (card_code, keyword, sequence)
 );
