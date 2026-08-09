@@ -1,0 +1,147 @@
+name: Daily price ingest
+
+# tcgcsv rebuilds once a day at ~20:00 UTC and keeps ONLY the current build - there is
+# no backfill endpoint. A day that is not fetched is gone permanently (2026-08-07 was
+# lost exactly this way). 21:00 UTC leaves an hour of headroom after their build.
+#
+# NOTE: `schedule` only fires from the repository's DEFAULT branch. This workflow does
+# nothing on a schedule until it has been promoted all the way to `main`; until then
+# only `workflow_dispatch` can run it, and that also requires the file to be on main.
+on:
+  schedule:
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Ingest even if this tcgcsv build was already ingested'
+        type: boolean
+        default: false
+
+# Never let two ingests overlap. They are idempotent, but a second run starting while
+# the first is mid-apply would read a stale high-water mark and duplicate the work.
+concurrency:
+  group: price-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Read last successful ingest from the database
+        id: state
+        env:
+          RA_DB: ${{ secrets.RA_DB }}
+        run: |
+          if [ -z "$RA_DB" ]; then
+            echo "::error::Secret RA_DB is not set. Add the Supabase session-pooler connection string (port 5432, not the IPv6-only direct host)."
+            exit 1
+          fi
+          last=$(psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 \
+            -c "select coalesce(max(source_built_at)::text,'') from price_ingest_runs where source_id='tcgplayer' and status='ok'")
+          echo "last_built_at=$last" >> "$GITHUB_OUTPUT"
+          echo "Last successful ingest: ${last:-never}"
+
+      - name: Fetch tcgcsv and generate SQL
+        id: generate
+        # LAST_BUILT_AT goes through the environment rather than being interpolated
+        # into the run block. It is only ever a timestamp we wrote ourselves, but a
+        # ${{ }} expansion inside a shell line is the standard Actions script-injection
+        # shape and is not worth keeping just to save a variable.
+        env:
+          LAST_BUILT_AT: ${{ steps.state.outputs.last_built_at }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          args=(--last-built-at "$LAST_BUILT_AT")
+          [ "$FORCE" = "true" ] && args+=(--force)
+          python3 scripts/ingest_tcgcsv.py "${args[@]}"
+          # The script writes price_ingest_<date>.sql only when there is something to
+          # ingest, so the file's absence IS the "skipped, already current" signal.
+          file=$(ls -1 price_ingest_*.sql 2>/dev/null | head -1 || true)
+          if [ -n "$file" ]; then
+            echo "sql_file=$file" >> "$GITHUB_OUTPUT"
+            echo "observed_on=$(echo "$file" | sed -E 's/price_ingest_(.*)\.sql/\1/')" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nothing to ingest - tcgcsv has not rebuilt since the last successful run."
+          fi
+
+      - name: Apply SQL
+        if: steps.generate.outputs.sql_file != ''
+        env:
+          RA_DB: ${{ secrets.RA_DB }}
+          SQL_FILE: ${{ steps.generate.outputs.sql_file }}
+        run: |
+          # ON_ERROR_STOP is load-bearing: without it psql reports success even when
+          # every statement inside the begin/commit block aborted and the commit
+          # silently degraded to a rollback.
+          psql "$RA_DB" -v ON_ERROR_STOP=1 -f "$SQL_FILE"
+
+      # Uploaded on every run that produced a file, not only failures. Nobody reads
+      # these daily; they exist because this pipeline has already shipped several
+      # silent defects, and "what exactly did we write that day" is otherwise
+      # unanswerable after the fact.
+      - name: Upload generated SQL as an audit artifact
+        if: always() && steps.generate.outputs.sql_file != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-ingest-sql-${{ steps.generate.outputs.observed_on }}
+          path: ${{ steps.generate.outputs.sql_file }}
+          retention-days: 90
+
+      - name: Verify the observations actually landed
+        if: steps.generate.outputs.sql_file != ''
+        env:
+          RA_DB: ${{ secrets.RA_DB }}
+          OBSERVED_ON: ${{ steps.generate.outputs.observed_on }}
+        run: |
+          rows=$(psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 \
+            -c "select count(*) from price_observations where observed_on = date '$OBSERVED_ON'")
+          echo "Rows for $OBSERVED_ON: $rows"
+          echo "- **$OBSERVED_ON**: $rows price observations" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$rows" -eq 0 ]; then
+            echo "::error::psql reported success but no observations exist for $OBSERVED_ON."
+            exit 1
+          fi
+
+      # 500 MB is the Supabase free-tier ceiling. Alerting at 350 MB leaves room to act
+      # before writes start failing rather than after.
+      - name: Check database size against the free-tier ceiling
+        # Runs even when the ingest failed - a full database is a plausible CAUSE of
+        # that failure - but not when we never got a working connection, since then
+        # this step would only fail a second time and bury the real error.
+        if: always() && steps.state.outcome == 'success'
+        env:
+          RA_DB: ${{ secrets.RA_DB }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          mb=$(psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 \
+            -c "select (pg_database_size(current_database())/1024/1024)::bigint")
+          echo "Database size: ${mb} MB of the 500 MB free-tier ceiling"
+          echo "- **Database size**: ${mb} MB / 500 MB" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$mb" -ge 350 ]; then
+            echo "::warning::Database is ${mb} MB, past the 350 MB alert threshold (500 MB ceiling)."
+            if [ -n "$DISCORD_WEBHOOK_URL" ]; then
+              jq -nc --arg c "RiftAcademy DB at ${mb} MB of 500 MB (alert threshold 350 MB)." \
+                '{content:$c}' | curl -sS -X POST -H 'Content-Type: application/json' -d @- "$DISCORD_WEBHOOK_URL"
+            fi
+          fi
+
+      - name: Alert on failure
+        if: failure()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "::warning::Ingest failed and DISCORD_WEBHOOK_URL is not set, so no alert was sent."
+            exit 0
+          fi
+          # A day missed is a day lost - tcgcsv serves only its current build.
+          jq -nc --arg c "Daily tcgcsv price ingest FAILED. Today's prices are unrecoverable if not fixed before the next tcgcsv rebuild (~20:00 UTC). $RUN_URL" \
+            '{content:$c}' | curl -sS -X POST -H 'Content-Type: application/json' -d @- "$DISCORD_WEBHOOK_URL"

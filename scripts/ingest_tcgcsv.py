@@ -10,9 +10,20 @@ Usage:
     python3 ingest_tcgcsv.py                 # normal run
     python3 ingest_tcgcsv.py --force         # ignore the last-updated check
     python3 ingest_tcgcsv.py --dry-run       # fetch and report, write nothing
+    python3 ingest_tcgcsv.py --last-built-at TS   # CI: state comes from the database
 
 Then:
     psql "$RA_DB" -f price_ingest_<date>.sql
+
+State, and why there are two sources of it:
+    A manual run keeps its high-water mark in a local file (STATE_FILE). That is fine
+    on Ashwin's machine and wrong on a CI runner, which is destroyed after every job -
+    a runner reading a local state file always sees "never ingested" and re-ingests
+    every time. The scheduled workflow therefore reads the real high-water mark from
+    price_ingest_runs.source_built_at and passes it in with --last-built-at, and this
+    script does NOT write the local state file on those runs: the database row that
+    the generated SQL inserts IS the state. Passing the value in rather than querying
+    it here keeps the "no database driver installed" property noted above.
 
 tcgcsv operator rules honoured, all from their published guidance:
   - last-updated.txt checked first; skip entirely if not newer than our last run
@@ -22,7 +33,7 @@ tcgcsv operator rules honoured, all from their published guidance:
   - 21 requests per full sync against their 10,000 ceiling
 """
 
-import json, csv, io, sys, time, collections, urllib.request, urllib.error
+import json, csv, io, re, sys, time, collections, urllib.request, urllib.error
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -73,6 +84,48 @@ def load_state():
     if STATE_FILE.exists():
         return json.loads(STATE_FILE.read_text())
     return {"last_built_at": None}
+
+
+def arg_value(flag):
+    """Read `--flag value`. Returns None if absent, "" if present but empty."""
+    if flag not in sys.argv:
+        return None
+    i = sys.argv.index(flag)
+    return sys.argv[i + 1].strip() if i + 1 < len(sys.argv) else ""
+
+
+def parse_ts(s):
+    """
+    Parse a timestamp from either of the two shapes this script sees, without
+    depending on the Python version: tcgcsv writes '2026-08-08T20:05:59+0000',
+    psql renders the same instant back as '2026-08-08 20:05:59+00'. Those two
+    strings are never equal, so the old string comparison would have re-ingested
+    every single scheduled run once state moved into the database.
+
+    Returns None if the string isn't a timestamp at all; callers fall back to
+    exact string comparison rather than treating "unparseable" as "newer".
+    """
+    if not s:
+        return None
+    t = s.strip().replace(" ", "T")
+    t = re.sub(r"(?i)z$", "+00:00", t)
+    m = re.search(r"([+-]\d{2})(:?)(\d{2})?$", t)
+    if m:                                   # +0000 / +00 / +00:00 -> +00:00
+        t = t[:m.start()] + f"{m.group(1)}:{m.group(3) or '00'}"
+    try:
+        return datetime.fromisoformat(t)
+    except ValueError:
+        return None
+
+
+def already_ingested(built_at, last_built_at):
+    """True when tcgcsv's current build is not newer than our last successful run."""
+    if not last_built_at:
+        return False
+    now, then = parse_ts(built_at), parse_ts(last_built_at)
+    if now is None or then is None:
+        return built_at.strip() == last_built_at.strip()
+    return now <= then
 
 
 def ext(product, key):
@@ -126,12 +179,15 @@ def q(v):
 def main():
     force = "--force" in sys.argv
     dry = "--dry-run" in sys.argv
-    state = load_state()
+    cli_last = arg_value("--last-built-at")
+    state_from_db = cli_last is not None
+    last_built_at = cli_last if state_from_db else load_state()["last_built_at"]
 
     built_at = get("/last-updated.txt").strip()
     print(f"tcgcsv last built : {built_at}")
-    print(f"our last ingest   : {state['last_built_at'] or 'never'}")
-    if not force and state["last_built_at"] == built_at:
+    print(f"our last ingest   : {last_built_at or 'never'}"
+          f"  ({'price_ingest_runs' if state_from_db else STATE_FILE})")
+    if not force and already_ingested(built_at, last_built_at):
         print("\nAlready ingested this build. Nothing to do.")
         print("tcgcsv rebuilds once daily at 20:00 UTC; polling more often gains nothing.")
         return 0
@@ -267,7 +323,12 @@ def main():
           f"{q('subtypes: ' + json.dumps(dict(sub_tally), sort_keys=True))});\n\n")
         w("commit;\n")
 
-    STATE_FILE.write_text(json.dumps({"last_built_at": built_at}))
+    # Only manual runs keep a local high-water mark. On a CI run the state lives in
+    # price_ingest_runs, and the row that records THIS run is written by the SQL above
+    # - so it must not be advanced here, before that SQL has actually been applied.
+    # Writing it here on CI would mark the build ingested even if psql then failed.
+    if not state_from_db:
+        STATE_FILE.write_text(json.dumps({"last_built_at": built_at}))
     print(f"\nwritten: {out}")
     print(f'run with: psql "$RA_DB" -f {out}')
     return 0
