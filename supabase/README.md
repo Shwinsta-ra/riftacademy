@@ -78,7 +78,26 @@ Practical consequence: any client-side read of these tables using the anon/publi
 
 ## There is no seed data any more
 
-**`config.toml`'s `[db.seed] sql_paths` is deliberately empty, and everything left in `seed/` is read-only.** Migrations 001–016 are the complete, self-sufficient path to a correct database. If you ever need seeded rows again, write a migration — not a seed file competing with one that already ran.
+**`config.toml`'s `[db.seed] sql_paths` is deliberately empty, and everything left in `seed/` is read-only.** If you ever need seeded rows again, write a migration — not a seed file competing with one that already ran.
+
+> ### ⚠️ This project cannot currently rebuild a database from scratch
+>
+> **`supabase db reset` fails, and has always failed.** Verified by running it on 2026-08-09:
+>
+> ```
+> Applying migration 20260805000008_backfill_master_inventory.sql...
+> ERROR: card_bans has 0, expected 11. A name failed to match.
+> ```
+>
+> Migration 008 resolves every ban's `card_code` with `select ... from cards where name = '...'`. On a fresh database, migrations 001–007 create **schema only** — there is no card data — and 008's own 25 inserts are Vendetta cards, none of them ban targets. So all 11 selects match nothing, 008's own assertion fires, and the migration rolls back.
+>
+> Migration 008 is therefore **not replayable on an empty database**, and never was. It succeeded originally only because it was applied by hand against the already-populated live database — which is also why it never appeared in the migration ledger. The ledger drift and the broken rebuild are the same root cause.
+>
+> **This is not caused by retiring the seeds.** `db reset` fails at 008, long before seeding would run, whatever `sql_paths` contains.
+>
+> **`supabase db push` is unaffected and remains safe** — it applies only *unapplied* migrations to the remote, which now means 015 and 016 against a live database that already has card data.
+>
+> Unresolved. See the fragment for the options; fixing it needs a decision from Core/Infra, since migration 008 is recorded as applied and this repo treats applied migrations as immutable.
 
 Both files that once lived here are retired. `seed_cards.sql` is covered above.
 
