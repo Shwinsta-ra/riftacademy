@@ -6,7 +6,9 @@ Project: `riftacademy` (`aqhtqgiwvcunbllmbdrq`), Postgres 17, us-west-1.
 
 **The live database is authoritative for `cards` and `card_printings`.** Not `src/data/cards.json`, which is a documented lossy interim source that seeds values only and never structure (see `docs/contracts/RiftCore_to_M9_Supabase_DDL_AUDITED_FINAL.md`). Corrections are applied to live and then, where the repo needs to agree, mirrored into `cards.json`.
 
-`seed_cards.sql` was **retired on 2026-08-09** and is no longer in this directory. It had drifted to 905 of 929 cards with stale `power_cost` / `might_bonus` / `rules_text` on hundreds more, and nothing loaded it — `config.toml`'s `[db.seed] sql_paths` points at `./seed.sql`, a path that does not exist. It was a 550KB file with no consumer that re-staled on every change to live.
+`seed_cards.sql` is **retired**. It had drifted to 905 of 929 cards with stale `power_cost` / `might_bonus` / `rules_text` on hundreds more, and nothing loaded it — `config.toml`'s `[db.seed] sql_paths` pointed at `./seed.sql`, a path that does not exist. It was a 550KB file with no consumer that re-staled on every change to live.
+
+> **If you can still see `seed/seed_cards.sql`, you are on a branch that predates the deletion.** The file is removed in the same commit that adds this README (branch `fix/retire-seed-cards`, PR #193) and is still present on `main`, `integration`, and every branch cut before that PR merges. Check with `git log --diff-filter=D -- supabase/seed/seed_cards.sql`. Either way it is **not** wired into `sql_paths`, so it does not auto-load on `db reset` — see `config.toml` (PR #194).
 
 Its content is not lost: it is preserved in git history. To recover it:
 
