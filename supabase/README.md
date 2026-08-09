@@ -50,7 +50,7 @@ Rules that follow from that:
 
 Scheduled jobs that insert rows — the daily tcgcsv price ingest, and any future financial-table writes — are **not** schema migrations and must not be recorded in the migration ledger. Putting recurring DML there would make the ledger meaningless as a schema-version record.
 
-Those get their own audit trail instead, following the pattern `price_ingest_runs` already establishes: an append-only run table recording what ran, when, from which source, and how many rows it wrote, with the target rows carrying a foreign key back to the run that produced them. The properties worth preserving in any new ingest:
+Those get their own audit trail instead, following the pattern `price_ingest_runs` establishes: an append-only run table recording what ran, when, from which source, and how many rows it wrote. The properties worth preserving in any new ingest:
 
 - one row per execution, written at start and completed at finish, so a crashed run is visibly incomplete rather than invisible;
 - the upstream source identifier and its build timestamp, so a re-run of unchanged source can skip cleanly instead of double-inserting;
@@ -60,15 +60,24 @@ Those get their own audit trail instead, following the pattern `price_ingest_run
 
 The answer to "what was inserted, when, and by what" should come from querying that run table, never from reading the migration ledger.
 
-**`price_ingest_runs` does not yet support all of that** (live schema checked 2026-08-09). It has `run_id`, `started_at`, `source_id`, `source_built_at`, the row counters, `status`, and `notes` — which already covers skip-on-unchanged-source and empty-run detection. It is **missing**:
+**Target rows do NOT carry a foreign key back to the run** (decided 2026-08-09, Ashwin). An earlier draft of this section described the pattern as including one, which contradicted the gap table below — that table only ever listed `price_ingest_runs` columns and never proposed a column on `price_observations`. The prose was the error. Resolved in favour of *not* adding it, for two reasons:
 
-| Column | Why it is needed |
-|---|---|
-| `ci_run_id` | Trace a row back to the exact GitHub Actions execution |
-| `commit_sha` | Trace a row back to the exact code that produced it |
-| `finished_at` | Distinguish a crashed run from a completed one by more than `status` |
+- `price_observations` is written with `on conflict (product_id, source_id, observed_on) do update`. A re-ingest of the same day overwrites the reference, so such a column would mean "the run that **last wrote** this row", not "the run that produced it" — materially weaker than the name implies, and it degrades further every time a day is re-ingested.
+- The traceability actually wanted is already delivered without it. `ci_run_id` and `commit_sha` bound any suspect date range to the exact code and workflow execution, and that run's artifact holds the literal SQL applied. A foreign key on the largest and fastest-growing table in the schema buys nothing beyond that.
 
-So the CI-traceability half of this pattern **is not documentation — it needs its own migration** before a scheduled workflow can populate it. That migration is in scope for the price-ingest automation work, not yet written.
+If some future ingest genuinely needs per-row provenance that survives re-writes, that is a different requirement and should be specified against it — not inherited from the sentence this note replaced.
+
+**Columns this section called for — delivered 2026-08-09.** `price_ingest_runs` had `run_id`, `started_at`, `source_id`, `source_built_at`, the row counters, `status`, and `notes`, which already covered skip-on-unchanged-source and empty-run detection. The gap is now closed:
+
+| Column | Why it is needed | Delivered by |
+|---|---|---|
+| `ci_run_id` | Trace a row back to the exact GitHub Actions execution | Migration 017 |
+| `commit_sha` | Trace a row back to the exact code that produced it | Migration 017 |
+| `finished_at` | Distinguish a crashed run from a completed one by more than `status` | Migration 018 |
+
+Migration 018 also widened `status` from `('ok','partial','failed')` to add `running` (row written at start; still in flight, or crashed if `finished_at` is null) and `skipped` (ran, upstream had not rebuilt, correctly wrote nothing). Both sit deliberately outside the `where status = 'ok'` high-water-mark query, so neither a crashed run nor a skipped one can make the next day look already-ingested.
+
+Note the ordering constraint this created, since it applies to any future change of the same shape: the columns had to exist in the database **before** the workflow that writes them reached `main`, or the run-row statement would abort on a missing column and take the whole ingest transaction — and that day's prices — with it. Both migrations were therefore applied ahead of the code, which is safe precisely because they are additive and the `status` constraint only ever widens.
 
 ## Row-level security
 
