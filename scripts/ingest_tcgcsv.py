@@ -12,6 +12,7 @@ Usage:
     python3 ingest_tcgcsv.py --dry-run       # fetch and report, write nothing
     python3 ingest_tcgcsv.py --last-built-at TS   # CI: state comes from the database
     python3 ingest_tcgcsv.py --ci-run-id N --commit-sha SHA   # CI: record provenance
+    python3 ingest_tcgcsv.py --run-id N                      # CI: close a 'running' row
 
 Then:
     psql "$RA_DB" -f price_ingest_<date>.sql
@@ -187,6 +188,13 @@ def main():
     # without a manual run ever recording a meaningless "" as its provenance.
     ci_run_id = arg_value("--ci-run-id") or None
     commit_sha = arg_value("--commit-sha") or None
+    # The run row this closes out, created by the workflow before the fetch began.
+    # Absent on a manual run, which inserts its own completed row instead.
+    run_id = arg_value("--run-id") or None
+    if run_id is not None and not str(run_id).isdigit():
+        print(f"--run-id must be the numeric run_id of an existing "
+              f"price_ingest_runs row, got {run_id!r}")
+        return 2
 
     built_at = get("/last-updated.txt").strip()
     print(f"tcgcsv last built : {built_at}")
@@ -320,17 +328,34 @@ def main():
               "high=excluded.high, direct_low=excluded.direct_low;\n")
         w("\n")
 
-        # ci_run_id / commit_sha are NULL on a manual run, and that is the correct
-        # encoding rather than a gap: NULL means "not produced by CI", which is what
-        # `where ci_run_id is null` relies on to find every hand-applied run. See
-        # migration 017 for why they are not backfilled with a placeholder.
-        w("insert into price_ingest_runs (source_id,source_built_at,groups_seen,rows_in,"
-          "rows_kept,rows_skipped_foil,printings_matched,printings_unmatched,"
-          "observations_written,status,notes,ci_run_id,commit_sha) values ('tcgplayer',"
-          f"timestamptz {q(built_at)},{len(groups)},{rows_in},{kept},0,"
-          f"{matched},{unmatched},{len(observations)},'ok',"
-          f"{q('subtypes: ' + json.dumps(dict(sub_tally), sort_keys=True))},"
-          f"{q(ci_run_id)},{q(commit_sha)});\n\n")
+        # Two shapes, deliberately.
+        #
+        # With --run-id, the workflow already wrote a 'running' row BEFORE the fetch
+        # started, so this closes that row out. That ordering is the whole point of the
+        # pattern in supabase/README.md: a run that dies mid-fetch leaves a 'running'
+        # row with a null finished_at instead of leaving no trace at all.
+        #
+        # Without it (a manual run), there is no pre-created row and no database
+        # connection to make one, so a single completed row is inserted as before.
+        # ci_run_id / commit_sha stay NULL there, which is the correct encoding rather
+        # than a gap - `where ci_run_id is null` is how every hand-applied run is found.
+        notes = q("subtypes: " + json.dumps(dict(sub_tally), sort_keys=True))
+        counters = (f"groups_seen={len(groups)},rows_in={rows_in},rows_kept={kept},"
+                    f"rows_skipped_foil=0,printings_matched={matched},"
+                    f"printings_unmatched={unmatched},"
+                    f"observations_written={len(observations)}")
+        if run_id:
+            w(f"update price_ingest_runs set source_built_at=timestamptz {q(built_at)},"
+              f"{counters},status='ok',finished_at=now(),notes={notes} "
+              f"where run_id={int(run_id)};\n\n")
+        else:
+            w("insert into price_ingest_runs (source_id,source_built_at,groups_seen,"
+              "rows_in,rows_kept,rows_skipped_foil,printings_matched,"
+              "printings_unmatched,observations_written,status,finished_at,notes,"
+              "ci_run_id,commit_sha) values ('tcgplayer',"
+              f"timestamptz {q(built_at)},{len(groups)},{rows_in},{kept},0,"
+              f"{matched},{unmatched},{len(observations)},'ok',now(),{notes},"
+              f"{q(ci_run_id)},{q(commit_sha)});\n\n")
         w("commit;\n")
 
     # Only manual runs keep a local high-water mark. On a CI run the state lives in
