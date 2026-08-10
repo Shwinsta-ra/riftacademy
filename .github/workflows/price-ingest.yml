@@ -61,10 +61,16 @@ jobs:
           CI_RUN_ID: ${{ github.run_id }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
+          # psql's :'var' interpolation only fires when the SQL is read via stdin/-f -
+          # it is silently NOT applied to a -c command string, which sends the literal
+          # colon to the server and fails with "syntax error at or near ':'". Verified
+          # locally against psql 16.13 on 2026-08-10. Use a heredoc on stdin instead.
           run_id=$(psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 \
-            -v ci="$CI_RUN_ID" -v sha="$COMMIT_SHA" \
-            -c "insert into price_ingest_runs (source_id,status,ci_run_id,commit_sha)
-                values ('tcgplayer','running',:'ci',:'sha') returning run_id")
+            -v ci="$CI_RUN_ID" -v sha="$COMMIT_SHA" <<'SQL'
+          insert into price_ingest_runs (source_id,status,ci_run_id,commit_sha)
+              values ('tcgplayer','running',:'ci',:'sha') returning run_id
+          SQL
+          )
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
           echo "Opened price_ingest_runs row $run_id"
 
@@ -153,13 +159,17 @@ jobs:
             echo "Ingest succeeded; the generated SQL already closed run $RUN_ROW_ID."
             exit 0
           fi
+          # psql's :'var' interpolation only fires when the SQL is read via stdin/-f -
+          # it is silently NOT applied to a -c command string (verified locally against
+          # psql 16.13 on 2026-08-10), so both branches below use a heredoc on stdin.
           if [ "$JOB_STATUS" = "success" ]; then
             # Skip: guarded on 'running' so it can never overwrite a row the generated
             # SQL already closed as 'ok'.
             psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 -v id="$RUN_ROW_ID" \
-              -v note="no new tcgcsv build since ${LAST_BUILT_AT:-never}" \
-              -c "update price_ingest_runs set status='skipped', finished_at=now(), notes=:'note'
-                  where run_id=:'id'::bigint and status='running'"
+              -v note="no new tcgcsv build since ${LAST_BUILT_AT:-never}" <<'SQL'
+          update price_ingest_runs set status='skipped', finished_at=now(), notes=:'note'
+              where run_id=:'id'::bigint and status='running'
+          SQL
             echo "Closed run $RUN_ROW_ID as skipped"
           else
             # Failure: deliberately NOT guarded. The two ways to be wrong here are not
@@ -169,9 +179,10 @@ jobs:
             # run skips and that day is lost permanently - which is the exact failure
             # this whole workflow exists to prevent. Bias to the recoverable error.
             psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 -v id="$RUN_ROW_ID" \
-              -v note="job status $JOB_STATUS" \
-              -c "update price_ingest_runs set status='failed', finished_at=now(), notes=:'note'
-                  where run_id=:'id'::bigint"
+              -v note="job status $JOB_STATUS" <<'SQL'
+          update price_ingest_runs set status='failed', finished_at=now(), notes=:'note'
+              where run_id=:'id'::bigint
+          SQL
             echo "Closed run $RUN_ROW_ID as failed"
           fi
 
