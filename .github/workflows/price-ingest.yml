@@ -65,10 +65,21 @@ jobs:
           # it is silently NOT applied to a -c command string, which sends the literal
           # colon to the server and fails with "syntax error at or near ':'". Verified
           # locally against psql 16.13 on 2026-08-10. Use a heredoc on stdin instead.
+          #
+          # The insert is wrapped in a CTE so the top-level statement is a SELECT: a
+          # bare `insert ... returning` still prints its "INSERT 0 1" command tag as a
+          # second output line even under -t, which corrupted this capture with a
+          # multi-line $run_id ("6\nINSERT 0 1") and broke the $GITHUB_OUTPUT write on
+          # the 2026-08-10 21:56 UTC run. -t reliably suppresses a SELECT's tag, so
+          # wrapping avoids relying on tag suppression for the DML statement itself.
+          # Verified locally against psql 16.13.
           run_id=$(psql "$RA_DB" -tAX -v ON_ERROR_STOP=1 \
             -v ci="$CI_RUN_ID" -v sha="$COMMIT_SHA" <<'SQL'
-          insert into price_ingest_runs (source_id,status,ci_run_id,commit_sha)
-              values ('tcgplayer','running',:'ci',:'sha') returning run_id
+          with ins as (
+            insert into price_ingest_runs (source_id,status,ci_run_id,commit_sha)
+                values ('tcgplayer','running',:'ci',:'sha') returning run_id
+          )
+          select run_id from ins
           SQL
           )
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
