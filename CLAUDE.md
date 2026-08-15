@@ -73,16 +73,6 @@ Allowed sources per target, verified against `.github/workflows/enforce-branch-f
 ## File placement — always Code's job, never Ashwin's
 Whenever a file needs to land somewhere in this repo (new CSVs, generated data, config, source exports, etc.), Claude Code places it. Locate and verify the correct destination yourself — check existing pipeline scripts, file locations, naming conventions — and move the file there as part of the task. Never hand Ashwin an `mv`/`cp` command to run; if a file needs to get from his Downloads folder into the repo, that's your job to do directly. Ashwin's goal is zero terminal use.
 
-## Handoff file convention
-When Ashwin hands off a task from a chat thread to a Code session, the default is a **single** markdown instruction file — if there's nothing else to preserve, that one file *is* the instruction, drop-in ready, no separate blurb needed.
-
-Two cases keep instructions and content in **separate** files, never merged:
-
-- **Raw data files** (CSV, JSON) that Code parses programmatically. Embedded prose breaks the format — a CSV can't have an instructional header row, JSON can't have prepended prose.
-- **Permanent content** meant to be committed as-is (design docs, specs, fragments, playbooks). Baking transient instructions into the final artifact either requires remembering to strip them or leaves throwaway text in the repo forever.
-
-In both cases the instruction file names the exact filename of the file to attach alongside it, so nothing is ambiguous about what goes together. Net effect: pure instructions are one file; anything involving data or permanent content is two files handed over in the same message, never one file trying to be both.
-
 ## Git identity
 Commits must use author email `ashwin.sathe86@gmail.com` (matches GitHub `shwinsta-ra`), or Vercel blocks the deploy with "commit author email is not valid."
 
