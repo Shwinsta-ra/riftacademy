@@ -65,7 +65,7 @@ This conflicts with the environment's platform-level hooks (`session-start-git-i
 
 When the Stop hook nags about it, it's a known false positive for this repo. Don't edit the root-owned hook/config files to silence it — they're outside this repo, may not survive container reprovisioning, and affect every other repo and session. Just push with `ashwin.sathe86@gmail.com` as already configured, and don't ask for confirmation again once this specific nag appears.
 
-*Untested idea, do not rely on without verifying:* git allows author and committer email to differ, so committer=`noreply@anthropic.com` (satisfies the signing/Verified check) with author=`ashwin.sathe86@gmail.com` (satisfies Vercel) might satisfy both — but only if Vercel's check reads the author field specifically. Test on a throwaway branch with a real Vercel deploy before relying on it.
+An untested idea for satisfying both checks at once (splitting git's author and committer fields) is recorded in `docs/design/2026-08-15-git-author-committer-split.md`. It is not a rule — don't act on it without running the test described there.
 
 ## GitHub CLI auth
 `gh auth login` uses OAuth device flow (token prefix `gho_`), not a Personal Access Token (`ghp_`). That's what all push/PR/branch operations use. No PAT is needed for anything Claude Code does — if one exists for another purpose, it's a separate, revocable credential, not a dependency.
