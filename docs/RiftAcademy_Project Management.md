@@ -391,7 +391,7 @@ Code then runs the equivalent of the old manual commands (checkout `integration`
 - Instructions must be granular, exact, full paths.
 - Diagnose real git state with `git fetch origin` + `git diff origin/X origin/Y`, never the GitHub UI's "Delete branch."
 - **Doc updates use the fragment system (Section 1a), not direct edits to this file** — the single most important process rule as of tonight.
-- **Cross-thread handoffs go through a staged folder system in Google Drive. Nothing handoff-related belongs in this repo.** Current state as of 2026-08-09; the path and folder names changed three times that day, so **use these names and no earlier ones.** Both trees live under `/Users/ashwinsathe/My Google Drive/Personal/Games/Riftbound/RiftAcademy/`, a normal local path kept synced by Google Drive for Desktop, so read and write it with ordinary file tools.
+- **Cross-thread handoffs go through a staged folder system in Google Drive. Nothing handoff-related belongs in this repo.** Current state as of 2026-08-09; the path and folder names changed three times that day, so **use these names and no earlier ones.** Both trees live under `/Users/ashwinsathe/My Google Drive/Ashwin/Games/Riftbound/RiftAcademy/`, a normal local path kept synced by Google Drive for Desktop, so read and write it with ordinary file tools. **Path corrected 2026-08-15**, with Ashwin's approval and verified by directory listing: this line read `Personal/` rather than `Ashwin/` from 2026-08-09 until then, and did not resolve. **Do not reach this content through the `.shortcut-targets-by-id` mount alias**, which was observed serving a stale view of `Code/` on 2026-08-15, showing a subfolder as absent hours after it was created.
 
   | Arrow | Folder |
   |---|---|
