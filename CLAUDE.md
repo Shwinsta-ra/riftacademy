@@ -2,6 +2,23 @@
 
 This file is read automatically by Claude Code at the start of every session in this repo. It exists so every session — including ones triggered remotely via Dispatch — inherits the same conventions without being re-taught.
 
+## Read `Code/README.md` in Drive first, every session
+Before starting work, read `README.md` in the RiftAcademy Drive folder:
+
+```
+/Users/ashwinsathe/My Google Drive/Ashwin/Games/Riftbound/RiftAcademy/Code/
+```
+
+**That file, not this one, is authoritative for how work is structured and handed off** between the Cowork threads (planning and coordination) and Code (this repo). Its content is deliberately not duplicated here — it changes independently, and a stale copy is worse than a pointer.
+
+The one-line version, enough to know what you're looking at: `Code/` holds one subfolder per open feature, plus a single `Completed-Features/` archive. Ashwin says "start session" to check out the oldest eligible open folder and begin work, "start session: `<slug>`" to target a specific one, and "end session" to close out. Everything that actually governs a session — the `_STATUS.md` states, the checkout and eligibility rules, the `decision_request`/`decision_response` exchange with Cowork, document locking — lives in `Code/README.md`. Read it; don't work from this summary.
+
+**How to read it.** Those files are Google Docs. On disk each one is a stub named `<name>.md.gdoc` holding a JSON `doc_id` — read the stub with the normal file tools, then fetch the real content with the Google Drive MCP's `read_file_content` on that id. Plain `.md` files in the same folders (generally the ones Code wrote) are read directly. Code can create plain `.md` files there but has no tool that rewrites an existing Google Doc's contents, so write updates as plain `.md` alongside the `.gdoc` and say in the file that it supersedes.
+
+Drive is mounted locally via Google Drive for Desktop, so this is an ordinary path. If a session has neither the mount nor a Drive tool — likely for remote/Dispatch sessions — say so plainly rather than proceeding as though `Code/` were empty.
+
+Two known traps: the folder is **`Ashwin/`**, not `Personal/` (a wrong path sat in the docs from 2026-08-09 to 2026-08-15). And don't reach `Code/` through the `.shortcut-targets-by-id` mount alias — it has shown a stale view, missing folders that exist under the path above, which breaks the checkout rule that stops two sessions claiming the same work.
+
 ## Canonical project doc
 `docs/RiftAcademy_Project Management.md` is the single canonical project-management doc: status, roadmap, standing rules, full deploy workflow, conventions. Read it before any non-trivial task.
 
