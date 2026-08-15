@@ -20,7 +20,7 @@ The admin thread **coordinates** across the product threads (RiftCore/RiftEngine
 | **Claude Project Knowledge** | Ambient reference cache for threads without a fresh zip | Ashwin, manually | One upload after each reconciliation PR merges. Never authoritative for a substantial rewrite — that's GitHub's job. |
 | **Google Drive** | Disaster-recovery backup only | Code, writing to the local Drive-for-Desktop synced path (the Drive API's own write tool is broken — reads work, `create_file` errors) | Plain filesystem overwrite at the synced path; Drive versions it in place. |
 
-**Concurrency:** git's branch → PR → merge flow is the lock. Ashwin merges every PR himself; that's the actual checkpoint, not a custom lock file.
+**Concurrency:** git's branch → PR → merge flow is the lock, not a custom lock file. **Changed 2026-08-15:** Claude now merges every PR up to and including `staging`; Ashwin's manual `staging` → `main` merge is the only remaining human checkpoint. Below `main`, the gate is the required status checks (`typecheck`, `check-source-branch`) plus the standing rule that Claude doesn't merge past an open decision — not a person reviewing each merge. Anything that genuinely needs Ashwin's eyes before landing has to be raised as a decision, because merging alone no longer stops it.
 
 ## 3. The fragment system
 
