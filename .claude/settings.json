@@ -10,7 +10,8 @@
     "ask": [
       "Bash(git push:*)",
       "Bash(gh pr merge:*)",
-      "Bash(gh pr close:*)"
+      "Bash(gh pr close:*)",
+      "mcp__github__merge_pull_request"
     ],
     "defaultMode": "acceptEdits"
   }
