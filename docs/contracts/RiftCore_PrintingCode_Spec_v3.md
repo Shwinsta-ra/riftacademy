@@ -1,6 +1,6 @@
 # RiftCore: Printing Code Grammar & Translation Spec — **v3**
 
-**Date:** 2026-08-07 · **Supersedes:** `RiftCore_PrintingCode_Spec_v2_CONSOLIDATED.md`, `RiftCore_PrintingCode_Spec_v2_1_Amendment.md`, and `RiftCore_PrintingCode_Spec_v2_2_Amendment.md`, in full. All three are deleted in the same commit that adds this file. **Implement from this document only.**
+**Date:** 2026-08-07 · **Extended 2026-08-16** with §3b (OP treatment discriminator), per `RiftCore_Decisions.md` **B16** (design) and **B17** (code-prefix ruling). **Additive, still v3 — not a version bump**, on B16's explicit instruction: nothing in §1–§13 changed meaning, and every code valid before §3b is valid after it. Touched by that extension: §3 (grammar), §3b (new), §4 rule 6, §8 rows 23–28, §8.1 (counts), §11, §12. · **Supersedes:** `RiftCore_PrintingCode_Spec_v2_CONSOLIDATED.md`, `RiftCore_PrintingCode_Spec_v2_1_Amendment.md`, and `RiftCore_PrintingCode_Spec_v2_2_Amendment.md`, in full. All three are deleted in the same commit that adds this file. **Implement from this document only.**
 
 **Why v3:** v2 plus two live amendments is the same three-documents-side-by-side shape that produced the original drift. The amendments are now validated by a passing implementation, so they fold in. Consolidation is the moment rulings disappear — see §13 for the carry-forward record and how it was checked.
 
@@ -38,18 +38,22 @@ Not cosmetic: `OGS-019-024` is **Master Yi, Wuju Bladesman**, banned in 2v2 Cons
 **External** (RuneHoard, ROI tracker): uppercase set, slash before total.
 
 ```
-external := SET "-" NUMBER [ "/" TOTAL ]
-internal := set "-" number [ "-" total ]
+external := SET "-" NUMBER [ "/" TOTAL ] [ "-" treatment ]
+internal := set "-" number [ "-" total ] [ "-" treatment ]
 
-SET    := 2–4 letters       (alias PG→OGS; see "set codes are data" below)
-NUMBER := (?:sp|[rt])? digits [ letter ] [ "*" ]
-TOTAL  := digits            -- the NUMBERING-SPACE total, not the set size
+SET       := 2–4 letters       (alias PG→OGS; see "set codes are data" below)
+NUMBER    := (?:sp|[rt])? digits [ letter ] [ "*" ]
+TOTAL     := digits            -- the NUMBERING-SPACE total, not the set size
+treatment := component ("-" component)*      -- always lowercase; see §3b
+component := [a-z0-9]* [a-z] [a-z0-9]*       -- at least one letter, never all-digits
 ```
 
 Canonical internal regex:
 ```
-^([a-z]{2,4})-((?:sp|[rt])?\d+[a-z]?\*?)(?:-(\d+))?$
+^([a-z]{2,4})-((?:sp|[rt])?\d+[a-z]?\*?)(?:-(\d+))?(?:-([a-z0-9]*[a-z][a-z0-9]*(?:-[a-z0-9]*[a-z][a-z0-9]*)*))?$
 ```
+
+**`treatment` is optional and absent on every printing that is not an OP product** — it was added by §3b (B16) and changes nothing for the codes that existed before it.
 
 | Component | Meaning |
 |---|---|
@@ -88,6 +92,71 @@ Two axes are in play, and the ruling turns on keeping them apart:
 
 > *Recorded, because it is the reason §13 exists:* this ruling was issued in Addendum C and **dropped when five documents were consolidated into v2 — Core's error.** M9 caught the omission. Consolidation is not free; anything decided in a superseded document must be carried forward explicitly.
 
+## 3b. OP treatment discriminator — the `treatment` suffix
+
+**Authority: `RiftCore_Decisions.md` decision B16 (2026-08-14).** Additive to v3; **not a version bump**, per B16. This section is what §12's "internal representation of promo printings" deferral was waiting for, and it closes the part of it that Core owns. See §12 for what remains open.
+
+### The problem
+
+32 OP (Organized Play) collector numbers each carry **2–3 physically distinct products**, distinguished only by a name parenthetical — `(Metal) (Prize Wall)` vs `(Metal) (Best Of)` vs `(Champion)` vs `(Top 8)`. `printing_variant`'s value set (`base`/`foil`/`alt_art`/`signed`/`ultimate`/`special`) holds none of them, and §3a's reasoning is exactly why it must not be stretched to: two of the four observed treatments (`Champion`, `Top 8`) describe **distribution context**, not a print-run characteristic.
+
+Without a discriminator, backfilling these collides several real products onto one `printing_code` — turning today's honest gap into a **wrong join on the highest-value rows in the catalogue** (10 of the top 15 most valuable printings sit on ambiguous OP codes). That is the §7 no-substitution prohibition failing at the schema layer instead of the function layer.
+
+### Where the treatment lives
+
+| | |
+|---|---|
+| **`card_printings.promo_treatment`** (migration 020) | The parenthetical **verbatim** — `Metal, Prize Wall`. Never normalised, stripped, or case-folded. |
+| **The `treatment` suffix in `printing_code`** | The **slugified** form — `metal-prizewall`. |
+
+Both, not either. A discriminator living only in a side column still leaves `printing_code` — the thing every other module joins on — ambiguous; that is why B16 makes it part of identity rather than an attribute.
+
+> **The code is derived from the column, never the reverse.** Slugification is lossy (`Metal, Prize Wall` and `Metal Prize Wall` slug identically), so a slug cannot reconstruct the parenthetical. Anything needing the printed text reads `promo_treatment`. This is §10's derivation principle applied to a transformation rather than to a source.
+
+### Slugification — one rule, three steps
+
+1. Split the verbatim treatment on **commas** into components.
+2. Within each component: lower-case, then **delete everything that is not `a-z0-9`** (spaces included).
+3. Join components with `-`.
+
+| Verbatim `promo_treatment` | Slug |
+|---|---|
+| `Metal, Prize Wall` | `metal-prizewall` |
+| `Metal, Best Of` | `metal-bestof` |
+| `Champion` | `champion` |
+| `Top 8` | `top8` |
+
+Note the asymmetry in step 2 — a comma becomes a hyphen, a *space* becomes nothing. That is what makes `Metal, Prize Wall` → `metal-prizewall` rather than `metal-prize-wall`, and it is taken from B16's worked example.
+
+**A component may never be all digits.** `Top 8` → `top8`, never `top-8`. The grammar in §3 enforces this (`component` requires at least one letter) because `TOTAL` is also digits: with a numeric component, `ven-r01-8` could not be resolved to "rune 1, treatment 8" versus "rune 1, total 8" by any parser. Step 2 makes all-digit components unreachable in practice; the grammar rejects them anyway, because an unrepresentable state beats a prohibited one (the same argument migration 002 makes for `cards_champion_units_only`).
+
+### Casing — treatment is a discriminator, not a namespace
+
+**The treatment suffix is lowercase in both the internal and external forms.** It joins rule 3 of §4's casing rule, not rules 1–2: like the alt-art variant letter, it discriminates *within* a namespace rather than naming one. So `OGS-019/024-metal-prizewall` ↔ `ogs-019-024-metal-prizewall`, and fixture 19's round-trip holds over treatment codes with no exception carved out for them.
+
+### ⚠ The set component of an OP code is the **mirrored base set**, not `op`
+
+**A treatment suffix does not make `OP` a set.** OP codes take the set, collector number and total of the card's *original* set, exactly as §8.4 established from all seven live holdings, and the treatment is appended to *that* code:
+
+```
+Master Yi, Wuju Bladesman — OP-019/024, three products
+  ogs-019-024-metal-prizewall
+  ogs-019-024-metal-bestof
+  ogs-019-024-champion
+```
+
+**not** `op-019-024-...`. §2 already records that `OGS-019-024` *is* Master Yi; §5 forbids inventing internal set codes `op`/`opp`/`pr`; §8.4 withdrew fixture 13 for asserting `op` as a set prefix, on the grounds that it "encodes a false model, and a wrong fixture propagates into every conforming implementation."
+
+> **Ruled, `RiftCore_Decisions.md` decision B17 (2026-08-16).** B16's illustrative example string reads `op-019-024-metal-prizewall`. **B17 rules that a documentation slip, not a competing design**, and confirms the mirrored-base-set form above as correct. Core re-verified all five contradicting sources against the live documents before ruling: B16's own rejected-alternative paragraph — *"treat OP as its own set … **Rejected**, explicitly contradicted by the design requirement that OP is not a set code"* — plus §2, §5, §8.4 and §13 carry-forward items 4 and 7. Five independent sources, one of them the same decision's own reasoning, against a single example string.
+>
+> **B16 is not amended** — it is append-only history, and B17 is the correction of record. **Cite B17, not this box, and do not re-derive the question from B16's example.** B17's scope is the code prefix only: `promo_treatment`, its verbatim storage, the functional unique index and migration 020 were all confirmed unaffected.
+>
+> *Kept as a ruling rather than deleted outright, on the same principle that keeps fixture 13 withdrawn-with-reason: the example still reads `op-` in B16, so a reader arriving from there needs to find the resolution rather than re-derive it the other way.*
+
+### What this does not do
+
+`card_printings` still holds **zero** OP rows. The product-to-treatment mapping — which of Master Yi's three OP products is `Metal, Prize Wall` — depends on `tcgplayer_groups`, which is the price spine's data (§5, §12). B16 routes that to Infrastructure explicitly. **Do not guess treatment strings to populate rows**; a guessed treatment is a §7 substitution wearing a schema's clothes.
+
 ## 4. Transformation
 
 **External → internal:** lowercase everything; `/` before TOTAL becomes `-`; preserve letter suffix and asterisk verbatim. *This direction was always correct — which is exactly why only an executable round-trip assertion caught the defect in the other direction.*
@@ -99,6 +168,7 @@ Two axes are in play, and the ruling turns on keeping them apart:
 3. **Preserve the variant suffix letter in lowercase.**
 4. Preserve the asterisk verbatim.
 5. Insert `/` before TOTAL when a total is present.
+6. **Preserve the treatment suffix in lowercase**, hyphen-separated, after TOTAL when a treatment is present (§3b). Same reasoning as rule 3 — it discriminates within a namespace rather than naming one.
 
 **Why the distinction is principled rather than arbitrary:** the set code and the number prefix both identify a **namespace** (which set; which numbering space — main, rune, token, special). The trailing letter is a **variant discriminator within** that namespace. Different roles, different casing, consistently rendered that way by every external source.
 
@@ -184,22 +254,30 @@ Ordered by risk. **`docs/contracts/printing_code_fixtures.json` is the authorita
 | 20 | **Malformed** | `VEN-?/166` | — | **must raise** (2026-08-02 placeholder) |
 | 21 | **Malformed** | `` (empty) | — | must raise |
 | 22 | **Unknown number prefix** | `VEN-ZZ1/006` | — | **must raise** — new forms are findings. A prefix check, **not** a set check (§3) |
+| 23 | **OP treatment** | `OGS-019/024-metal-prizewall` | `ogs-019-024-metal-prizewall` | §3b. Master Yi — comma→hyphen *and* space→nothing in one slug. Set is the **mirrored base set**, never `op` |
+| 24 | **OP treatment** | `OGS-019/024-metal-bestof` | `ogs-019-024-metal-bestof` | §3b. Differs from 23 **only** in the suffix — which is the point: without it these two products collapse onto one code |
+| 25 | **OP treatment** | `OGS-019/024-champion` | `ogs-019-024-champion` | §3b. Single-component treatment, no hyphen in the slug |
+| 26 | **Forward-looking** | `VEN-R01-champion` | `ven-r01-champion` | **zero occurrences** as of 2026-08-16. The one path 23–25 cannot reach: treatment present, **TOTAL absent**. Do not delete as redundant |
+| 27 | **Malformed** | `OGS-019/024-top-8` | — | **must raise** — an all-digit treatment component is ambiguous against `TOTAL` (§3b). Correct slug for `Top 8` is `top8` |
+| 28 | **OP → base set** | `OP-011/024` | `ogs-011-024` | **DEFERRED**, `blocked_on: tcgplayer_groups`. A **data** lookup, not a grammar rule — reading the set off `TOTAL` encodes the coincidence §12 warns about. Harness skips **and reports** |
 
 ### 8.1 Counts — report both figures, always
 
 "20" alone is misleading, because it invites the reading *"the harness runs 20 things."* It does not; it runs 21.
 
 ```
-entries                     23
+entries                     29
 meta-assertions              1   (fixture 19 — excluded from the fixture count, but EXECUTABLE)
-data fixtures               22
+data fixtures               28
   withdrawn                  1   (13)
-  deferred                   1   (17b)
-data fixtures executable    20
-harness assertions today    21   (20 data + 1 meta)
+  deferred                   2   (17b, 28)
+data fixtures executable    25
+harness assertions today    26   (25 data + 1 meta)
 ```
 
-Derivation: `23 entries − 1 meta-assertion = 22 data fixtures − 1 withdrawn = 21 executable − 1 deferred = 20 executable today`.
+Derivation: `29 entries − 1 meta-assertion = 28 data fixtures − 1 withdrawn = 27 executable − 2 deferred = 25 executable today`.
+
+*Figures as of 2026-08-16, when §3b added fixtures 23–28. They read 23/22/20/21 from 2026-08-06 until then; anything quoting the older numbers predates the treatment suffix.*
 
 **The meta-assertion is excluded from "fixture count" on the merits:** fixture 19 has no external/internal pair; it is a property assertion *over* the other fixtures, not a data fixture. It is nonetheless the assertion that found the §4 casing defect, so excluding it from the count must never be read as excluding it from execution.
 
@@ -274,12 +352,25 @@ This belongs to the consumer, not the grammar — it is the half of the lesson a
 | Vendetta Signature printings | **0 exist** — `ven-189*-166` / `ven-191*-166` translate correctly and resolve to nothing (situation C) |
 | Fixture 19 round-trip under §4's corrected rule | **holds** for all 16 round-tripping fixtures; all 3 must-raise fixtures still raise |
 
+### Re-validated 2026-08-16, for §3b
+
+Checked live rather than assumed, per B-principle "never assert database state from memory."
+
+| Check | Result |
+|---|---|
+| OP rows in `card_printings` | **0** — `set_code` is one of OGN/OGS/SFD/UNL/VEN only. §3b changes the schema, not the data |
+| `(set_code, collector_number, printing_variant)` distinct | **1,165 of 1,165** — so migration 020's unique index builds on live without a violation |
+| `ogs-019-024` identity | **Master Yi, Wuju Bladesman** — confirms §2, and confirms `ogs` (not `op`) is the base code the three OP-019/024 products hang off |
+| §8.4's seven OP mirror targets | **7 of 7** resolve live to the names tabulated there (Flash, Mister Root, Dragonsoul Sage, Lunar Boon, Upstage Comedy, Riven Shattered, Ashe Focused) |
+| Migration 020 against a fresh database | **applies cleanly**; 7 of 7 behavioural assertions on the new index pass, including the three-way Master Yi case and the NULL-collision case the `coalesce` exists to close |
+
 ## 12. Open, not blocking
 
-- **Internal representation of promo printings — deferred to the asset-migration sweep.** `card_printings` holds **zero** promo printings, so nothing resolves today and nothing breaks. It is a real design question: a promo printing shares its collector number with the base printing, so it needs a distinguishing element in a **primary key**, and the options (a variant suffix in the code, a composite key, or a separate promo table) have different costs. Designing it now against seven rows in a spreadsheet would repeat exactly the mistake fixture 13 embodies.
-  - **One fragility to carry into that design:** today the TOTAL disambiguates the source set only because all five set totals happen to be distinct (298, 221, 219, 166, 024). **That is a coincidence, not a property.** Any promo model relying on it breaks the first time two sets share a total.
+- ~~**Internal representation of promo printings — deferred to the asset-migration sweep.**~~ **RESOLVED 2026-08-16 by §3b** (design: `RiftCore_Decisions.md` B16; schema: migration `20260816000020_promo_treatment.sql`). The distinguishing element the deferral was looking for is the treatment discriminator, carried in **both** `card_printings.promo_treatment` (verbatim) and the `treatment` suffix of `printing_code` (slugified). Of the three options weighed here, the outcome is closest to "a variant suffix in the code" — but with the authoritative value in its own column, because a slug is lossy and a suffix alone cannot carry the printed parenthetical. A separate promo table was not needed: OP products are ordinary printings of ordinary cards, and the collision was an under-specified key, not a different kind of object.
+  - **The fragility carried into that design, still live:** today the TOTAL disambiguates the source set only because all five set totals happen to be distinct (298, 221, 219, 166, 024). **That is a coincidence, not a property**, and it breaks the first time two sets share a total. §3b therefore does **not** derive the base set from TOTAL, and **fixture 28 is deferred rather than executable for exactly this reason** — resolving `OP-011/024` to `ogs-011-024` is a `tcgplayer_groups` lookup, not arithmetic on the total.
+- **Still open:** the product-to-treatment **mapping** — which of Master Yi's three OP products is `Metal, Prize Wall`. Depends on `tcgplayer_groups`; routed to Infrastructure by B16. §3b makes the mapping *representable*; it does not supply it, and `card_printings` still holds zero OP rows. **Treatment strings must not be guessed to close this** (§7's no-substitution prohibition, applied to data).
 - Set-coverage gap (promo sets absent from `card_printings`) — tracked on the same sweep.
-- `tcgplayer_groups` mapping table — owner of the price spine; §5 fixtures and fixture 17b activate once group ids are known.
+- `tcgplayer_groups` mapping table — owner of the price spine; §5 fixtures and fixtures **17b and 28** activate once group ids are known.
 
 ## 13. Consolidation record
 
@@ -321,4 +412,7 @@ This spec has **already lost a ruling once** during consolidation — the Crysta
 ### Related records, referenced rather than absorbed
 
 - **`printing_code_fixtures_FINDINGS.md`** — the closed record of the three findings raised while transcribing §8 into JSON, with Core's resolution against each. Kept as a record; **not folded into this spec**, for the same reason fixture 13 is kept withdrawn rather than deleted.
+- **`RiftCore_Decisions.md` B16** — the design decision §3b implements, and the record of the two alternatives it rejected (extending `printing_variant`; treating OP as its own set). Not folded in here: B16 is Core's decision record, and this spec quoting it is not the same as amending it.
+- **`RiftCore_Decisions.md` B17** — corrects B16's `op-…` worked example to the mirrored base-set form (§3b). **B16 is left untouched**, per the append-only convention, so B16 and B17 disagree on the page by design and **B17 is the one that governs**. That is exactly why §3b keeps the ruling box instead of just showing the right answer: a reader arriving from B16's example needs a pointer, not silence.
+- **`supabase/migrations/20260816000020_promo_treatment.sql`** — the schema half of §3b: the `promo_treatment` column, its non-blank check, and the functional unique index that makes the treatment part of identity rather than an attribute.
 - **`scripts/verify_printing_code_fixtures.py`** — asserts the fixture file's structural invariants and both counts. It deliberately does **not** implement the translator: §1 rules that a single canonical implementation is impossible, and a reference implementation living next to the fixtures would quietly become one.

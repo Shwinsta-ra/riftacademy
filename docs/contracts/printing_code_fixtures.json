@@ -12,19 +12,21 @@
     "The entry with \"kind\": \"assertion\" is a meta-assertion over the other fixtures, not a data fixture; dispatch on it rather than parsing an external value.",
     "Fixtures are keyed by (id, part). \"part\" is absent for every fixture except the two halves of 17, which are (17, \"a\") and (17, \"b\"). This keeps \"id\" an integer for typed loaders rather than mixing int and string, while keeping ids traceable to v3 §8's numbering (v3 §8.2).",
     "Human-facing output (test names, reports) MUST use the derived display key: str(id) + (part or \"\") -> \"5\", \"17a\", \"17b\". Uniqueness is asserted on (id, part); the display form is presentation only and is never a key (v3 §8.2).",
-    "Reports MUST state both counts from \"counts\" below — 20 executable data fixtures AND 21 harness assertions today — so \"20\" is never read as \"the harness runs 20 things\" (v3 §8.1)."
+    "Reports MUST state both counts from \"counts\" below — 25 executable data fixtures AND 26 harness assertions today — so \"25\" is never read as \"the harness runs 25 things\" (v3 §8.1).",
+    "Fixtures 23-28 exercise the v3 §3b treatment suffix. The suffix is LOWERCASE in both the internal and external forms (v3 §4 rule 6), and the set component of an OP product code is the mirrored BASE SET (ogs-019-024-champion), never 'op' — ruled by RiftCore_Decisions.md decision B17; see v3 §3b and §8.4. B16's 'op-…' worked example is a documentation slip that B17 corrects, and B16 is left untouched as append-only history, so cite B17. Resolving an OP code to its base set is a tcgplayer_groups data lookup, not a grammar rule (fixture 28, deferred)."
   ],
+  "extended_by": "v3 §3b (OP treatment discriminator) added 2026-08-16 per RiftCore_Decisions.md B16. Additive to v3, NOT a version bump — every code valid before §3b is valid after it. Fixtures 23-28 belong to that extension.",
   "counts": {
-    "entries": 23,
+    "entries": 29,
     "meta_assertions": 1,
-    "data_fixtures": 22,
+    "data_fixtures": 28,
     "withdrawn": 1,
-    "deferred": 1,
-    "executable": 21,
-    "executable_today": 20,
-    "harness_assertions_today": 21,
-    "derivation": "23 entries, minus the meta-assertion (19) = 22 data fixtures; minus withdrawn (13) = 21 executable; minus deferred (17b) = 20 executable today. Harness assertions today = 20 executable data fixtures + 1 meta-assertion (19, which is excluded from the fixture count but IS executed) = 21. See v3 §8.1.",
-    "note": "\"executable\" (21) and \"harness_assertions_today\" (21) are equal by coincidence and mean different things. \"executable\" counts data fixtures that are not withdrawn, INCLUDING the deferred 17b. \"harness_assertions_today\" counts what the harness actually runs today. Always report \"executable_today\" (20) and \"harness_assertions_today\" (21) together.",
+    "deferred": 2,
+    "executable": 27,
+    "executable_today": 25,
+    "harness_assertions_today": 26,
+    "derivation": "29 entries, minus the meta-assertion (19) = 28 data fixtures; minus withdrawn (13) = 27 executable; minus deferred (17b, 28) = 25 executable today. Harness assertions today = 25 executable data fixtures + 1 meta-assertion (19, which is excluded from the fixture count but IS executed) = 26. See v3 §8.1.",
+    "note": "\"executable\" (27) and \"harness_assertions_today\" (26) mean different things. \"executable\" counts data fixtures that are not withdrawn, INCLUDING the two deferred ones (17b, 28). \"harness_assertions_today\" counts what the harness actually runs today. Always report \"executable_today\" (25) and \"harness_assertions_today\" (26) together. These figures were 20 and 21 until 2026-08-16, when v3 §3b added fixtures 23-28; anything quoting the older pair predates the treatment suffix.",
     "asserted_by": "scripts/verify_printing_code_fixtures.py — recomputes every field above from the \"fixtures\" array rather than trusting this block."
   },
   "casing_rule": "v3 §4, internal -> external: (1) uppercase the SET component; (2) uppercase the NUMBER's alphabetic prefix if present (r->R, t->T, sp->SP); (3) preserve the variant suffix letter in lowercase; (4) preserve the asterisk verbatim; (5) insert '/' before TOTAL when present. External -> internal is unchanged: lowercase everything.",
@@ -102,6 +104,29 @@
     { "id": 21, "case": "malformed_empty", "external": "", "expect": "raise" },
 
     { "id": 22, "case": "unknown_prefix", "external": "VEN-ZZ1/006", "expect": "raise",
-      "note": "Unknown NUMBER prefix must fail to parse — new forms are findings. Note this is a prefix check, not a set check: per v3 §3 an unknown SET is situation C (data gap), not a raise." }
+      "note": "Unknown NUMBER prefix must fail to parse — new forms are findings. Note this is a prefix check, not a set check: per v3 §3 an unknown SET is situation C (data gap), not a raise." },
+
+    { "id": 23, "case": "op_treatment_metal_prizewall", "external": "OGS-019/024-metal-prizewall", "internal": "ogs-019-024-metal-prizewall",
+      "promo_treatment": "Metal, Prize Wall",
+      "note": "v3 §3b. Master Yi, Wuju Bladesman — one of three OP products sharing OP-019/024. The set component is the MIRRORED BASE SET (ogs), never 'op' — RULED, RiftCore_Decisions.md decision B17 (2026-08-16), which corrects B16's 'op-019-024-metal-prizewall' worked example as a documentation slip. Supporting: v3 §2 records OGS-019-024 as Master Yi, §5 forbids inventing set code 'op', §8.4 withdrew fixture 13 for asserting it. Asserts comma -> hyphen AND space -> nothing in a single slug: 'Metal, Prize Wall' -> 'metal-prizewall', not 'metal-prize-wall'. Verified live 2026-08-16: ogs-019-024 is Master Yi, Wuju Bladesman." },
+
+    { "id": 24, "case": "op_treatment_metal_bestof", "external": "OGS-019/024-metal-bestof", "internal": "ogs-019-024-metal-bestof",
+      "promo_treatment": "Metal, Best Of",
+      "note": "v3 §3b. Second of the three-way OP-019/024 collision. Differs from fixture 23 ONLY in the treatment suffix, which is exactly the point: without the suffix these two physically distinct products collapse onto one printing_code." },
+
+    { "id": 25, "case": "op_treatment_champion", "external": "OGS-019/024-champion", "internal": "ogs-019-024-champion",
+      "promo_treatment": "Champion",
+      "note": "v3 §3b. Third of the three-way OP-019/024 collision. Single-component treatment, so no hyphen appears in the slug. 'Champion' describes a DISTRIBUTION CONTEXT rather than a print-run treatment, which is why B16 rejected extending printing_variant and added a column instead." },
+
+    { "id": 26, "case": "forward_looking_treatment_no_total", "external": "VEN-R01-champion", "internal": "ven-r01-champion",
+      "note": "FORWARD-LOOKING, zero occurrences in either population as of 2026-08-16; do not delete as redundant (same standing as fixture 18). Asserts the one grammar path fixtures 23-25 cannot reach: treatment present while TOTAL is ABSENT. Runes carry no total (v3 §3), so this is where an implementation that splits on '-', or that assumes the segment after the number is always the total, breaks. No product with this code is known to exist; it exercises the grammar, not the catalogue." },
+
+    { "id": 27, "case": "malformed_all_digit_treatment", "external": "OGS-019/024-top-8", "expect": "raise",
+      "note": "v3 §3b. An all-digit treatment component MUST fail to parse. TOTAL is also digits, so a numeric component makes 'ven-r01-8' irresolvably ambiguous between 'total 8' and 'treatment 8'. The correct slug for the observed treatment 'Top 8' is 'top8', because slug step 2 deletes the space — so this state is unreachable through the slug rule and is rejected by the grammar as well. Unrepresentable beats merely prohibited." },
+
+    { "id": 28, "case": "op_product_resolves_to_base_set", "external": "OP-011/024", "internal": "ogs-011-024",
+      "deferred": true,
+      "blocked_on": "tcgplayer_groups",
+      "note": "DEFERRED. Resolving an OP product code to its mirrored base set is a DATA lookup through tcgplayer_groups, not a grammar rule, and must not be implemented as one. It is tempting to read the base set off TOTAL (024 -> OGS); v3 §12 warns explicitly that this works only because the five set totals happen to be distinct today — a coincidence, not a property, which breaks the first time two sets share a total. The seven known OP holdings are tabulated in v3 §8.4 and were re-verified against live 2026-08-16 (OP-011/024 = Flash = ogs-011-024). Harness must skip and REPORT the skip, never count it as a pass. This entry, not fixture 13, is the live successor to what 13 was reaching for." }
   ]
 }

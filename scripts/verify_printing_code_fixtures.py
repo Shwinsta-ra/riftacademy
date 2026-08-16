@@ -92,8 +92,13 @@ def main():
 
     check("derivation identity: entries - meta - withdrawn - deferred == executable_today",
           len(fixtures) - len(meta) - len(withdrawn) - len(deferred) == len(executable_today))
-    check("both counts are reported together (20 executable, 21 harness assertions)",
-          counts["executable_today"] == 20 and counts["harness_assertions_today"] == 21)
+    # Deliberately hardcoded against v3 §8.1's prose rather than derived: every
+    # other check here recomputes from the array, so nothing else would notice
+    # the spec's stated figures drifting away from the file's. Bump both numbers
+    # here and in §8.1 in the same commit that adds or retires a fixture.
+    # 25/26 as of 2026-08-16 (§3b added fixtures 23-28); was 20/21 before that.
+    check("both counts match v3 §8.1's prose (25 executable, 26 harness assertions)",
+          counts["executable_today"] == 25 and counts["harness_assertions_today"] == 26)
     check("the meta-assertion is excluded from the fixture count but NOT from execution",
           counts["data_fixtures"] == counts["entries"] - counts["meta_assertions"]
           and harness_today > len(executable_today))
