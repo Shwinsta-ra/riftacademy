@@ -1,11 +1,25 @@
 {
   "permissions": {
     "deny": [
-      "Bash(git branch -D:*)",
-      "Bash(git branch -d:*)",
+      "Bash(git branch -D beta:*)",
+      "Bash(git branch -D hotfix/:*)",
+      "Bash(git branch -D integration:*)",
+      "Bash(git branch -D main:*)",
+      "Bash(git branch -D staging:*)",
+      "Bash(git branch -d beta:*)",
+      "Bash(git branch -d hotfix/:*)",
+      "Bash(git branch -d integration:*)",
+      "Bash(git branch -d main:*)",
+      "Bash(git branch -d staging:*)",
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
       "Bash(rm -rf:*)"
+    ],
+    "allow": [
+      "Bash(git branch -D feature/:*)",
+      "Bash(git branch -D fix/:*)",
+      "Bash(git branch -d feature/:*)",
+      "Bash(git branch -d fix/:*)"
     ],
     "ask": [
       "Bash(git push:*)",
