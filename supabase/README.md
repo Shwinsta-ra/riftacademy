@@ -79,6 +79,36 @@ Rules that follow from that:
 2. **If something *was* applied out of band**, record it immediately:
    `supabase migration repair --status applied <version>`
 3. **A migration must be replayable on an empty database.** Migrations run *before* any seed data loads, so a migration that asserts a fixed row count against seeded data can never succeed on a fresh rebuild. Assert invariants that hold at any row count — see `20260808000015_display_name.sql` and `20260808000016_normalize_champion_tags.sql`, both of which assert "no row is left in the bad state" rather than "exactly N rows exist."
+4. **If you apply a migration through the Supabase MCP's `apply_migration`, fix the recorded version afterwards.** It stamps its own timestamp instead of your filename's version, which silently desynchronises the ledger from `migrations/`. See below.
+
+### `apply_migration` does not use your filename's version
+
+**The Supabase MCP's `apply_migration` ignores the version in your migration filename and stamps a fresh `YYYYMMDDHHMMSS` timestamp of its own.** The `name` argument is honoured; the version is not derived from it, and there is no argument to set it.
+
+That leaves the ledger holding a version no file corresponds to, and `migrations/` holding a file the ledger has never heard of. The next `supabase db push` sees your file as unapplied and re-runs it — which for any `add column` / `create index` migration fails on "already exists", and for a data migration is worse.
+
+**This is a different failure from the 008–014 one above, and rule 1 does not cover it.** Rule 1 warns against the dashboard and the MCP *SQL connector* (`execute_sql`), which record nothing at all. `apply_migration` *does* write a ledger row — it just writes the wrong version. A ledger that is silently wrong is harder to notice than one that is visibly empty, so check the version every time rather than trusting the tool's success flag.
+
+**Observed 2026-08-16**, applying `20260816000020_promo_treatment.sql` at Ashwin's direction: the tool reported success and recorded the migration as version `20260816142621`. The DDL itself was correct and complete; only the version was wrong.
+
+Two ways to correct it, both producing the same end state:
+
+```
+supabase migration repair --status applied 20260816000020
+```
+
+or, when no terminal is available, a single scoped update through the SQL connector:
+
+```
+update supabase_migrations.schema_migrations
+   set version = '20260816000020'
+ where version = '<the timestamp the tool stamped>'
+   and name = '<the migration name>';
+```
+
+Prefer updating the tool's row over inserting a second one. An insert leaves the tool's phantom version in the ledger with no file behind it, which is the same class of desync in the other direction. **Verify with `list_migrations` afterwards** — the last entry should read as your filename's version, and the sequence should have no gaps.
+
+The underlying rule is unchanged: `supabase db push` remains the intended path, because it takes the version from the filename and this whole problem does not arise. Reach for `apply_migration` only when pushing is genuinely unavailable, and treat the version fix as part of applying, not as cleanup you might get to later.
 
 ### Data writes are not migrations
 
