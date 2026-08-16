@@ -2,8 +2,8 @@
 
 This file is read automatically by Claude Code at the start of every session in this repo. It exists so every session — including ones triggered remotely via Dispatch — inherits the same conventions without being re-taught.
 
-## Read `Code/README.md` in Drive first, every session
-Before starting work, read `README.md` in the RiftAcademy Drive folder:
+## Read `Code/README-Code.md` in Drive first, every session
+Before starting work, read `README-Code.md` in the RiftAcademy Drive folder:
 
 ```
 /Users/ashwinsathe/My Google Drive/Ashwin/Games/Riftbound/RiftAcademy/Code/
@@ -11,7 +11,9 @@ Before starting work, read `README.md` in the RiftAcademy Drive folder:
 
 **That file, not this one, is authoritative for how work is structured and handed off** between the Cowork threads (planning and coordination) and Code (this repo). Its content is deliberately not duplicated here — it changes independently, and a stale copy is worse than a pointer.
 
-The one-line version, enough to know what you're looking at: `Code/` holds one subfolder per open feature, plus a single `Completed-Features/` archive. Ashwin says "start session" to check out the oldest eligible open folder and begin work, "start session: `<slug>`" to target a specific one, and "end session" to close out. Everything that actually governs a session — the `_STATUS.md` states, the checkout and eligibility rules, the `decision_request`/`decision_response` exchange with Cowork, document locking — lives in `Code/README.md`. Read it; don't work from this summary.
+The one-line version, enough to know what you're looking at: `Code/` holds one subfolder per open feature, plus archive folders (`Completed-Features/`, `historical-context-archive/`) that are never open work. Ashwin says "start session" to check out the oldest eligible open folder and begin work, "start session: `<slug>`" to target a specific one, and "end session" to close out. Everything that actually governs a session — the `_STATUS.md` states, the checkout and eligibility rules, the `decision_request`/`decision_response` exchange with Cowork, document locking, and what "end session" actually does — lives in `Code/README-Code.md`. Read it; don't work from this summary, and treat it as authoritative wherever it and this summary disagree.
+
+**The file was named `Code/README.md` until 2026-08-16**, when a Cowork restructure renamed it to `README-Code.md`. If you are holding an older `CLAUDE.md` and cannot find `Code/README.md`, that rename is why — look for `README-Code.md` rather than concluding the folder is empty. **If neither name resolves, list `Code/` and read whatever README-shaped file is at its top level rather than guessing**; this pointer has now gone stale once and the same fix applies next time.
 
 **How to read it.** Those files are Google Docs. On disk each one is a stub named `<name>.md.gdoc` holding a JSON `doc_id` — read the stub with the normal file tools, then fetch the real content with the Google Drive MCP's `read_file_content` on that id. Plain `.md` files in the same folders (generally the ones Code wrote) are read directly. Code can create plain `.md` files there but has no tool that rewrites an existing Google Doc's contents, so write updates as plain `.md` alongside the `.gdoc` and say in the file that it supersedes.
 
