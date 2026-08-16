@@ -2,6 +2,23 @@
 
 This file is read automatically by Claude Code at the start of every session in this repo. It exists so every session — including ones triggered remotely via Dispatch — inherits the same conventions without being re-taught.
 
+## Read `Code/README.md` in Drive first, every session
+Before starting work, read `README.md` in the RiftAcademy Drive folder:
+
+```
+/Users/ashwinsathe/My Google Drive/Ashwin/Games/Riftbound/RiftAcademy/Code/
+```
+
+**That file, not this one, is authoritative for how work is structured and handed off** between the Cowork threads (planning and coordination) and Code (this repo). Its content is deliberately not duplicated here — it changes independently, and a stale copy is worse than a pointer.
+
+The one-line version, enough to know what you're looking at: `Code/` holds one subfolder per open feature, plus a single `Completed-Features/` archive. Ashwin says "start session" to check out the oldest eligible open folder and begin work, "start session: `<slug>`" to target a specific one, and "end session" to close out. Everything that actually governs a session — the `_STATUS.md` states, the checkout and eligibility rules, the `decision_request`/`decision_response` exchange with Cowork, document locking — lives in `Code/README.md`. Read it; don't work from this summary.
+
+**How to read it.** Those files are Google Docs. On disk each one is a stub named `<name>.md.gdoc` holding a JSON `doc_id` — read the stub with the normal file tools, then fetch the real content with the Google Drive MCP's `read_file_content` on that id. Plain `.md` files in the same folders (generally the ones Code wrote) are read directly. Code can create plain `.md` files there but has no tool that rewrites an existing Google Doc's contents, so write updates as plain `.md` alongside the `.gdoc` and say in the file that it supersedes.
+
+Drive is mounted locally via Google Drive for Desktop, so this is an ordinary path. If a session has neither the mount nor a Drive tool — likely for remote/Dispatch sessions — say so plainly rather than proceeding as though `Code/` were empty.
+
+Two known traps: the folder is **`Ashwin/`**, not `Personal/` (a wrong path sat in the docs from 2026-08-09 to 2026-08-15). And don't reach `Code/` through the `.shortcut-targets-by-id` mount alias — it has shown a stale view, missing folders that exist under the path above, which breaks the checkout rule that stops two sessions claiming the same work.
+
 ## Canonical project doc
 `docs/RiftAcademy_Project Management.md` is the single canonical project-management doc: status, roadmap, standing rules, full deploy workflow, conventions. Read it before any non-trivial task.
 
@@ -42,7 +59,16 @@ Allowed sources per target, verified against `.github/workflows/enforce-branch-f
 - **DO NOT merge any PR into `main`** — Ashwin always merges to `main` himself, manually, after testing on staging. This is a hard rule, not a default to override even if asked to "just finish it." It is the one merge Claude never makes.
 - Always confirm the PR base branch explicitly before opening one — GitHub's compare view defaults to `main`, which has caused accidental wrong-target PRs before.
 - Branch name must match the target's allowed prefix (see the table above). A mismatched prefix (e.g. `docs/*`) fails `check-source-branch` immediately regardless of content. Push a new branch with an allowed prefix and open a fresh PR; don't try to rename a branch under an open PR.
-- Never delete branches. If a branch looks stale or wrong, surface `git fetch origin` + `git diff origin/X origin/Y` output to Ashwin rather than acting on it.
+- **Delete a `feature/*` or `fix/*` branch only once its work is verified fully promoted to `staging`** (narrowed 2026-08-15; was a blanket "never delete branches"). Those two prefixes only — a `hotfix/*` or `claude/*` branch, or anything you did not verify, still gets surfaced to Ashwin rather than acted on. Three conditions, all required: the branch has no open PR, its work is present in `staging`, and you recorded the tip SHA in your response first (`git push origin <sha>:refs/heads/<name>` restores it, so this stays reversible). Verify with **both** of these, because either one alone lies:
+  - `git branch -r --merged origin/staging` — catches branches merged as ancestors, but **misses squash merges entirely**, which is most of this repo's history.
+  - `git cherry origin/staging origin/<branch>` — `-` means the patch is already in `staging`. It reports per-commit patch equivalence, so a branch that merely fell behind can read as "nothing new" when it still holds an unmerged file. Confirm with `comm -13` over `git ls-tree -r --name-only` for both refs, and check any file it lists: a `docs/updates/pending/` fragment absent from `staging` is normally reconciled-and-deleted, not lost — `docs/RiftAcademy_Project Management.md` records which pass folded it.
+
+  Cite the evidence in your response, per the fragment-verification rule below. If the two checks disagree and you can't explain why, don't delete — surface it.
+- Never delete or force-push a protected branch (`integration`, `beta`, `staging`, `main`) under any circumstance.
+- **Deleting a *local* branch ref needs Ashwin's go-ahead in the session, every time** (added 2026-08-15). The rule above governs *remote* branches, which you may delete once verified — `git push origin --delete` prompts and goes through. Local refs are different: **`Bash(git branch -d:*)` and `Bash(git branch -D:*)` are in the `deny` list in `.claude/settings.json`, deliberately.** That is a standing guard, not a misconfiguration, and it is the reason this rule can't simply say "clean up after yourself."
+  - **Do not route around the deny rule on your own judgment.** `git update-ref -d refs/heads/<name>` deletes the same ref through plumbing and does not match the denied pattern. It exists, it works, and it is **not yours to reach for unprompted** — using it silently would make the guard decorative. Ask; if Ashwin authorises a one-off, say plainly which command you're using and why it differs from the denied one before running it.
+  - **Ask at the moment your work is promoted, not later.** When your PR reaches `staging` and your local branch is therefore redundant, that is the point to raise it — "PR #N is on `staging`; local `fix/foo` (`<sha>`) is now redundant, delete it?" — with the verification already done and the SHA recorded. Asking then costs one line in a message Ashwin is already reading. The alternative is what happened on 2026-08-15: sixteen dead refs accumulated until a dedicated cleanup task was needed, and one of them (`fix/config-toml-seed-path`) had to be diffed against a merged twin before anyone could tell whether its work had landed at all.
+  - Never batch local deletions on the `[gone]` remote marker alone. A gone remote means the branch was deleted upstream, which is *usually* a merge and sometimes isn't — verify each one against `staging` the same way the rule above requires.
 - **`git push --force-with-lease` is allowed on your own unmerged branches, and nowhere else** (adopted 2026-08-15). Scope: a branch you created and pushed yourself, with no merged history and no review comments yet — typically to rebase off a wrong base before anyone has looked at it. The lease is the safety: it aborts rather than overwriting if someone else pushed since your last fetch. **Never on a protected branch, never plain `--force`, and never to discard someone else's commits.** Plain `--force`/`-f` stay denied in `.claude/settings.json`; `--force-with-lease` doesn't match those patterns, and `Bash(git push:*)` still prompts.
 - Vercel's Hobby plan allows 1 concurrent build account-wide — pushing several branches in quick succession queues builds sequentially, so a full promotion chain can take 10–20 minutes to appear. That's normal, not a failure.
 - Every branch/PR gets an auto-generated Vercel preview URL — unindexed and unlinked, so effectively private. That's the default mechanism for "let me look at this before it's official."
@@ -50,16 +76,6 @@ Allowed sources per target, verified against `.github/workflows/enforce-branch-f
 
 ## File placement — always Code's job, never Ashwin's
 Whenever a file needs to land somewhere in this repo (new CSVs, generated data, config, source exports, etc.), Claude Code places it. Locate and verify the correct destination yourself — check existing pipeline scripts, file locations, naming conventions — and move the file there as part of the task. Never hand Ashwin an `mv`/`cp` command to run; if a file needs to get from his Downloads folder into the repo, that's your job to do directly. Ashwin's goal is zero terminal use.
-
-## Handoff file convention
-When Ashwin hands off a task from a chat thread to a Code session, the default is a **single** markdown instruction file — if there's nothing else to preserve, that one file *is* the instruction, drop-in ready, no separate blurb needed.
-
-Two cases keep instructions and content in **separate** files, never merged:
-
-- **Raw data files** (CSV, JSON) that Code parses programmatically. Embedded prose breaks the format — a CSV can't have an instructional header row, JSON can't have prepended prose.
-- **Permanent content** meant to be committed as-is (design docs, specs, fragments, playbooks). Baking transient instructions into the final artifact either requires remembering to strip them or leaves throwaway text in the repo forever.
-
-In both cases the instruction file names the exact filename of the file to attach alongside it, so nothing is ambiguous about what goes together. Net effect: pure instructions are one file; anything involving data or permanent content is two files handed over in the same message, never one file trying to be both.
 
 ## Git identity
 Commits must use author email `ashwin.sathe86@gmail.com` (matches GitHub `shwinsta-ra`), or Vercel blocks the deploy with "commit author email is not valid."
