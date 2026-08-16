@@ -13,7 +13,7 @@
     "Fixtures are keyed by (id, part). \"part\" is absent for every fixture except the two halves of 17, which are (17, \"a\") and (17, \"b\"). This keeps \"id\" an integer for typed loaders rather than mixing int and string, while keeping ids traceable to v3 §8's numbering (v3 §8.2).",
     "Human-facing output (test names, reports) MUST use the derived display key: str(id) + (part or \"\") -> \"5\", \"17a\", \"17b\". Uniqueness is asserted on (id, part); the display form is presentation only and is never a key (v3 §8.2).",
     "Reports MUST state both counts from \"counts\" below — 25 executable data fixtures AND 26 harness assertions today — so \"25\" is never read as \"the harness runs 25 things\" (v3 §8.1).",
-    "Fixtures 23-28 exercise the v3 §3b treatment suffix. The suffix is LOWERCASE in both the internal and external forms (v3 §4 rule 6), and the set component of an OP product code is the mirrored BASE SET (ogs-019-024-champion), never 'op' — see v3 §3b and §8.4. Resolving an OP code to its base set is a tcgplayer_groups data lookup, not a grammar rule (fixture 28, deferred)."
+    "Fixtures 23-28 exercise the v3 §3b treatment suffix. The suffix is LOWERCASE in both the internal and external forms (v3 §4 rule 6), and the set component of an OP product code is the mirrored BASE SET (ogs-019-024-champion), never 'op' — ruled by RiftCore_Decisions.md decision B17; see v3 §3b and §8.4. B16's 'op-…' worked example is a documentation slip that B17 corrects, and B16 is left untouched as append-only history, so cite B17. Resolving an OP code to its base set is a tcgplayer_groups data lookup, not a grammar rule (fixture 28, deferred)."
   ],
   "extended_by": "v3 §3b (OP treatment discriminator) added 2026-08-16 per RiftCore_Decisions.md B16. Additive to v3, NOT a version bump — every code valid before §3b is valid after it. Fixtures 23-28 belong to that extension.",
   "counts": {
@@ -108,7 +108,7 @@
 
     { "id": 23, "case": "op_treatment_metal_prizewall", "external": "OGS-019/024-metal-prizewall", "internal": "ogs-019-024-metal-prizewall",
       "promo_treatment": "Metal, Prize Wall",
-      "note": "v3 §3b. Master Yi, Wuju Bladesman — one of three OP products sharing OP-019/024. The set component is the MIRRORED BASE SET (ogs), never 'op': v3 §2 records OGS-019-024 as Master Yi, §5 forbids inventing set code 'op', and §8.4 withdrew fixture 13 for asserting it. Asserts comma -> hyphen AND space -> nothing in a single slug: 'Metal, Prize Wall' -> 'metal-prizewall', not 'metal-prize-wall'. Verified live 2026-08-16: ogs-019-024 is Master Yi, Wuju Bladesman." },
+      "note": "v3 §3b. Master Yi, Wuju Bladesman — one of three OP products sharing OP-019/024. The set component is the MIRRORED BASE SET (ogs), never 'op' — RULED, RiftCore_Decisions.md decision B17 (2026-08-16), which corrects B16's 'op-019-024-metal-prizewall' worked example as a documentation slip. Supporting: v3 §2 records OGS-019-024 as Master Yi, §5 forbids inventing set code 'op', §8.4 withdrew fixture 13 for asserting it. Asserts comma -> hyphen AND space -> nothing in a single slug: 'Metal, Prize Wall' -> 'metal-prizewall', not 'metal-prize-wall'. Verified live 2026-08-16: ogs-019-024 is Master Yi, Wuju Bladesman." },
 
     { "id": 24, "case": "op_treatment_metal_bestof", "external": "OGS-019/024-metal-bestof", "internal": "ogs-019-024-metal-bestof",
       "promo_treatment": "Metal, Best Of",
